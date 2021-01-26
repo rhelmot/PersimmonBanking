@@ -27,3 +27,6 @@ class BankAccount(models.Model):
     def account_number(self):
         return '%016d' % self.id
 
+class SignInHistory(models.Model):
+    log = models.DateTimeField(auto_now = True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
