@@ -27,3 +27,9 @@ class BankAccount(models.Model):
     def account_number(self):
         return '%016d' % self.id
 
+class BankStatements(models.Model):
+    date = models.DateField(auto_now=True)
+    debit = models.DecimalField(decimal_places=2, max_length=10,null=True)
+    credit = models.DecimalField(decimal_places=2,max_length=10,null=True)
+    balance = models.DecimalField(decimal_places=2,max_length=10)
+    bankAccount = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
