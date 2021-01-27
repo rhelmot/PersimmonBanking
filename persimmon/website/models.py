@@ -29,7 +29,6 @@ class BankAccount(models.Model):
 
 class BankStatements(models.Model):
     date = models.DateField(auto_now=True)
-    debit = models.DecimalField(decimal_places=2, max_length=10,null=True)
-    credit = models.DecimalField(decimal_places=2,max_length=10,null=True)
+    transaction = models.CharField(max_length=30)
     balance = models.DecimalField(decimal_places=2,max_length=10)
     bankAccount = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
