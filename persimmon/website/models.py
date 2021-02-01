@@ -27,6 +27,17 @@ class BankAccount(models.Model):
     def account_number(self):
         return '%016d' % self.id
 
+    def bank_statements(self, start_day, end_day):
+        result = BankStatements.objects.filter(bankAccountId=self.id, date__range=[start_day, end_day])
+        return result
+
+class BankStatements(models.Model):
+    date = models.DateField(auto_now=True)
+    transaction = models.CharField(max_length=30)
+    balance = models.DecimalField(decimal_places=2,max_length=10)
+    bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    
 class SignInHistory(models.Model):
     log = models.DateTimeField(auto_now = True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
