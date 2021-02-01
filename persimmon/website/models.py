@@ -15,6 +15,19 @@ class User(models.Model):
     phone = models.CharField(max_length=10)
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
+     
+    #returns true if employee is set at given security level
+    def check_level(self, level):
+        if(self.employee_level==level):
+            return True
+        else:
+            return False
+
+    @property
+    def get_name(self):
+        return
+    def get_level(self):
+        return self.employee_level
 
 
 class AccountType(models.IntegerChoices):
