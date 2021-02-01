@@ -14,31 +14,6 @@ class User(models.Model):
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
 
-    # placeholder till website itself is up
-    def chk_address(self):
-        for char in self.address:
-            if char in "!/?!.:;|":
-                print("invalid input cannot have /?!.:;|")
-                break
-
-    def change_phone_number(self):
-        t = 0
-        while (t == 0):
-            self.phone = input("enter here")
-            if len(self.phone) > 10:
-                print("invalid")
-            else:
-                for char in self.phone:
-                    if char in "0123456789":
-                        t = 1
-                        continue
-                    else:
-                        print("invalid input")
-                        t = 0
-                        break
-
-
-
 
 
 class AccountType(models.IntegerChoices):
