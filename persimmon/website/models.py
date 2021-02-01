@@ -28,7 +28,7 @@ class BankAccount(models.Model):
         return '%016d' % self.id
 
     def bank_statements(self, start_day, end_day):
-        result = BankStatements.objects.filter(bankAccount=self.id, date__range=[start_day, end_day])
+        result = BankStatements.objects.filter(bankAccountId=self.id, date__range=[start_day, end_day])
         return result
 
 
@@ -36,4 +36,4 @@ class BankStatements(models.Model):
     date = models.DateField(auto_now=True)
     transaction = models.CharField(max_length=30)
     balance = models.DecimalField(decimal_places=2,max_length=10)
-    bankAccount = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
