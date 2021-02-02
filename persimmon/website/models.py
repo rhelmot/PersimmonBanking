@@ -1,10 +1,12 @@
 from django.db import models
 
+
 class EmployeeLevel(models.IntegerChoices):
     CUSTOMER = 0
     TELLER = 1
     MANAGER = 2
     ADMIN = 3
+
 
 class User(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -15,11 +17,11 @@ class User(models.Model):
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
 
 
-
 class AccountType(models.IntegerChoices):
     CHECKING = 0
     SAVINGS = 1
     CREDIT = 2
+
 
 class BankAccount(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -35,13 +37,25 @@ class BankAccount(models.Model):
         result = BankStatements.objects.filter(bankAccountId=self.id, date__range=[start_day, end_day])
         return result
 
+
 class BankStatements(models.Model):
     date = models.DateField(auto_now=True)
     transaction = models.CharField(max_length=30)
     balance = models.DecimalField(decimal_places=2,max_length=10)
     bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
-    
+
+
 class SignInHistory(models.Model):
     log = models.DateTimeField(auto_now = True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+
+class Appointment(models.Model):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee', limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+    time = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['employee', 'time'], name='employee_availability')
+        ]
