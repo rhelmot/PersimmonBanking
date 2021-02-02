@@ -41,7 +41,7 @@ class BankAccount(models.Model):
 class BankStatements(models.Model):
     date = models.DateField(auto_now=True)
     transaction = models.CharField(max_length=30)
-    balance = models.DecimalField(decimal_places=2,max_length=10)
+    balance = models.DecimalField(decimal_places=2,max_digits=10)
     bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
 
 
