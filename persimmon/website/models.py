@@ -10,7 +10,11 @@ class User(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=200)
     username = models.CharField(max_length=200)
+    phone = models.CharField(max_length=10)
+    address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
+
+
 
 class AccountType(models.IntegerChoices):
     CHECKING = 0
