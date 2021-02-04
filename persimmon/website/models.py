@@ -15,7 +15,7 @@ class User(models.Model):
     phone = models.CharField(max_length=10)
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
-     
+
     def check_level(self, level):
         """
         Returns whether user has permission for the given level
