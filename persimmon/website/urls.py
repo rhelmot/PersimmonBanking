@@ -3,5 +3,10 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('<str:myusername>/<int:level>/', views.security_check, name='security_check'),
+    path('seccheck/<str:myusername>/<int:level>/', views.security_check, name='security_check'),
+
+    path('api/bankaccount/new', views.create_bank_account),
+    path('api/bankaccount/get-pending', views.get_pending_bank_accounts_admin),
+    path('api/bankaccount/approve', views.approve_bank_account),
+    path('api/bankaccount/get', views.get_my_accounts)
 ]
