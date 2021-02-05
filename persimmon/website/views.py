@@ -8,10 +8,15 @@ from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatu
 MAX_REQUEST_LENGTH = 4096
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
-    # TODO actually look up user from session information. this is a stub
     if expect_not_logged_in:
-        return None
-    user = User.objects.first()
+        if not request.user.is_authenticated:
+            return None
+        raise Http404("API unavailable to current authentication")
+
+    if not request.user.is_authenticated:
+        raise Http404("API unavailable to current authentication")
+
+    user = User.objects.get(django_user=request.user)
     if not user.check_level(required_auth):
         raise Http404("API unavailable to current authentication")
     return user

@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User as DjangoUser
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -16,11 +17,22 @@ class EmployeeLevel(models.IntegerChoices):
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200)
-    username = models.CharField(max_length=200, unique=True)
+    django_user = models.OneToOneField(DjangoUser, on_delete=models.CASCADE)
     phone = models.CharField(max_length=10)
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
+
+    @property
+    def email(self):
+        return self.django_user.email
+
+    @property
+    def username(self):
+        return self.django_user.username
+
+    @property
+    def name(self):
+        return '%s %s' % (self.django_user.first_name, self.django_user.last_name)
 
     def check_level(self, level):
         """
