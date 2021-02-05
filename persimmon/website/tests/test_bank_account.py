@@ -51,17 +51,17 @@ class TestAccountWorkflow(TestCase):
         req = client_user.post(
             reverse(views.create_bank_account),
             content_type='application/json',
-            data={"account_type": AccountType.CHECKING.value})
+            data={"account_type": AccountType.CHECKING})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
             reverse(views.create_bank_account),
             content_type='application/json',
-            data={"account_type": AccountType.SAVINGS.value})
+            data={"account_type": AccountType.SAVINGS})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
             reverse(views.create_bank_account),
             content_type='application/json',
-            data={"account_type": AccountType.CREDIT.value})
+            data={"account_type": AccountType.CREDIT})
         self.assertEqual(req.status_code, 200)
 
         # test that creating the accounts manipulates the database correctly
@@ -86,7 +86,7 @@ class TestAccountWorkflow(TestCase):
         req_data = req.json()
         self.assertIs(type(req_data), list)
         self.assertEqual(len(req_data), 3)
-        self.assertTrue(all(acct['approval_status'] == ApprovalStatus.PENDING.value for acct in req_data))
+        self.assertTrue(all(acct['approval_status'] == ApprovalStatus.PENDING for acct in req_data))
 
         # test that the user cannot access the admin functions
         req = client_user.post(
@@ -156,8 +156,6 @@ class TestAccountWorkflow(TestCase):
         req_data = req.json()
         self.assertIs(type(req_data), list)
         self.assertEqual(len(req_data), 2)
-        self.assertTrue(all(acct['approval_status'] == ApprovalStatus.APPROVED.value for acct in req_data))
+        self.assertTrue(all(acct['approval_status'] == ApprovalStatus.APPROVED for acct in req_data))
 
         # PHEW
-
-

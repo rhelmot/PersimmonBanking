@@ -1,7 +1,7 @@
 from decimal import Decimal
-import pydantic
 import json
-from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest
+import pydantic
+from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
 
@@ -21,16 +21,16 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
         raise Http404("API unavailable to current authentication")
     return user
 
-def api_function(f):
+def api_function(func):
     """
     This is a magic function which will automatically deserialize POST request data from JSON and serialize the response
     back to JSON. Additionally, it will typecheck the JSON object structure against the function's type annotations.
     Use it by @annotating your view functions with it.
     """
-    gen_namespace = {name: NotImplemented for name in f.__annotations__}
-    gen_namespace['__annotations__'] = f.__annotations__
+    gen_namespace = {name: NotImplemented for name in func.__annotations__}
+    gen_namespace['__annotations__'] = func.__annotations__
     gen_namespace['Config'] = ApiGenConfig
-    request_type = type(f.__name__ + '_args', (pydantic.BaseModel,), gen_namespace)
+    request_type = type(func.__name__ + '_args', (pydantic.BaseModel,), gen_namespace)
 
     def inner(request: HttpRequest, *args, **kwargs):
         if request.method != 'POST':
@@ -47,22 +47,22 @@ def api_function(f):
         except (json.JSONDecodeError, UnicodeDecodeError):
             return HttpResponseBadRequest("Data encoding error")
 
-        if type(request_data_dict) is not dict:
+        if not isinstance(request_data_dict, dict):
             # force an error in the next stanza
             request_data_dict = {'_': None}
 
         try:
             request_data_validated = request_type(**request_data_dict)
         except pydantic.ValidationError:
-            return HttpResponseBadRequest("Data form error: expecting " + str(f.__annotations__))
+            return HttpResponseBadRequest("Data form error: expecting " + str(func.__annotations__))
 
         kwargs.update(request_data_validated.dict())
-        result = f(request, *args, **kwargs)
+        result = func(request, *args, **kwargs)
         if result is None:
             result = {}
         if isinstance(result, HttpResponse):
             return result
-        return HttpResponse(json.dumps(result, default=encode_extra), content_type='application/json')
+        return JsonResponse(result, safe=False, json_dumps_params=dict(default=encode_extra))
 
     return inner
 
@@ -71,7 +71,7 @@ class ApiGenConfig:
     validate_all = True
 
 def encode_extra(thing):
-    if type(thing) is Decimal:
+    if isinstance(thing, Decimal):
         return str(thing)
 
     raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
@@ -117,8 +117,8 @@ def approve_bank_account(request, account_number: int, approved: bool):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
     try:
         account = BankAccount.objects.get(id=account_number, approval_status=ApprovalStatus.PENDING)
-    except BankAccount.DoesNotExist:
-        raise Http404("No such account pending approval")
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account pending approval") from exc
 
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()

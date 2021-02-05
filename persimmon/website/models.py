@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User as DjangoUser
+from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 
 
 class ApprovalStatus(models.IntegerChoices):
