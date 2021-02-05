@@ -1,4 +1,4 @@
-import functools
+from decimal import Decimal
 import pydantic
 import json
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest
@@ -62,13 +62,19 @@ def api_function(f):
             result = {}
         if isinstance(result, HttpResponse):
             return result
-        return HttpResponse(json.dumps(result))
+        return HttpResponse(json.dumps(result, default=encode_extra), content_type='application/json')
 
     return inner
 
 class ApiGenConfig:
     extra = pydantic.Extra.forbid
     validate_all = True
+
+def encode_extra(thing):
+    if type(thing) is Decimal:
+        return str(thing)
+
+    raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
 
 ######
 ## actual views begin here
@@ -97,7 +103,7 @@ def create_bank_account(request, account_type: AccountType):
     return {'account': account.account_number}
 
 @api_function
-def get_pending_bank_accounts_admin(request):
+def get_pending_bank_accounts(request):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
     accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.PENDING)
     return [{
@@ -120,7 +126,7 @@ def approve_bank_account(request, account_number: int, approved: bool):
 @api_function
 def get_my_accounts(request):
     user = current_user(request)
-    accounts = BankAccount.objects.filter(user=user).exclude(approval_status=ApprovalStatus.DECLINED)
+    accounts = BankAccount.objects.filter(owner=user).exclude(approval_status=ApprovalStatus.DECLINED)
     return [{
         'account': account.account_number,
         'type': account.type,
