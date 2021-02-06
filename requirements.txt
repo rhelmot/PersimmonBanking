@@ -1,3 +1,4 @@
+pydantic
 Django==3.1.5
 pylint
 pylint-django
