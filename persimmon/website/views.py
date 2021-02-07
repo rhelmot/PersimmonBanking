@@ -97,6 +97,14 @@ def index(request):
     return HttpResponse("Hello world")
 
 @api_function
+def create_user_account(request, User):
+    user = current_user(request)
+
+    newUser = User(django_user=User._meta.get_field('django_user'), phone=User._meta.get_field("phone"), address= User._meta.get_field("address"), employee_level= User._meta.get_field("employee_level"))
+    newUser.save()
+    return "The new user ", str(newUser.name()), "has been added"
+
+@api_function
 def create_bank_account(request, account_type: AccountType):
     user = current_user(request)
     account = BankAccount.objects.create(owner=user, type=account_type)
