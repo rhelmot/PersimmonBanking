@@ -3,8 +3,9 @@ import json
 import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, DjangoUser
 
+from django.core import serializers
 MAX_REQUEST_LENGTH = 4096
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
@@ -97,12 +98,31 @@ def index(request):
     return HttpResponse("Hello world")
 
 @api_function
-def create_user_account(request, User):
-    user = current_user(request)
+def create_user_account(request, username: str, first_name: str,
+                        last_name: str, email: str, password: str,
+                        phone: str, address: str, employee_level: EmployeeLevel):
 
-    newUser = User(django_user=User._meta.get_field('django_user'), phone=User._meta.get_field("phone"), address= User._meta.get_field("address"), employee_level= User._meta.get_field("employee_level"))
-    newUser.save()
-    return "The new user ", str(newUser.name()), "has been added"
+    current_user(request, expect_not_logged_in=True)
+
+    django_user = DjangoUser.objects.create_user(
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        password=password)
+
+    User.objects.create(
+        phone=phone,
+        address=address,
+        employee_level=employee_level,
+        django_user=django_user)
+    # new_user = serializers.serialize('json', new_user)
+
+    # return ({"id": new_user.id})
+    # new_user = User(django_user=User._meta.get_field('django_user'), phone=User._meta.get_field("phone"),
+    #                address= User._meta.get_field("address"), employee_level= User._meta.get_field("employee_level"))
+    # new_user.save()
+    # return "The new user ", str(new_user.name()), "has been added"
 
 @api_function
 def create_bank_account(request, account_type: AccountType):
