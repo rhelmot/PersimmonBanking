@@ -23,4 +23,3 @@ def make_user(username,
         address=address,
         employee_level=employee_level,
         django_user=django_user)
-
