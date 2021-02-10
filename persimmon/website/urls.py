@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/bankaccount/get', views.get_my_accounts),
     path('api/session/login', views.persimmon_login),
     path('api/session/logout', views.persimmon_logout),
+    path('api/session/status', views.login_status),
 ]
