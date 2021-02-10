@@ -150,3 +150,7 @@ def persimmon_logout(request):
     current_user(request)
     django_logout(request)
     return {}
+
+@api_function
+def login_status(request):
+    return {"logged_in": request.user.is_authenticated}

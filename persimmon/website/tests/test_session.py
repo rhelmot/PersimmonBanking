@@ -7,15 +7,10 @@ from .. import views
 class TestSessions(TestCase):
     @staticmethod
     def is_logged_in(client):
-        req = client.post(
-            reverse(views.get_my_accounts),
+        return client.post(
+            reverse(views.login_status),
             content_type='application/json',
-            data={})
-        if req.status_code == 200:
-            return True
-        if req.status_code == 404:
-            return False
-        raise Exception("testing error: bankaccounts/get endpoint has weird behavior")
+            data={}).json()['logged_in']
 
     def test_login_logout(self):
         make_user('username', password='password')
