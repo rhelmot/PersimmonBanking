@@ -8,6 +8,7 @@ from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatu
 
 MAX_REQUEST_LENGTH = 4096
 
+
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
     if expect_not_logged_in:
         if not request.user.is_authenticated:
@@ -21,6 +22,7 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
     if not user.check_level(required_auth):
         raise Http404("API unavailable to current authentication")
     return user
+
 
 def api_function(func):
     """
@@ -67,9 +69,11 @@ def api_function(func):
 
     return inner
 
+
 class ApiGenConfig:
     extra = pydantic.Extra.forbid
     validate_all = True
+
 
 def encode_extra(thing):
     if isinstance(thing, Decimal):
@@ -77,11 +81,12 @@ def encode_extra(thing):
 
     raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
 
+
 ######
 ## actual views begin here
 ######
 
-#checks if user with username has same employeelevel as level
+# checks if user with username has same employeelevel as level
 def security_check(request, myusername, level):
     try:
         user = User.objects.get(username=myusername)
@@ -93,15 +98,18 @@ def security_check(request, myusername, level):
 
     return HttpResponse("success this user match the required permissions")
 
-#index for website/ to check if url views are working
+
+# index for website/ to check if url views are working
 def index(request):
     return HttpResponse("Hello world")
+
 
 @api_function
 def create_bank_account(request, account_type: AccountType):
     user = current_user(request)
     account = BankAccount.objects.create(owner=user, type=account_type)
     return {'account': account.account_number}
+
 
 @api_function
 def get_pending_bank_accounts(request):
@@ -113,6 +121,7 @@ def get_pending_bank_accounts(request):
         'type': account.type
     } for account in accounts]
 
+
 @api_function
 def approve_bank_account(request, account_number: int, approved: bool):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
@@ -123,6 +132,7 @@ def approve_bank_account(request, account_number: int, approved: bool):
 
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
+
 
 @api_function
 def get_my_accounts(request):
@@ -140,7 +150,8 @@ def get_my_accounts(request):
 def approve_credit_debit_funds(request, account_number: int, approved: bool, credittype0debittype1: int):
     current_user(request, required_auth=EmployeeLevel.TELLER)
     try:
-        pendingtransactions = BankStatements.objects.filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
+        pendingtransactions = BankStatements \
+            .objects.filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
     except BankStatements.DoesNotExist as exc:
         raise Http404("No such transaction pending approval") from exc
     for creditdebit in pendingtransactions:
@@ -163,8 +174,8 @@ def approve_credit_debit_funds(request, account_number: int, approved: bool, cre
 def credit_debit_funds(request, account_number: int, balance: Decimal, credittype0debittype1: int):
     current_user(request)
     if credittype0debittype1 == 0:
-        transactionbalance = "-"+balance
+        transactionbalance = "-" + balance
     else:
-        transactionbalance = "+"+balance
+        transactionbalance = "+" + balance
     credittransaction = BankStatements.objects.create(bankAccountId=account_number, transaction=transactionbalance)
     credittransaction.save()
