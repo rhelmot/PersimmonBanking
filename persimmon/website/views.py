@@ -147,7 +147,7 @@ def approve_credit_debit_funds(request, account_number: int, approved: bool, cre
         if approved:
             creditdebit.approve_status = ApprovalStatus.APPROVED
             account = BankAccount.objects.filter(id=account_number)
-            if(credittype0debittype1==0):
+            if credittype0debittype1 == 0:
                 account.balance -= int(creditdebit.transaction[1])
             else:
                 account.balance += int(creditdebit.transaction[1])
@@ -162,11 +162,9 @@ def approve_credit_debit_funds(request, account_number: int, approved: bool, cre
 @api_function
 def credit_debit_funds(request, account_number: int, balance: Decimal, credittype0debittype1: int):
     current_user(request)
-    if(credittype0debittype1==0):
+    if credittype0debittype1 == 0:
         transactionbalance = "-"+balance
     else:
         transactionbalance = "+"+balance
     credittransaction = BankStatements.objects.create(bankAccountId=account_number, transaction=transactionbalance)
     credittransaction.save()
-
-
