@@ -68,6 +68,7 @@ class BankStatements(models.Model):
     transaction = models.CharField(max_length=30)
     balance = models.DecimalField(decimal_places=2,max_digits=10)
     bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
 
 
 class SignInHistory(models.Model):
