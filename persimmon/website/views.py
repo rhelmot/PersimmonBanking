@@ -162,7 +162,6 @@ def approve_credit_debit_funds(request, account_number: int, approved: bool, cre
                 account.balance -= int(creditdebit.transaction[1])
             else:
                 account.balance += int(creditdebit.transaction[1])
-
         else:
             creditdebit.approve_status = ApprovalStatus.DECLINED
         now = datetime.now()
@@ -179,3 +178,14 @@ def credit_debit_funds(request, account_number: int, balance: Decimal, credittyp
         transactionbalance = "+" + balance
     credittransaction = BankStatements.objects.create(bankAccountId=account_number, transaction=transactionbalance)
     credittransaction.save()
+
+@api_function
+def get_pending_creditdebittransactions(request, account_number: int):
+    current_user(request, required_auth=EmployeeLevel.MANAGER)
+    pendingtransactions = BankStatements.objects.filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
+    return [{
+        'accountid': credidebit.bankAccountId,
+        'transaction': credidebit.transaction,
+        'balance': credidebit.balance,
+        'approval_status': credidebit.approval_status,
+    } for credidebit in pendingtransactions]
