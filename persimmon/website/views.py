@@ -133,3 +133,56 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
+@api_function
+def get_my_address(request):
+    user = current_user(request)
+    return [{
+        'my address': user.address
+    }]
+
+@api_function
+def change_my_address(request, new_address: str):
+    user = current_user(request)
+    user.address = new_address
+    user.save()
+    return [{
+        'my new address': user.address
+    }]
+
+
+#transfer amount from the balance of bankaccount with acountnumb1 id
+@api_function
+def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
+    user = current_user(request)
+    account1 = BankAccount.objects.filter(owner=user, id=accountnumb1).exclude(approval_status=ApprovalStatus.DECLINED)
+    if len(account1)== 1:
+        if account1[0].balance < amount:
+            return [{
+                'error':'error insufficient funds'
+            }]
+        else:
+            account2= BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
+            if len(account2)==1:
+                account1[0].balance = account1[0].balance-amount
+                account2[0].balance = account2[0].balance+amount
+                account1[0].save()
+                account2[0].save()
+                return [{
+                    'Account Balance': account1[0].balance
+                }]
+            else:
+                return [{
+                    'error': 'account number 2 does not exit'
+                }]
+    else:
+        return [{
+            'error': 'account to debt does not exist or is not owned by user'
+        }]
+
+
+
+
+
+
+

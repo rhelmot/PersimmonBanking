@@ -34,6 +34,7 @@ class User(models.Model):
     def name(self):
         return '%s %s' % (self.django_user.first_name, self.django_user.last_name)
 
+
     def check_level(self, level):
         """
         Returns whether user has permission for the given level
@@ -61,6 +62,8 @@ class BankAccount(models.Model):
     def bank_statements(self, start_day, end_day):
         result = BankStatements.objects.filter(bankAccountId=self.id, date__range=[start_day, end_day])
         return result
+
+
 
 
 class BankStatements(models.Model):
