@@ -111,11 +111,12 @@ def create_user_account(request, username: str, first_name: str,
         email=email,
         password=password)
 
-    User.objects.create(
+    new_user = User.objects.create(
         phone=phone,
         address=address,
         employee_level=employee_level,
         django_user=django_user)
+    new_user.save()
     # new_user = serializers.serialize('json', new_user)
 
     # return ({"id": new_user.id})
