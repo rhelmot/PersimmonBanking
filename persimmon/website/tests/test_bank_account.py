@@ -1,31 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..models import User, EmployeeLevel, BankAccount, DjangoUser, AccountType, ApprovalStatus
+from .common import make_user
+from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus
 from .. import views
-
-def make_user(username,
-              first_name='Firstname',
-              last_name='Lastname',
-              password='password',
-              email='example@example.com',
-              phone='0000000000',
-              address='nowhere',
-              employee_level=EmployeeLevel.CUSTOMER) -> User:
-    """
-    A function for quickly creating a user with a bunch of testing defaults set.
-    """
-    django_user = DjangoUser.objects.create_user(
-        username=username,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        password=password)
-    return User.objects.create(
-        phone=phone,
-        address=address,
-        employee_level=employee_level,
-        django_user=django_user)
 
 class TestAccountWorkflow(TestCase):
     """
