@@ -182,7 +182,8 @@ def credit_debit_funds(request, account_number: int, balance: Decimal, credittyp
 @api_function
 def get_pending_creditdebittransactions(request, account_number: int):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
-    pendingtransactions = BankStatements.objects.filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
+    pendingtransactions = BankStatements.objects\
+        .filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
     return [{
         'accountid': credidebit.bankAccountId,
         'transaction': credidebit.transaction,
