@@ -6,7 +6,6 @@ from django.contrib.auth import authenticate, login as django_login, logout as d
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, DjangoUser
 
-from django.core import serializers
 MAX_REQUEST_LENGTH = 4096
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
@@ -118,13 +117,7 @@ def create_user_account(request, username: str, first_name: str,
         employee_level=employee_level,
         django_user=django_user)
     new_user.save()
-    # new_user = serializers.serialize('json', new_user)
 
-    # return ({"id": new_user.id})
-    # new_user = User(django_user=User._meta.get_field('django_user'), phone=User._meta.get_field("phone"),
-    #                address= User._meta.get_field("address"), employee_level= User._meta.get_field("employee_level"))
-    # new_user.save()
-    # return "The new user ", str(new_user.name()), "has been added"
 
 @api_function
 def create_bank_account(request, account_type: AccountType):
