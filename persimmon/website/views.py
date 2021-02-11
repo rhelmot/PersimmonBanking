@@ -99,7 +99,7 @@ def index(request):
 
 @api_function
 def create_user_account(request, username: str, first_name: str,
-                        last_name: str, email: str, password: str,
+                        last_name: str, password: str, email: str,
                         phone: str, address: str, employee_level: EmployeeLevel):
 
     current_user(request, expect_not_logged_in=True)
