@@ -2,6 +2,7 @@ from decimal import Decimal
 import json
 import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, DjangoUser
 
@@ -162,3 +163,23 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
+@api_function
+def persimmon_login(request, username: str, password: str):
+    current_user(request, expect_not_logged_in=True)
+    django_user = authenticate(request, username=username, password=password)
+    if django_user is None:
+        return {"error": "could not authenticate"}
+
+    django_login(request, django_user)
+    return {}
+
+@api_function
+def persimmon_logout(request):
+    current_user(request)
+    django_logout(request)
+    return {}
+
+@api_function
+def login_status(request):
+    return {"logged_in": request.user.is_authenticated}
