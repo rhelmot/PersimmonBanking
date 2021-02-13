@@ -12,8 +12,13 @@ class TestAccountWorkflow(TestCase):
     """
     def test_workflow(self):
         # setup database
-        create_user_account(request, 'admin', employee_level=EmployeeLevel.ADMIN)
-        create_user_account('user')
+        create_user_account(username='admin', first_name='first_name', last_name='last_name',
+                            password='password', email='example@example.com', phone='5809331341',
+                            address='nowhere', employee_level=EmployeeLevel.ADMIN)
+
+        create_user_account(username='user', first_name='first_name', last_name='last_name',
+                            password='password', email='example@example.com', phone='5809331341',
+                            address='nowhere', employee_level=EmployeeLevel.ADMIN)
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
         client_user = Client()
