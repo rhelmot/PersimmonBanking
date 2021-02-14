@@ -11,7 +11,6 @@ class TestAccountWorkflow(TestCase):
     """
 
     def test_workflow(self):
-
         # test that we can create a user account
 
         client_user1 = Client()
@@ -26,15 +25,17 @@ class TestAccountWorkflow(TestCase):
 
         client_user2 = Client()
 
-
         req2 = client_user2.post(reverse(views.create_user_account), content_type='application/json',
-                                data={"username": "new_user", "last_name": "Deshpande",
-                                      "password": "password", "email": "test_email", "phone": "4803333141",
-                                      "address": "address", "employee_level": EmployeeLevel.ADMIN})
+                                 data={"username": "new_user", "last_name": "Deshpande",
+                                       "password": "password", "email": "test_email", "phone": "4803333141",
+                                       "address": "address", "employee_level": EmployeeLevel.ADMIN})
         self.assertEqual(req2.status_code, 400)
 
         # test that a new user account has been created
 
         user_accounts = list(User.objects.all())
         self.assertEqual(len(user_accounts), 1)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 67181089e6c77e490331a137e5b6129513480f06
