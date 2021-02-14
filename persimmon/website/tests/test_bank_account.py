@@ -1,11 +1,11 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-<<<<<<< HEAD
+
 from ..common import make_user
-=======
+
 from .common import create_user_account
->>>>>>> 67181089e6c77e490331a137e5b6129513480f06
+
 from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus
 from .. import views
 

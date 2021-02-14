@@ -35,7 +35,4 @@ class TestAccountWorkflow(TestCase):
 
         user_accounts = list(User.objects.all())
         self.assertEqual(len(user_accounts), 1)
-<<<<<<< HEAD
 
-=======
->>>>>>> 67181089e6c77e490331a137e5b6129513480f06

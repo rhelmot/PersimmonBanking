@@ -4,7 +4,7 @@ import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, DjangoUser
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
 from .common import make_user
 
 MAX_REQUEST_LENGTH = 4096
