@@ -5,8 +5,10 @@ from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadReque
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
+from .common import make_user
 
 MAX_REQUEST_LENGTH = 4096
+
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
     if expect_not_logged_in:
@@ -21,6 +23,7 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
     if not user.check_level(required_auth):
         raise Http404("API unavailable to current authentication")
     return user
+
 
 def api_function(func):
     """
@@ -67,9 +70,11 @@ def api_function(func):
 
     return inner
 
+
 class ApiGenConfig:
     extra = pydantic.Extra.forbid
     validate_all = True
+
 
 def encode_extra(thing):
     if isinstance(thing, Decimal):
@@ -77,11 +82,12 @@ def encode_extra(thing):
 
     raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
 
+
 ######
 ## actual views begin here
 ######
 
-#checks if user with username has same employeelevel as level
+# checks if user with username has same employeelevel as level
 def security_check(request, myusername, level):
     try:
         user = User.objects.get(username=myusername)
@@ -93,15 +99,33 @@ def security_check(request, myusername, level):
 
     return HttpResponse("success this user match the required permissions")
 
-#index for website/ to check if url views are working
+
+# index for website/ to check if url views are working
 def index(request):
     return HttpResponse("Hello world")
+
+
+@api_function
+def create_user_account(request, username: str, first_name: str,
+                        last_name: str, password: str, email: str,
+                        phone: str, address: str):
+    current_user(request, expect_not_logged_in=True)
+    new_user = make_user(username=username,
+                         first_name=first_name,
+                         last_name=last_name,
+                         password=password,
+                         email=email,
+                         phone=phone,
+                         address=address)
+    new_user.save()
+
 
 @api_function
 def create_bank_account(request, account_type: AccountType):
     user = current_user(request)
     account = BankAccount.objects.create(owner=user, type=account_type)
     return {'account': account.account_number}
+
 
 @api_function
 def get_pending_bank_accounts(request):
@@ -112,6 +136,7 @@ def get_pending_bank_accounts(request):
         'owner': account.owner_id,
         'type': account.type
     } for account in accounts]
+
 
 @api_function
 def approve_bank_account(request, account_number: int, approved: bool):
@@ -124,6 +149,7 @@ def approve_bank_account(request, account_number: int, approved: bool):
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
 
+
 @api_function
 def get_my_accounts(request):
     user = current_user(request)
@@ -135,6 +161,7 @@ def get_my_accounts(request):
         'approval_status': account.approval_status,
     } for account in accounts]
 
+
 @api_function
 def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
@@ -145,11 +172,13 @@ def persimmon_login(request, username: str, password: str):
     django_login(request, django_user)
     return {}
 
+
 @api_function
 def persimmon_logout(request):
     current_user(request)
     django_logout(request)
     return {}
+
 
 @api_function
 def login_status(request):
