@@ -1,10 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-
-
 from ..common import make_user
-
-from .common import create_user_account
 
 from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus
 from .. import views
@@ -16,13 +12,8 @@ class TestAccountWorkflow(TestCase):
     """
     def test_workflow(self):
         # setup database
-        create_user_account(username='admin', first_name='first_name', last_name='last_name',
-                            password='password', email='example@example.com', phone='5809331341',
-                            address='nowhere', employee_level=EmployeeLevel.ADMIN)
-
-        create_user_account(username='user', first_name='first_name', last_name='last_name',
-                            password='password', email='example@example.com', phone='5809331341',
-                            address='nowhere', employee_level=EmployeeLevel.ADMIN)
+        make_user('admin', employee_level=EmployeeLevel.ADMIN)
+        make_user('user')
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
         client_user = Client()
