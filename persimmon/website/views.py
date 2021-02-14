@@ -108,7 +108,7 @@ def index(request):
 @api_function
 def create_user_account(request, username: str, first_name: str,
                         last_name: str, password: str, email: str,
-                        phone: str, address: str, employee_level: EmployeeLevel):
+                        phone: str, address: str):
     current_user(request, expect_not_logged_in=True)
     new_user = make_user(username=username,
                          first_name=first_name,
@@ -116,8 +116,7 @@ def create_user_account(request, username: str, first_name: str,
                          password=password,
                          email=email,
                          phone=phone,
-                         address=address,
-                         employee_level=employee_level)
+                         address=address)
     new_user.save()
 
 
