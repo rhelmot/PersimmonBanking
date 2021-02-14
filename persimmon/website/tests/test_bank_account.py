@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from .common import make_user
+from ..common import make_user
 from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus
 from .. import views
 
