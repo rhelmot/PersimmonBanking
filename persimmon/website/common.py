@@ -1,4 +1,4 @@
-from ..models import User, DjangoUser, EmployeeLevel
+from .models import User, DjangoUser, EmployeeLevel
 
 
 def make_user(username,
