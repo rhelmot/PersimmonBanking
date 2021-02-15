@@ -82,6 +82,9 @@ class Appointment(models.Model):
                                  limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
     time = models.DateTimeField(default=timezone.now)
 
+    def __str__(self):
+        return f'{self.customer.id} appointment at {self.time} '
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['employee', 'time'], name='employee_availability')
