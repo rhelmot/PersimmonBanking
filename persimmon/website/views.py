@@ -2,8 +2,9 @@ from decimal import Decimal
 import json
 import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
 
@@ -151,6 +152,11 @@ def schedule_appointment(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
+            form.save()
+            user_name = form.cleaned_data.get('name')
+            date = form.cleaned_data.get('Date')
+            messages.success(request, f'Appointment created for {user}')
+            return redirect('')
             
     else:
         form = UserCreationForm()
