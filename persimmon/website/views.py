@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 import json
 import pydantic
+from django.db import transaction
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
@@ -129,7 +130,6 @@ def approve_bank_account(request, account_number: int, approved: bool):
         account = BankAccount.objects.get(id=account_number, approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account pending approval") from exc
-
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
 
@@ -146,46 +146,59 @@ def get_my_accounts(request):
     } for account in accounts]
 
 
+@transaction.atomic
 @api_function
-def approve_credit_debit_funds(request, account_number: int, approved: bool, credittype0debittype1: int):
+def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
     current_user(request, required_auth=EmployeeLevel.TELLER)
     try:
-        pendingtransactions = BankStatements \
-            .objects.filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
+        pendingtransaction = BankStatements.objects.get(id=transaction_id, approval_status=ApprovalStatus.PENDING)
     except BankStatements.DoesNotExist as exc:
         raise Http404("No such transaction pending approval") from exc
-    for creditdebit in pendingtransactions:
-        if approved:
-            creditdebit.approve_status = ApprovalStatus.APPROVED
-            account = BankAccount.objects.filter(id=account_number)
-            if credittype0debittype1 == 0:
-                account.balance -= int(creditdebit.transaction[1])
-            else:
-                account.balance += int(creditdebit.transaction[1])
+    if approved:
+        pendingtransaction.approve_status = ApprovalStatus.APPROVED
+        try:
+            account = BankAccount.objects.get(id=pendingtransaction.accountId, approval_status=ApprovalStatus.PENDING)
+        except BankAccount.DoesNotExist as exc:
+            raise Http404("No such account") from exc
+        if pendingtransaction.transaction.startswith("-"):
+            account.balance -= int(pendingtransaction.transaction[1])
+            pendingtransaction.balance = account.balance
         else:
-            creditdebit.approve_status = ApprovalStatus.DECLINED
+            account.balance += int(pendingtransaction.transaction[1])
+            pendingtransaction.balance = account.balance
+        account.save()
         now = datetime.now()
-        creditdebit.date = now.strftime("%d %b")
-        creditdebit.save()
-
-
-@api_function
-def credit_debit_funds(request, account_number: int, balance: Decimal, credittype0debittype1: int):
-    current_user(request)
-    if credittype0debittype1 == 0:
-        transactionbalance = "-" + balance
+        pendingtransaction.date = now.strftime("%d %b")
+        pendingtransaction.save()
     else:
-        transactionbalance = "+" + balance
-    credittransaction = BankStatements.objects.create(bankAccountId=account_number, transaction=transactionbalance)
-    credittransaction.save()
+        pendingtransaction.approve_status = ApprovalStatus.DECLINED
+        now = datetime.now()
+        pendingtransaction.date = now.strftime("%d %b")
+        pendingtransaction.save()
+
 
 @api_function
-def get_pending_creditdebittransactions(request, account_number: int):
+def credit_debit_funds(request, account_number: int, balance: Decimal):
+    user = current_user(request)
+    try:
+        account = BankAccount.objects.get(id=account_number, owner=user, approval_status=ApprovalStatus.PENDING)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+    if balance < 0:
+        transactionbalance = str(balance)
+    else:
+        transactionbalance = "+" + str(balance)
+    BankStatements.objects.create(accountId=account_number, transaction=transactionbalance, balance=account.balance)
+
+
+@api_function
+def get_pending_transactions(request, account_number: int):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
-    pendingtransactions = BankStatements.objects\
-        .filter(bankAccountId=account_number, approval_status=ApprovalStatus.PENDING)
+    pendingtransactions = BankStatements.objects \
+        .filter(accountId=account_number, approval_status=ApprovalStatus.PENDING)
     return [{
-        'accountid': credidebit.bankAccountId,
+        'transactionid':credidebit.id,
+        'accountid': credidebit.accountId,
         'transaction': credidebit.transaction,
         'balance': credidebit.balance,
         'approval_status': credidebit.approval_status,

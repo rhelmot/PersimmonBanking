@@ -12,5 +12,5 @@ urlpatterns = [
 
     path('api/creditdebitfunds/creditdebit', views.credit_debit_funds),
     path('api/creditdebitfunds/approve', views.approve_credit_debit_funds),
-    path('api/creditdebitfunds/get-pending-creditdebit', views.get_pending_creditdebittransactions),
+    path('api/creditdebitfunds/get-pending', views.get_pending_transactions),
 ]
