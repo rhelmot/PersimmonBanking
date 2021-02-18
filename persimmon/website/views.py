@@ -148,6 +148,7 @@ def approve_bank_account(request, account_number: int, approved: bool):
         account = BankAccount.objects.get(id=account_number, approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account pending approval") from exc
+
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
 
@@ -251,3 +252,21 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+
+@api_function
+def bank_statement(request, account_id: int, month: int, year: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.first(account_id=account_id, user=user)
+    except BankAccount.DoesNotExist:
+        raise Http404("No such account")
+
+    transactions = BankStatements.objects\
+        .filter(date__month=month, date__year=year, account_id=account_id)\
+        .order_by("date")
+    return [ {
+        'timestamp': trans.date,
+        'transaction': trans.transaction,
+        'balance': trans.balance,
+    } for trans in transactions]
