@@ -170,13 +170,13 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
 
 
 @api_function
-def credit_debit_funds(request, account_id: int, transaction: Decimal):
+def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
     user = current_user(request)
     try:
         BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account") from exc
-    bankstatement = BankStatements.objects.create(accountId=account_id, transaction=transaction)
+    bankstatement = BankStatements.objects.create(accountId=account_id, transaction=transactionvalue)
     if transaction < 0:
         bankstatement.description = "credit"
     else:
