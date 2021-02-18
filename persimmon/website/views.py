@@ -259,8 +259,8 @@ def bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
     try:
         BankAccount.objects.first(account_id=account_id, user=user)
-    except BankAccount.DoesNotExist:
-        raise Http404("No such account")
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
 
     transactions = BankStatements.objects\
         .filter(date__month=month, date__year=year, account_id=account_id)\
