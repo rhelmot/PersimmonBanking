@@ -4,8 +4,9 @@ import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
 from .common import make_user
+from django.db import transaction
 
 MAX_REQUEST_LENGTH = 4096
 
@@ -183,3 +184,86 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+
+@api_function
+def get_all_info(request):
+    user = current_user(request)
+    return {
+        'name': user.name,
+        'username': user.username,
+        'email': user.email,
+        'phone': user.phone,
+        'address': user.address,
+    }
+
+
+@api_function
+def change_my_email(request, new_email: str):
+    user = current_user(request)
+    user.change_email(new_email)
+    return {
+        'my new email': user.email
+    }
+
+
+@api_function
+def change_my_phone(request, new_phone: str):
+    user = current_user(request)
+    user.phone = new_phone
+    user.save()
+    return {
+        'my new phone': user.phone
+    }
+
+
+@api_function
+def change_my_address(request, new_address: str):
+    user = current_user(request)
+    user.address = new_address
+    user.save()
+    return {
+        'my new address': user.address
+    }
+
+
+# transfer amount from the balance of bankaccount with acountnumb1 id
+@api_function
+def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
+    with transaction.atomic():
+        user = current_user(request)
+        account1 = BankAccount.objects.filter(id=accountnumb1).exclude(approval_status=ApprovalStatus.DECLINED)
+        if len(account1) == 1 and account1[0].owner.django_user.username == user.username:
+            if account1[0].balance < amount or amount <= 0:
+                return {
+                    'error': 'error insufficient funds'
+                }
+            else:
+                account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
+                if len(account2) == 1:
+                    account1[0].balance = account1[0].balance-amount
+                    account1[0].save()
+                    acc1statement = BankStatements.objects.create(
+                        transaction='sending '+ amount.to_eng_string() + ' to ' + str(accountnumb2),
+                        balance=account1[0].balance,
+                        bankAccountId=account1[0]
+                    )
+                    acc1statement.save()
+                    account2[0].balance = account2[0].balance+amount
+                    account2[0].save()
+                    acc2statement = BankStatements.objects.create(
+                        transaction='received ' + amount.to_eng_string() + ' from ' + str(accountnumb1),
+                        balance=account2[0].balance,
+                        bankAccountId=account2[0]
+                    )
+                    acc2statement.save()
+                    return {
+                        'Account Balance': account1[0].balance
+                    }
+
+                return {
+                    'error': 'account number 2 does not exit'
+                }
+        return {
+            'error': 'account to debt does not exist or is not owned by user'
+        }
