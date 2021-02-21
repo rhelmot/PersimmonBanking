@@ -9,6 +9,9 @@ urlpatterns = [
     path('api/bankaccount/get-pending', views.get_pending_bank_accounts),
     path('api/bankaccount/approve', views.approve_bank_account),
     path('api/bankaccount/get', views.get_my_accounts),
-    path('api/bankaccount/schedule_appointment', views.schedule_appointment, name='website-appointment')
-
+    path('api/createuseraccount/create', views.create_user_account),
+    path('api/bankaccount/schedule_appointment', views.schedule_appointment, name='website-appointment').
+    path('api/session/login', views.persimmon_login),
+    path('api/session/logout', views.persimmon_logout),
+    path('api/session/status', views.login_status),
 ]
