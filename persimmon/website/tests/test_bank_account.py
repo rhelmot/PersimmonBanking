@@ -116,6 +116,7 @@ class TestAccountWorkflow(TestCase):
             content_type='application/json',
             data={'account_number': req_data[0]['account'],
                   'approved': True})
+        print(req_data)
         self.assertEqual(req.status_code, 200)
         req = client_admin.post(
             reverse(views.approve_bank_account),

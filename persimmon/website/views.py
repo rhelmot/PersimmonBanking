@@ -157,27 +157,36 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
     if approved:
         pendingtransaction.approve_status = ApprovalStatus.APPROVED
         try:
-            account = BankAccount.objects.get(id=pendingtransaction.accountId, approval_status=ApprovalStatus.PENDING)
+            account = BankAccount.objects.get(id=pendingtransaction.accountId.id, approval_status=ApprovalStatus.PENDING)
         except BankAccount.DoesNotExist as exc:
             raise Http404("No such account") from exc
         account.balance += pendingtransaction.transaction
+        pendingtransaction.balance = account.balance
         account.save()
     else:
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
     now = datetime.now()
     pendingtransaction.date = now.strftime("%d-%b-%Y %H:%M:%S")
     pendingtransaction.save()
+    return [{
+        'id': pendingtransaction.id,
+        'transaction': pendingtransaction.transaction,
+        'balance': pendingtransaction.balance,
+        'accountId': pendingtransaction.accountId.id,
+        'description': pendingtransaction.description,
+        'approval_status': pendingtransaction.approve_status
+    }]
 
 
 @api_function
 def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
     user = current_user(request)
     try:
-        BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.PENDING)
+        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account") from exc
-    bankstatement = BankStatements.objects.create(accountId=account_id, transaction=transactionvalue)
-    if transaction < 0:
+    bankstatement = BankStatements.objects.create(accountId=account, transaction=transactionvalue)
+    if transactionvalue < 0:
         bankstatement.description = "credit"
     else:
         bankstatement.description = "debit"
@@ -187,13 +196,16 @@ def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
 @api_function
 def get_pending_transactions(request, account_id: int):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
+    try:
+        account = BankAccount.objects.get(id=account_id)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
     pendingtransactions = BankStatements.objects \
-        .filter(accountId=account_id, approval_status=ApprovalStatus.PENDING)
+        .filter(accountId=account, approval_status=ApprovalStatus.PENDING)
     return [{
-        'transactionid':credidebit.id,
-        'accountid': credidebit.accountId,
-        'transaction': credidebit.transaction,
-        'balance': credidebit.balance,
-        'description': credidebit.description,
-        'approval_status': credidebit.approval_status,
-    } for credidebit in pendingtransactions]
+        'transactionid': creditdebit.id,
+        'accountId': creditdebit.accountId.id,
+        'transaction': creditdebit.transaction,
+        'description': creditdebit.description,
+        'approval_status': creditdebit.approval_status,
+    } for creditdebit in pendingtransactions]
