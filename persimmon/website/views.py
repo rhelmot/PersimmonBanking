@@ -3,6 +3,7 @@ import json
 import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django.shortcuts import render
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
 from .common import make_user
@@ -183,3 +184,7 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+
+def tier1_users(request):
+    return render(request, 'website/tier1_userPage.html')
