@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from .test_bank_account import make_user
-from ..models import User, EmployeeLevel, BankAccount, DjangoUser, AccountType, ApprovalStatus
+from ..models import EmployeeLevel, BankAccount, AccountType
 from .. import views
 
 
@@ -23,7 +23,6 @@ class TestCreditDebitWorkFlow(TestCase):
             content_type='application/json',
             data={"account_type": AccountType.CREDIT})
         self.assertEqual(req.status_code, 200)
-        accounts = list(BankAccount.objects.all())
         req_data = req.json()
 
         # test that can't make credit request due to missing parameters#
@@ -46,10 +45,10 @@ class TestCreditDebitWorkFlow(TestCase):
                                 data={"account_id": req_data['account']})
         self.assertEqual(req.status_code, 200)
         req_pending_data = req.json()
-        print(req_pending_data[0]["transactionid"])
 
         # test that can approve pending transaction#
         req = client_admin.post(reverse(views.approve_credit_debit_funds), content_type="application/json",
                                 data={"transaction_id": req_pending_data[0]["transactionid"],
                                       "approved": True})
         self.assertEqual(req.status_code, 200)
+        self.assertEqual(len(req.json()[0]), 6)
