@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from .test_bank_account import make_user
-from ..models import EmployeeLevel, BankAccount, AccountType
+from ..models import EmployeeLevel, AccountType
 from .. import views
 
 

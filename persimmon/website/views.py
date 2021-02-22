@@ -157,7 +157,8 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
     if approved:
         pendingtransaction.approve_status = ApprovalStatus.APPROVED
         try:
-            account = BankAccount.objects.get(id=pendingtransaction.accountId.id, approval_status=ApprovalStatus.PENDING)
+            account = BankAccount.objects.get(id=pendingtransaction.accountId.id,
+                                              approval_status=ApprovalStatus.PENDING)
         except BankAccount.DoesNotExist as exc:
             raise Http404("No such account") from exc
         account.balance += pendingtransaction.transaction
