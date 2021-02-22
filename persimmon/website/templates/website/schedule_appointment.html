@@ -10,11 +10,24 @@
 </head>
 <body>
     <h1> Schedule Appointment </h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+             {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
     <div class="container">
         <form method="POST">
             {% csrf_token %}
-            <fieldset class="form_group">
+            <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Schedule Now</legend>
+                <label for="fname">First name:</label>
+                <input type="text" id="fname" name="fname" required><br><br>
+                <label for="lname">Last name:</label>
+                <input type="text" id="lname" name="lname" required><br><br>
+                <label for="time">Select a time:</label>
+                <input type="datetime-local" id="time" name="time" min="11:00" max="16:00" step="900" required><br><br>
             </fieldset>
             <div class="form-group">
                 <label for="fname">First name:</label>
@@ -27,7 +40,7 @@
         </form>
         <div class="border-top pt-3">
             <small class="text-muted">
-                To check already booked appointments <a class="ml-2" href="#">Here</a>
+                To check already booked appointments <a class="ml-2" href="">here</a>
             </small>
         </div>
 
