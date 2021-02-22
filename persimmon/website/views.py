@@ -4,8 +4,11 @@ import json
 import pydantic
 from django.db import transaction
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+
 
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
+from .common import make_user
 
 MAX_REQUEST_LENGTH = 4096
 
@@ -103,6 +106,21 @@ def security_check(request, myusername, level):
 # index for website/ to check if url views are working
 def index(request):
     return HttpResponse("Hello world")
+
+
+@api_function
+def create_user_account(request, username: str, first_name: str,
+                        last_name: str, password: str, email: str,
+                        phone: str, address: str):
+    current_user(request, expect_not_logged_in=True)
+    new_user = make_user(username=username,
+                         first_name=first_name,
+                         last_name=last_name,
+                         password=password,
+                         email=email,
+                         phone=phone,
+                         address=address)
+    new_user.save()
 
 
 @api_function
@@ -210,3 +228,27 @@ def get_pending_transactions(request, account_id: int):
         'description': creditdebit.description,
         'approval_status': creditdebit.approval_status,
     } for creditdebit in pendingtransactions]
+  
+  
+@api_function
+def persimmon_login(request, username: str, password: str):
+    current_user(request, expect_not_logged_in=True)
+    django_user = authenticate(request, username=username, password=password)
+    if django_user is None:
+        return {"error": "could not authenticate"}
+
+    django_login(request, django_user)
+    return {}
+
+
+@api_function
+def persimmon_logout(request):
+    current_user(request)
+    django_logout(request)
+    return {}
+
+
+@api_function
+def login_status(request):
+    return {"logged_in": request.user.is_authenticated}
+

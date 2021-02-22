@@ -13,4 +13,9 @@ urlpatterns = [
     path('api/creditdebitfunds/creditdebit', views.credit_debit_funds),
     path('api/creditdebitfunds/approve', views.approve_credit_debit_funds),
     path('api/creditdebitfunds/get-pending', views.get_pending_transactions),
+  
+    path('api/createuseraccount/create', views.create_user_account),
+    path('api/session/login', views.persimmon_login),
+    path('api/session/logout', views.persimmon_logout),
+    path('api/session/status', views.login_status),
 ]
