@@ -173,19 +173,19 @@ def schedule_appointment(request):
     if request.method == 'POST':
         form = Appointment(request.POST)
         if request.POST.get('fname') and request.POST.get('lname') and request.POST.get('time'):
+            form.save()
             fname = form.cleaned_data.get('fname')
             lname = form.cleaned_data.get('lname')
             time = form.cleaned_data.get('time')
-            form.customer.django_user.first_name= request.POST.get('fname')
+            form.customer.django_user.first_name = request.POST.get('fname')
             form.customer.django_user.last_name = request.POST.get('lname')
             form.time = request.POST.get('time')
             form.save()
             messages.success(request, f'Appointment created for {fname} {lname} at {time}')
             return redirect('website/home')
-            
     else:
-        form = UserCreationForm()
-    return render(request, 'website/schedule_appointment.html',{'form': form})
+        form = Appointment()
+    return render(request, 'website/schedule_appointment.html', {'form': form})
 
 @api_function
 def persimmon_login(request, username: str, password: str):
