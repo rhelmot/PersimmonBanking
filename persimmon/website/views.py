@@ -228,8 +228,8 @@ def get_pending_transactions(request, account_id: int):
         'description': creditdebit.description,
         'approval_status': creditdebit.approval_status,
     } for creditdebit in pendingtransactions]
-  
-  
+
+
 @api_function
 def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
@@ -251,4 +251,3 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
-
