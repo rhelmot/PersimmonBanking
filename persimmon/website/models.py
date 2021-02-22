@@ -65,10 +65,13 @@ class BankAccount(models.Model):
 
 
 class BankStatements(models.Model):
-    date = models.DateField(auto_now=True)
-    transaction = models.CharField(max_length=30)
-    balance = models.DecimalField(decimal_places=2, max_digits=10)
-    bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)
+    date = models.DateTimeField(auto_now=True)
+    transaction = models.DecimalField(decimal_places=2, max_digits=10)
+    balance = models.DecimalField(decimal_places=2, max_digits=10, null=True)
+    accountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    description = models.CharField(max_length=20, default="credit")
+    approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
 
 
 class SignInHistory(models.Model):
