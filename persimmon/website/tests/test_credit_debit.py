@@ -18,12 +18,12 @@ class TestCreditDebitWorkFlow(TestCase):
         make_user('admin', employee_level=EmployeeLevel.ADMIN)
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
-        req = client_user.post(
+        req1 = client_user.post(
             reverse(views.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.CREDIT})
-        self.assertEqual(req.status_code, 200)
-        req_data = req.json()
+        self.assertEqual(req1.status_code, 200)
+        req_data = req1.json()
 
         # test that can't make credit request due to missing parameters#
         req = client_user.post(reverse(views.credit_debit_funds), content_type="application/json",
