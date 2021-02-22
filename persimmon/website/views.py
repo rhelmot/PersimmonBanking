@@ -10,7 +10,6 @@ from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatu
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from .common import make_user
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus
 
 MAX_REQUEST_LENGTH = 4096
 
@@ -172,13 +171,17 @@ def get_my_accounts(request):
 
 def schedule_appointment(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
+        form = Appointment(request.POST)
+        if request.POST.get('fname') and request.POST.get('lname') and request.POST.get('time'):
+            fname = form.cleaned_data.get('fname')
+            lname = form.cleaned_data.get('lname')
+            time = form.cleaned_data.get('time')
+            form.customer.django_user.first_name= request.POST.get('fname')
+            form.customer.django_user.last_name = request.POST.get('lname')
+            form.time = request.POST.get('time')
             form.save()
-            user_name = form.cleaned_data.get('name')
-            date = form.cleaned_data.get('Date')
-            messages.success(request, f'Appointment created for {user}')
-            return redirect('')
+            messages.success(request, f'Appointment created for {fname} {lname} at {time}')
+            return redirect('website/home')
             
     else:
         form = UserCreationForm()
