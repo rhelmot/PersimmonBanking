@@ -1,5 +1,5 @@
 from django.contrib import admin  # pylint: disable=unused-import
-from .models import User, BankAccount, BankStatements
+from .models import User, BankAccount, BankStatements, Appointment
 
 # Register your models here.
 admin.site.register(Appointment)
