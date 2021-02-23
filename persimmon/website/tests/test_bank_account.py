@@ -154,10 +154,11 @@ class TestAccountWorkflow(TestCase):
                                    type=AccountType.CHECKING)
 
         # add transactions to database
-        BankStatements.objects.create(bankAccountId=account, transaction="0", balance=0, date=datetime.date(2020, 2, 1))
-        BankStatements.objects.create(bankAccountId=account, transaction="1", balance=0, date=datetime.date(2021, 1, 1))
-        BankStatements.objects.create(bankAccountId=account, transaction="2", balance=0, date=datetime.date(2021, 2, 1))
-        BankStatements.objects.create(bankAccountId=account, transaction="3", balance=0, date=datetime.date(2021, 3, 1))
+        BankStatements.objects.create(accountId=account, transaction=1, balance=0, description="0", date=datetime.date(2020, 2, 1), approval_status=ApprovalStatus.APPROVED)
+        BankStatements.objects.create(accountId=account, transaction=1, balance=1, description="1", date=datetime.date(2021, 1, 1), approval_status=ApprovalStatus.APPROVED)
+        BankStatements.objects.create(accountId=account, transaction=1, balance=2, description="2", date=datetime.date(2021, 2, 1), approval_status=ApprovalStatus.APPROVED)
+        BankStatements.objects.create(accountId=account, transaction=1, balance=2, description="X", date=datetime.date(2021, 2, 1), approval_status=ApprovalStatus.PENDING)
+        BankStatements.objects.create(accountId=account, transaction=1, balance=3, description="3", date=datetime.date(2021, 3, 1), approval_status=ApprovalStatus.APPROVED)
 
         # test that we get back only relevant entries
         req = client_user.post(
@@ -168,7 +169,7 @@ class TestAccountWorkflow(TestCase):
         req_data = req.json()
         self.assertIs(type(req_data), list)
         self.assertEqual(len(req_data), 1)
-        self.assertEqual(req_data[0]["transaction"], "2")
+        self.assertEqual(req_data[0]["description"], "2")
 
         # test that you can't get entries for other users
         req = client_admin.post(

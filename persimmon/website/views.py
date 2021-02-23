@@ -188,8 +188,7 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
         account.save()
     else:
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
-    now = datetime.now()
-    pendingtransaction.date = now.strftime("%d-%b-%Y %H:%M:%S")
+    pendingtransaction.date = datetime.now()
     pendingtransaction.save()
     return [{
         'id': pendingtransaction.id,
@@ -266,10 +265,11 @@ def bank_statement(request, account_id: int, month: int, year: int):
         raise Http404("No such account") from exc
 
     transactions = BankStatements.objects\
-        .filter(date__month=month, date__year=year, bankAccountId=account_id)\
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
         .order_by("date")
     return [ {
         'timestamp': trans.date,
         'transaction': trans.transaction,
         'balance': trans.balance,
+        'description': trans.description,
     } for trans in transactions]
