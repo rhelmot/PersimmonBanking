@@ -1,14 +1,16 @@
+import datetime
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from ..common import make_user
 
-from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus
+from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus, BankStatements
 from .. import views
 
 
 class TestAccountWorkflow(TestCase):
     """
-    Test the workflow for creating a bank account
+    Test the workflow for creating a bank account and accessing statements
     """
     def test_workflow(self):
         # setup database
@@ -139,3 +141,39 @@ class TestAccountWorkflow(TestCase):
         self.assertTrue(all(acct['approval_status'] == ApprovalStatus.APPROVED for acct in req_data))
 
         # PHEW
+
+    def test_bank_statements(self):
+        # setup database
+        make_user('admin', employee_level=EmployeeLevel.ADMIN)
+        user = make_user('user')
+        client_admin = Client()
+        self.assertTrue(client_admin.login(username='admin', password='password'))
+        client_user = Client()
+        self.assertTrue(client_user.login(username='user', password='password'))
+        account = BankAccount.objects.create(owner=user, approval_status=ApprovalStatus.APPROVED,
+                                   type=AccountType.CHECKING)
+
+        # add transactions to database
+        BankStatements.objects.create(bankAccountId=account, transaction="0", balance=0, date=datetime.date(2020, 2, 1))
+        BankStatements.objects.create(bankAccountId=account, transaction="1", balance=0, date=datetime.date(2021, 1, 1))
+        BankStatements.objects.create(bankAccountId=account, transaction="2", balance=0, date=datetime.date(2021, 2, 1))
+        BankStatements.objects.create(bankAccountId=account, transaction="3", balance=0, date=datetime.date(2021, 3, 1))
+
+        # test that we get back only relevant entries
+        req = client_user.post(
+            reverse(views.bank_statement),
+            content_type='application/json',
+            data={"account_id": account.id, "month": 2, "year": 2021})
+        self.assertEqual(req.status_code, 200)
+        req_data = req.json()
+        self.assertIs(type(req_data), list)
+        self.assertEqual(len(req_data), 1)
+        self.assertEqual(req_data[0]["transaction"], "2")
+
+        # test that you can't get entries for other users
+        req = client_admin.post(
+            reverse(views.bank_statement),
+            content_type='application/json',
+            data={"account_id": account.id, "month": 2, "year": 2021})
+        self.assertEqual(req.status_code, 404)
+
