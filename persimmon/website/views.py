@@ -1,7 +1,10 @@
 from decimal import Decimal
+from datetime import datetime
 import json
 import pydantic
+from django.db import transaction
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
+
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -81,6 +84,8 @@ class ApiGenConfig:
 def encode_extra(thing):
     if isinstance(thing, Decimal):
         return str(thing)
+    if isinstance(thing, datetime):
+        return thing.isoformat()
 
     raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
 
@@ -165,6 +170,7 @@ def get_my_accounts(request):
         'approval_status': account.approval_status,
     } for account in accounts]
 
+
 def schedule_appointment(request):
     if request.is_ajax():
         form = Appointment(request.POST)
@@ -182,6 +188,71 @@ def schedule_appointment(request):
     else:
         form = Appointment()
     return render(request, 'website/schedule_appointment.html', {'form': form})
+
+
+@transaction.atomic
+@api_function
+def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
+    current_user(request, required_auth=EmployeeLevel.TELLER)
+    try:
+        pendingtransaction = BankStatements.objects.get(id=transaction_id, approval_status=ApprovalStatus.PENDING)
+    except BankStatements.DoesNotExist as exc:
+        raise Http404("No such transaction pending approval") from exc
+    if approved:
+        pendingtransaction.approve_status = ApprovalStatus.APPROVED
+        try:
+            account = BankAccount.objects.get(id=pendingtransaction.accountId.id,
+                                              approval_status=ApprovalStatus.PENDING)
+        except BankAccount.DoesNotExist as exc:
+            raise Http404("No such account") from exc
+        account.balance += pendingtransaction.transaction
+        pendingtransaction.balance = account.balance
+        account.save()
+    else:
+        pendingtransaction.approve_status = ApprovalStatus.DECLINED
+    pendingtransaction.date = datetime.now()
+    pendingtransaction.save()
+    return [{
+        'id': pendingtransaction.id,
+        'transaction': pendingtransaction.transaction,
+        'balance': pendingtransaction.balance,
+        'accountId': pendingtransaction.accountId.id,
+        'description': pendingtransaction.description,
+        'approval_status': pendingtransaction.approve_status
+    }]
+
+
+@api_function
+def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
+    user = current_user(request)
+    try:
+        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.PENDING)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+    bankstatement = BankStatements.objects.create(accountId=account, transaction=transactionvalue)
+    if transactionvalue < 0:
+        bankstatement.description = "credit"
+    else:
+        bankstatement.description = "debit"
+    bankstatement.save()
+
+
+@api_function
+def get_pending_transactions(request, account_id: int):
+    current_user(request, required_auth=EmployeeLevel.MANAGER)
+    try:
+        account = BankAccount.objects.get(id=account_id)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+    pendingtransactions = BankStatements.objects \
+        .filter(accountId=account, approval_status=ApprovalStatus.PENDING)
+    return [{
+        'transactionid': creditdebit.id,
+        'accountId': creditdebit.accountId.id,
+        'transaction': creditdebit.transaction,
+        'description': creditdebit.description,
+        'approval_status': creditdebit.approval_status,
+    } for creditdebit in pendingtransactions]
 
 
 @api_function
@@ -205,3 +276,23 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+
+  
+def bank_statement(request, account_id: int, month: int, year: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.get(id=account_id, owner=user)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+
+    transactions = BankStatements.objects\
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+        .order_by("date")
+    return [ {
+        'timestamp': trans.date,
+        'transaction': trans.transaction,
+        'balance': trans.balance,
+        'description': trans.description,
+    } for trans in transactions]
+
