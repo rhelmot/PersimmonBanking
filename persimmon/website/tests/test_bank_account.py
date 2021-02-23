@@ -153,12 +153,21 @@ class TestAccountWorkflow(TestCase):
         account = BankAccount.objects.create(owner=user, approval_status=ApprovalStatus.APPROVED,
                                    type=AccountType.CHECKING)
 
+        def create_transaction(balance, description, date, approved):
+            BankStatements.objects.create(
+                accountId=account,
+                transaction=1,
+                balance=balance,
+                description=description,
+                date=date,
+                approval_status=ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING)
+
         # add transactions to database
-        BankStatements.objects.create(accountId=account, transaction=1, balance=0, description="0", date=datetime.date(2020, 2, 1), approval_status=ApprovalStatus.APPROVED)
-        BankStatements.objects.create(accountId=account, transaction=1, balance=1, description="1", date=datetime.date(2021, 1, 1), approval_status=ApprovalStatus.APPROVED)
-        BankStatements.objects.create(accountId=account, transaction=1, balance=2, description="2", date=datetime.date(2021, 2, 1), approval_status=ApprovalStatus.APPROVED)
-        BankStatements.objects.create(accountId=account, transaction=1, balance=2, description="X", date=datetime.date(2021, 2, 1), approval_status=ApprovalStatus.PENDING)
-        BankStatements.objects.create(accountId=account, transaction=1, balance=3, description="3", date=datetime.date(2021, 3, 1), approval_status=ApprovalStatus.APPROVED)
+        create_transaction(0, "0", datetime.date(2020, 2, 1), True)
+        create_transaction(1, "1", datetime.date(2021, 1, 1), True)
+        create_transaction(2, "2", datetime.date(2021, 2, 1), True)
+        create_transaction(2, "X", datetime.date(2021, 2, 1), False)
+        create_transaction(3, "3", datetime.date(2021, 3, 1), True)
 
         # test that we get back only relevant entries
         req = client_user.post(
@@ -177,4 +186,3 @@ class TestAccountWorkflow(TestCase):
             content_type='application/json',
             data={"account_id": account.id, "month": 2, "year": 2021})
         self.assertEqual(req.status_code, 404)
-

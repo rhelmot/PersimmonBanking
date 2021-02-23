@@ -69,7 +69,7 @@ class BankStatements(models.Model):
     description = models.CharField(max_length=20, default="credit")
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=signature-differs
         if self.date is None:
             self.date = timezone.now()
         super().save(*args, **kwargs)
