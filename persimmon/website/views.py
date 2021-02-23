@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadReque
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Appointment
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Appointment, BankStatements
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from .common import make_user
 
