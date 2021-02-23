@@ -4,12 +4,10 @@ import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 
 from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Appointment
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from .common import make_user
-
 
 MAX_REQUEST_LENGTH = 4096
 
@@ -167,25 +165,24 @@ def get_my_accounts(request):
         'approval_status': account.approval_status,
     } for account in accounts]
 
-
-
 def schedule_appointment(request):
-    if request.method == 'POST':
+    if request.is_ajax():
         form = Appointment(request.POST)
-        if request.POST.get('fname') and request.POST.get('lname') and request.POST.get('time'):
+        if form.is_valid():
             form.save()
-            fname = form.cleaned_data.get('fname')
-            lname = form.cleaned_data.get('lname')
-            time = form.cleaned_data.get('time')
+            fname = form.cleaned_data('fname')
+            lname = form.cleaned_data('lname')
+            time = form.cleaned_data('time')
             form.customer.django_user.first_name = request.POST.get('fname')
             form.customer.django_user.last_name = request.POST.get('lname')
-            form.time = request.POST.get('time')
-            form.save()
             messages.success(request, f'Appointment created for {fname} {lname} at {time}')
-            return redirect('website/home')
+            return JsonResponse({
+                'msg': 'Success'
+            })
     else:
         form = Appointment()
     return render(request, 'website/schedule_appointment.html', {'form': form})
+
 
 @api_function
 def persimmon_login(request, username: str, password: str):
@@ -208,4 +205,3 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
-

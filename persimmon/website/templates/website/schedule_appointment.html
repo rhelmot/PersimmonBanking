@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
     <h1> Schedule Appointment </h1>
@@ -9,9 +14,8 @@
         {% endfor %}
     {% endif %}
     <div class="container">
-        <form method="POST">
+        <form id="appointment" method="POST">
             {% csrf_token %}
-            <fieldset class="form_group">
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Schedule Now</legend>
                 <label for="fname">First name:</label>
@@ -22,15 +26,34 @@
                 <input type="datetime-local" id="time" name="time" min="11:00" max="16:00" step="900" required><br><br>
             </fieldset>
             <div class="form-group">
-                <button class="btn btn-outline-info" type="submit">Schedule</button>
-
+                <button class="btn btn-outline-info" type="submit" id="btnSubmit">Schedule</button>
+            </div>
         </form>
         <div class="border-top pt-3">
             <small class="text-muted">
-                To check already booked appointments <a class="ml-2" href="#">Here</a>
                 To check already booked appointments <a class="ml-2" href="">here</a>
             </small>
         </div>
+    </div>
+<script>
+    const form = document.getElementById('appointment');
+    form.addEventListener("submit", submitHandler);
 
-
+    function submitHandler(e){
+        e.preventDefault();
+        $.ajax({
+            type:'POST',
+            url:'{% url 'appointment' %}',
+            data: $("#appointment").serialize(),
+            dataType: 'json',
+            success: function(data){
+                if (data.msg == 'Success'){
+                    form.reset();
+                    alert('Form is submitted')
+                }
+            }
+        })
+    }
+</script>
+</body>
 </html>
