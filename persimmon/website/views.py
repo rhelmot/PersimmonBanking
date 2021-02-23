@@ -185,8 +185,6 @@ def schedule_appointment(request):
             return JsonResponse({
                 'msg': 'Success'
             })
-    else:
-        form = Appointment()
     return render(request, 'website/schedule_appointment.html', {'form': form})
 
 
