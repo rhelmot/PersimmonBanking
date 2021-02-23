@@ -26,7 +26,9 @@ SECRET_KEY = ')dimn^b^qcbpf8stkoinv#5b$&_@@y4!+2v_zys5pt&8ky1ade'
 DEBUG = True
 
 
+
 ALLOWED_HOSTS = ['testserver']
+
 
 
 

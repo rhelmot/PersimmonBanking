@@ -1,5 +1,5 @@
-from datetime import datetime
 from decimal import Decimal
+from datetime import datetime
 import json
 import pydantic
 from django.db import transaction
@@ -86,6 +86,8 @@ class ApiGenConfig:
 def encode_extra(thing):
     if isinstance(thing, Decimal):
         return str(thing)
+    if isinstance(thing, datetime):
+        return thing.isoformat()
 
     raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
 
@@ -154,6 +156,7 @@ def approve_bank_account(request, account_number: int, approved: bool):
         account = BankAccount.objects.get(id=account_number, approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account pending approval") from exc
+
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
 
@@ -210,8 +213,7 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
         account.save()
     else:
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
-    now = datetime.now()
-    pendingtransaction.date = now.strftime("%d-%b-%Y %H:%M:%S")
+    pendingtransaction.date = datetime.now()
     pendingtransaction.save()
     return [{
         'id': pendingtransaction.id,
@@ -277,4 +279,22 @@ def persimmon_logout(request):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+  
+def bank_statement(request, account_id: int, month: int, year: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.get(id=account_id, owner=user)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+
+    transactions = BankStatements.objects\
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+        .order_by("date")
+    return [ {
+        'timestamp': trans.date,
+        'transaction': trans.transaction,
+        'balance': trans.balance,
+        'description': trans.description,
+    } for trans in transactions]
 
