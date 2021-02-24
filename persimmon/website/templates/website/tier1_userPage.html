@@ -6,5 +6,15 @@
 </head>
 <body>
     <h1> Tier 1 User Page</h1>
+
+    <h2> Non critical transactions</h2>
+    <form action="/website/tier1/viewpage" method = "post">
+        {% csrf_token %}
+        <input type="submit" value="View">
+    </form>
+
+<button type="button">Create</button>
+<button type="button">Authorize</button>
+
 </body>
 </html>

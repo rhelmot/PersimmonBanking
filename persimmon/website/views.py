@@ -259,6 +259,12 @@ def login_status(request):
 def tier1_users(request):
     return render(request, 'website/tier1_userPage.html')
 
+
+def tier1_users_view(request):
+    if request.method == 'POST':
+        return render(request, 'website/tier1_viewPage.html')
+
+
 @api_function
 def bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
