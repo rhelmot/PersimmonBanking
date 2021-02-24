@@ -7,7 +7,6 @@ from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadReque
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.shortcuts import render
 
-
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
 from .common import make_user
 
@@ -257,12 +256,23 @@ def login_status(request):
 
 
 def tier1_users(request):
-    return render(request, 'website/tier1_userPage.html')
+
+    if request.method == 'GET':
+        return render(request, 'website/tier1_userPage.html')
 
 
 def tier1_users_view(request):
     if request.method == 'POST':
         return render(request, 'website/tier1_viewPage.html')
+
+
+def tier1_users_create(request):
+    if request.method == 'POST':
+        return render(request, 'website/tier1_createPage.html')
+
+def tier1_users_authorize(request):
+    if request.method == 'POST':
+        return render(request, 'website/tier1_authorizePage.html')
 
 
 @api_function
@@ -273,10 +283,10 @@ def bank_statement(request, account_id: int, month: int, year: int):
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account") from exc
 
-    transactions = BankStatements.objects\
-        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+    transactions = BankStatements.objects \
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED) \
         .order_by("date")
-    return [ {
+    return [{
         'timestamp': trans.date,
         'transaction': trans.transaction,
         'balance': trans.balance,

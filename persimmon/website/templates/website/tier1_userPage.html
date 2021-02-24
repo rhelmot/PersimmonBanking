@@ -13,8 +13,15 @@
         <input type="submit" value="View">
     </form>
 
-<button type="button">Create</button>
-<button type="button">Authorize</button>
+    <form action="/website/tier1/createpage" method = "post">
+        {% csrf_token %}
+        <input type="submit" value="Create">
+    </form>
+
+    <form action="/website/tier1/authorizepage" method = "post">
+        {% csrf_token %}
+        <input type="submit" value="Authorize">
+    </form>
 
 </body>
 </html>

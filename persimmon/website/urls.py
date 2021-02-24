@@ -20,5 +20,8 @@ urlpatterns = [
     path('api/session/logout', views.persimmon_logout),
     path('api/session/status', views.login_status),
     path('tier1/userpage', views.tier1_users),
-    path('tier1/viewpage', views.tier1_users_view)
+    path('tier1/viewpage', views.tier1_users_view),
+    path('tier1/createpage', views.tier1_users_create),
+    path('tier1/authorizepage', views.tier1_users_authorize)
+
 ]
