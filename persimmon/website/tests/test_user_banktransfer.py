@@ -1,43 +1,20 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from decimal import Decimal
 from ..models import User, EmployeeLevel, BankAccount, DjangoUser, AccountType, BankStatements
 from .. import views
-
-def make_user(username,
-              first_name='Firstname',
-              last_name='Lastname',
-              password='password',
-              email='example@example.com',
-              phone='0000000000',
-              address='nowhere',
-              employee_level=EmployeeLevel.CUSTOMER) -> User:
-    """
-    A function for quickly creating a user with a bunch of testing defaults set.
-    """
-    django_user = DjangoUser.objects.create_user(
-        username=username,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        password=password)
-    return User.objects.create(
-        phone=phone,
-        address=address,
-        employee_level=employee_level,
-        django_user=django_user)
+from .common_test_functions import *
 
 
-class TestUserInformation(TestCase):
-    def test_UserInformation(self):
+class TestUserBankTransfer(TestCase):
+    def test_user_bank_transfer(self):
         # setup database
         make_user('admin', employee_level=EmployeeLevel.ADMIN)
-        make_user('user1')
-        make_user('user2')
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
+        make_user('user1')
         client_user1 = Client()
         self.assertTrue(client_user1.login(username='user1', password='password'))
+        make_user('user2')
         client_user2 = Client()
         self.assertTrue(client_user2.login(username='user2', password='password'))
 
@@ -55,32 +32,22 @@ class TestUserInformation(TestCase):
         self.assertEqual(req.status_code, 200)
 
         # approve accounts
-        req = client_admin.post(
-            reverse(views.get_pending_bank_accounts),
-            content_type='application/json',
-            data={})
+        req = view_pending_account(client_admin)
         self.assertEqual(req.status_code, 200)
         req_data = req.json()
         self.assertIs(type(req_data), list)
 
-        req = client_admin.post(
-            reverse(views.approve_bank_account),
-            content_type='application/json',
-            data={'account_number': req_data[0]['account'],
-                  'approved': True})
+        req = approve_account(client_admin, req_data, 0)
         self.assertEqual(req.status_code, 200)
 
-        req = client_admin.post(
-            reverse(views.approve_bank_account),
-            content_type='application/json',
-            data={'account_number': req_data[1]['account'],
-                  'approved': True})
+        req = approve_account(client_admin, req_data, 1)
+        self.assertEqual(req.status_code, 200)
         # add money to accounts
-        allofthem = BankAccount.objects.all()
-        account1 = allofthem[0]
+        all_acc = BankAccount.objects.all()
+        account1 = all_acc[0]
         account1.balance = 1000
         account1.save()
-        account2 = allofthem[1]
+        account2 = all_acc[1]
         account2.balance = 500
         account2.save()
 
@@ -165,12 +132,12 @@ class TestUserInformation(TestCase):
         self.assertEqual(current_balance, 510)
 
         # check if bankstatements were created
-        allStatements = BankStatements.objects.filter()
-        self.assertEqual(len(allStatements), 2)
+        all_statements = BankStatements.objects.filter()
+        self.assertEqual(len(all_statements), 2)
 
-        self.assertEqual(allStatements[0].transaction, 'sending 10 to 2')
-        self.assertEqual(allStatements[0].balance, 990.00)
-        self.assertEqual(allStatements[0].bankAccountId, account1)
-        self.assertEqual(allStatements[1].transaction, 'received 10 from 1')
-        self.assertEqual(allStatements[1].balance, 510.00)
-        self.assertEqual(allStatements[1].bankAccountId, account2)
+        self.assertEqual(all_statements[0].transaction, 'sending 10 to 2')
+        self.assertEqual(all_statements[0].balance, 990.00)
+        self.assertEqual(all_statements[0].bankAccountId, account1)
+        self.assertEqual(all_statements[1].transaction, 'received 10 from 1')
+        self.assertEqual(all_statements[1].balance, 510.00)
+        self.assertEqual(all_statements[1].bankAccountId, account2)

@@ -3,10 +3,10 @@ import json
 import pydantic
 from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
-
+from django.db import transaction
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
 from .common import make_user
-from django.db import transaction
+
 
 MAX_REQUEST_LENGTH = 4096
 
@@ -238,32 +238,31 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
                 return {
                     'error': 'error insufficient funds'
                 }
-            else:
-                account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
-                if len(account2) == 1:
-                    account1[0].balance = account1[0].balance-amount
-                    account1[0].save()
-                    acc1statement = BankStatements.objects.create(
-                        transaction='sending '+ amount.to_eng_string() + ' to ' + str(accountnumb2),
-                        balance=account1[0].balance,
-                        bankAccountId=account1[0]
-                    )
-                    acc1statement.save()
-                    account2[0].balance = account2[0].balance+amount
-                    account2[0].save()
-                    acc2statement = BankStatements.objects.create(
-                        transaction='received ' + amount.to_eng_string() + ' from ' + str(accountnumb1),
-                        balance=account2[0].balance,
-                        bankAccountId=account2[0]
-                    )
-                    acc2statement.save()
-                    return {
-                        'Account Balance': account1[0].balance
-                    }
-
+            account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
+            if len(account2) == 1:
+                account1[0].balance = account1[0].balance-amount
+                account1[0].save()
+                acc1statement = BankStatements.objects.create(
+                    transaction='sending '+ amount.to_eng_string() + ' to ' + str(accountnumb2),
+                    balance=account1[0].balance,
+                    bankAccountId=account1[0]
+                )
+                acc1statement.save()
+                account2[0].balance = account2[0].balance+amount
+                account2[0].save()
+                acc2statement = BankStatements.objects.create(
+                    transaction='received ' + amount.to_eng_string() + ' from ' + str(accountnumb1),
+                    balance=account2[0].balance,
+                    bankAccountId=account2[0]
+                )
+                acc2statement.save()
                 return {
-                    'error': 'account number 2 does not exit'
+                    'Account Balance': account1[0].balance
                 }
+
+            return {
+                'error': 'account number 2 does not exit'
+            }
         return {
             'error': 'account to debt does not exist or is not owned by user'
         }
