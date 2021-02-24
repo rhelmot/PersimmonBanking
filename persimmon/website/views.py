@@ -258,6 +258,7 @@ def login_status(request):
 
 def tier1_users(request):
     return render(request, 'website/tier1_userPage.html')
+
 @api_function
 def bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
