@@ -2,7 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from ..models import EmployeeLevel, BankAccount, AccountType, BankStatements
 from .. import views
-from .common_test_functions import make_user, view_pending_account, approve_account
+from ..common import make_user
+from .common_test_functions import view_pending_account, approve_account
 
 
 class TestUserBankTransfer(TestCase):

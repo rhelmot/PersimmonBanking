@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from ..models import EmployeeLevel
 from .. import views
-from .common_test_functions import make_user
+from ..common import make_user
 
 
 class TestUserInformation(TestCase):

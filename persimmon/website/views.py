@@ -5,7 +5,7 @@ from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadReque
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.db import transaction
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
-from .tests.common_test_functions import make_user
+from .common import make_user
 
 
 MAX_REQUEST_LENGTH = 4096
