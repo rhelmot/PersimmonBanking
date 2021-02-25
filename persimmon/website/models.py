@@ -64,10 +64,6 @@ class BankAccount(models.Model):
     def account_number(self):
         return '%016d' % self.id
 
-    def bank_statements(self, start_day, end_day):
-        result = BankStatements.objects.filter(bankAccountId=self.id, date__range=[start_day, end_day])
-        return result
-
 
 class BankStatements(models.Model):
     id = models.AutoField(primary_key=True)
