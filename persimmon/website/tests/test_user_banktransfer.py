@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from ..models import EmployeeLevel, BankAccount, AccountType, BankStatements
+from django.db import models
 from .. import views
 from ..common import make_user
 from .common_test_functions import view_pending_account, approve_account
@@ -136,9 +138,9 @@ class TestUserBankTransfer(TestCase):
         all_statements = BankStatements.objects.filter()
         self.assertEqual(len(all_statements), 2)
 
-        self.assertEqual(all_statements[0].transaction, 'sending 10 to 2')
+        self.assertEqual(all_statements[0].description, 'sent 10 to 2' )
         self.assertEqual(all_statements[0].balance, 990.00)
-        self.assertEqual(all_statements[0].bankAccountId, account1)
-        self.assertEqual(all_statements[1].transaction, 'received 10 from 1')
+        self.assertEqual(all_statements[0].accountId, account1)
+        self.assertEqual(all_statements[1].description, 'received 10 from 1')
         self.assertEqual(all_statements[1].balance, 510.00)
-        self.assertEqual(all_statements[1].bankAccountId, account2)
+        self.assertEqual(all_statements[1].accountId, account2)

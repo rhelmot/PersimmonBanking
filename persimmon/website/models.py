@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 
 
@@ -69,10 +70,18 @@ class BankAccount(models.Model):
 
 
 class BankStatements(models.Model):
-    date = models.DateField(auto_now=True)
-    transaction = models.CharField(max_length=30)
-    balance = models.DecimalField(decimal_places=2,max_digits=10)
-    bankAccountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    id = models.AutoField(primary_key=True)
+    date = models.DateTimeField()
+    transaction = models.DecimalField(decimal_places=2, max_digits=10)
+    balance = models.DecimalField(decimal_places=2, max_digits=10, null=True)
+    accountId = models.ForeignKey(BankAccount, on_delete=models.CASCADE)
+    description = models.CharField(max_length=20, default="credit")
+    approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
+
+    def save(self, *args, **kwargs):  # pylint: disable=signature-differs
+        if self.date is None:
+            self.date = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class SignInHistory(models.Model):

@@ -243,17 +243,23 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
                 account1[0].balance = account1[0].balance-amount
                 account1[0].save()
                 acc1statement = BankStatements.objects.create(
-                    transaction='sending '+ amount.to_eng_string() + ' to ' + str(accountnumb2),
+                    transaction=-1*amount,
                     balance=account1[0].balance,
-                    bankAccountId=account1[0]
+                    accountId=account1[0],
+                    description='sent '+str(amount)+' to '+str(accountnumb2),
+                    approval_status=ApprovalStatus.APPROVED
+
                 )
                 acc1statement.save()
                 account2[0].balance = account2[0].balance+amount
                 account2[0].save()
                 acc2statement = BankStatements.objects.create(
-                    transaction='received ' + amount.to_eng_string() + ' from ' + str(accountnumb1),
+
+                    transaction=amount,
                     balance=account2[0].balance,
-                    bankAccountId=account2[0]
+                    accountId=account2[0],
+                    description='received '+str(amount)+' from '+str(accountnumb1),
+                    approval_status=ApprovalStatus.APPROVED
                 )
                 acc2statement.save()
                 return {
@@ -266,3 +272,21 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
         return {
             'error': 'account to debt does not exist or is not owned by user'
         }
+
+@api_function
+def bank_statement(request, account_id: int, month: int, year: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.get(id=account_id, owner=user)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+
+    transactions = BankStatements.objects\
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+        .order_by("date")
+    return [ {
+        'timestamp': trans.date,
+        'transaction': trans.transaction,
+        'balance': trans.balance,
+        'description': trans.description,
+    } for trans in transactions]
