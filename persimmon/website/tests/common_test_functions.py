@@ -1,5 +1,4 @@
 from django.urls import reverse
-from ..models import User, EmployeeLevel, DjangoUser
 from .. import views
 
 
