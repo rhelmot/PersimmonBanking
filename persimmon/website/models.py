@@ -41,6 +41,11 @@ class User(models.Model):
         """
         return self.employee_level >= level
 
+    def change_email(self, new_email):
+        self.django_user.email = new_email
+        self.django_user.save()
+        return self.django_user.email
+
 
 class AccountType(models.IntegerChoices):
     CHECKING = 0
