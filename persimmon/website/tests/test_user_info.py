@@ -11,13 +11,13 @@ class TestUserInformation(TestCase):
         # setup database
         make_user('admin', employee_level=EmployeeLevel.ADMIN)
         make_user('user')
-        client_admin = Client()
-        self.assertTrue(client_admin.login(username='admin', password='password'))
-        client_user = Client()
-        self.assertTrue(client_user.login(username='user', password='password'))
+        admin = Client()
+        self.assertTrue(admin.login(username='admin', password='password'))
+        client = Client()
+        self.assertTrue(client.login(username='user', password='password'))
 
         # test if client can change there address successfully
-        req = client_user.post(
+        req = client.post(
             reverse(views.change_my_address),
             content_type='application/json',
             data={'new_address': '123 fake street'})
@@ -27,7 +27,7 @@ class TestUserInformation(TestCase):
         self.assertEqual(req_data, {'my new address': '123 fake street'})
 
         # test if client can change there phone number
-        req = client_user.post(
+        req = client.post(
             reverse(views.change_my_phone),
             content_type='application/json',
             data={'new_phone': '0987654321'})
@@ -37,7 +37,7 @@ class TestUserInformation(TestCase):
         self.assertEqual(req_data, {'my new phone': '0987654321'})
 
         # test if client can change there email
-        req = client_user.post(
+        req = client.post(
             reverse(views.change_my_email),
             content_type='application/json',
             data={'new_email': 'new@example.com'})
