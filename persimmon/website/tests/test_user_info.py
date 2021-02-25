@@ -45,4 +45,3 @@ class TestUserInformation(TestCase):
         req_data = req.json()
         # print(req_data)
         self.assertEqual(req_data, {'my new email': 'new@example.com'})
-

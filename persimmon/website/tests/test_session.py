@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..common import make_user
+from common_test_functions import make_user
 from .. import views
 
 class TestSessions(TestCase):

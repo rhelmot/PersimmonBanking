@@ -1,6 +1,6 @@
 from django.urls import reverse
 
-from ..models import User, EmployeeLevel, DjangoUser, AccountType
+from ..models import User, EmployeeLevel, DjangoUser
 from .. import views
 
 
@@ -42,5 +42,3 @@ def approve_account(client, req_data, number):
         data={'account_number': req_data[number]['account'],
               'approved': True})
     return req
-
-
