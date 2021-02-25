@@ -1,8 +1,6 @@
-from decimal import Decimal
 from django.test import TestCase, Client
 from django.urls import reverse
 from ..models import EmployeeLevel, BankAccount, AccountType, BankStatements
-from django.db import models
 from .. import views
 from ..common import make_user
 from .common_test_functions import view_pending_account, approve_account
