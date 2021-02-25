@@ -253,6 +253,24 @@ def persimmon_logout(request):
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
 
+@api_function
+def bank_statement(request, account_id: int, month: int, year: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.get(id=account_id, owner=user)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+
+    transactions = BankStatements.objects\
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+        .order_by("date")
+    return [ {
+        'timestamp': trans.date,
+        'transaction': trans.transaction,
+        'balance': trans.balance,
+        'description': trans.description,
+    } for trans in transactions]
+
 
 @api_function
 def get_all_info(request):
@@ -340,21 +358,3 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
         return {
             'error': 'account to debt does not exist or is not owned by user'
         }
-
-@api_function
-def bank_statement(request, account_id: int, month: int, year: int):
-    user = current_user(request)
-    try:
-        BankAccount.objects.get(id=account_id, owner=user)
-    except BankAccount.DoesNotExist as exc:
-        raise Http404("No such account") from exc
-
-    transactions = BankStatements.objects\
-        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
-        .order_by("date")
-    return [ {
-        'timestamp': trans.date,
-        'transaction': trans.transaction,
-        'balance': trans.balance,
-        'description': trans.description,
-    } for trans in transactions]
