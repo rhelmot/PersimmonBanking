@@ -2,11 +2,16 @@ from decimal import Decimal
 from datetime import datetime
 import json
 import pydantic
+
 from django.db import transaction
-from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse, HttpResponseForbidden
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django import forms, urls
+from django.template.response import TemplateResponse
+
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
 from .common import make_user
+from .middleware import HalfCsrfViewMiddleware
 
 
 MAX_REQUEST_LENGTH = 4096
@@ -52,6 +57,12 @@ def api_function(func):
             request_data_dict = json.loads(request_data)
         except (json.JSONDecodeError, UnicodeDecodeError):
             return HttpResponseBadRequest("Data encoding error")
+
+        token = request_data_dict.pop('csrfmiddlewaretoken', None)
+        if token is None:
+            return HttpResponseForbidden("No CSRF token provided")
+        if not HalfCsrfViewMiddleware.check_token(request, token):
+            return HttpResponseForbidden("CSRF protection triggered")
 
         if not isinstance(request_data_dict, dict):
             # force an error in the next stanza
@@ -271,7 +282,6 @@ def bank_statement(request, account_id: int, month: int, year: int):
         'description': trans.description,
     } for trans in transactions]
 
-
 @api_function
 def get_all_info(request):
     user = current_user(request)
@@ -358,3 +368,32 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
         return {
             'error': 'account to debt does not exist or is not owned by user'
         }
+
+@api_function
+def reset_password(request, email: str):
+    current_user(request, expect_not_logged_in=True)
+    try:
+        User.objects.get(django_user__email=email)
+    except User.DoesNotExist as e:
+        raise Http404("No such email in our databases...") from e
+    # TODO send an email here... lol
+    return {}
+
+class ResetPasswordForm(forms.Form):
+    email = forms.CharField(max_length=200)
+
+def reset_password_page(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/reset_password.html', {
+        'form': ResetPasswordForm(),
+        'api': urls.reverse(reset_password),
+        'success': urls.reverse(reset_password_sent)
+    })
+
+def reset_password_sent(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/reset_password_sent.html', {})
+
+
