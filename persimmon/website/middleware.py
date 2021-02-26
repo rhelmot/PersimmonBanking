@@ -50,9 +50,11 @@ def api_function(func):
             return HttpResponseBadRequest("Data encoding error")
 
         token = request_data_dict.pop('csrfmiddlewaretoken', None)
-        if token is None:
+        if getattr(request, '_dont_enforce_csrf_checks', False):
+            pass
+        elif token is None:
             return HttpResponseForbidden("No CSRF token provided")
-        if not HalfCsrfViewMiddleware.check_token(request, token):
+        elif not HalfCsrfViewMiddleware.check_token(request, token):
             return HttpResponseForbidden("CSRF protection triggered")
 
         if not isinstance(request_data_dict, dict):
