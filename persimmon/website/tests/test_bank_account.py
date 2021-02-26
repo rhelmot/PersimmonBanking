@@ -2,10 +2,10 @@ import datetime
 
 from django.test import TestCase, Client
 from django.urls import reverse
-from ..common import make_user
 
 from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus, BankStatements
 from .. import views
+from ..common import make_user
 
 
 class TestAccountWorkflow(TestCase):
