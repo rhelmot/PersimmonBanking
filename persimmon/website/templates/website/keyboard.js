@@ -48,7 +48,7 @@ const Keyboard = {
           "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
           "caps", "a", "s", "d", "f", "g", "h", "j", "k", "l", "enter",
           "done", "z", "x", "c", "v", "b", "n", "m", ",", ".", "?",
-          "space"
+          "@","#","$","%","!", "space", "^","&","*","_","+"
       ];
 
       //create icon HTML
@@ -121,6 +121,7 @@ const Keyboard = {
                       this.properties.value += this.properties.capslock? key.toUpperCase() : key.toLowerCase();
                       this._triggerEvent("oninput");
                   });
+
                   break;
           }
 
