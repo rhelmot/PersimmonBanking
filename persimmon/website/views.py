@@ -1,9 +1,12 @@
 from decimal import Decimal
 from datetime import datetime
-import json
-import pydantic
+
 from django.db import transaction
-from django.http import HttpResponse, HttpRequest, Http404, HttpResponseBadRequest, JsonResponse
+
+from django.http import HttpResponse, Http404
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django import forms, urls
+from django.template.response import TemplateResponse
 
 
 from django.shortcuts import render, redirect
@@ -11,8 +14,7 @@ from django.contrib import messages
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Appointment, BankStatements
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from .common import make_user
-
-MAX_REQUEST_LENGTH = 4096
+from .middleware import api_function
 
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
@@ -28,72 +30,6 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
     if not user.check_level(required_auth):
         raise Http404("API unavailable to current authentication")
     return user
-
-
-def api_function(func):
-    """
-    This is a magic function which will automatically deserialize POST request data from JSON and serialize the response
-    back to JSON. Additionally, it will typecheck the JSON object structure against the function's type annotations.
-    Use it by @annotating your view functions with it.
-    """
-    gen_namespace = {name: NotImplemented for name in func.__annotations__}
-    gen_namespace['__annotations__'] = func.__annotations__
-    gen_namespace['Config'] = ApiGenConfig
-    request_type = type(func.__name__ + '_args', (pydantic.BaseModel,), gen_namespace)
-
-    def inner(request: HttpRequest, *args, **kwargs):
-        if request.method != 'POST':
-            return HttpResponseBadRequest("Must be a POST request")
-
-        request_data = request.read(MAX_REQUEST_LENGTH + 1)
-        if len(request_data) == MAX_REQUEST_LENGTH + 1:
-            return HttpResponseBadRequest("Request too large")
-        if len(request_data) == 0:
-            request_data = b''
-
-        try:
-            request_data_dict = json.loads(request_data)
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return HttpResponseBadRequest("Data encoding error")
-
-        if not isinstance(request_data_dict, dict):
-            # force an error in the next stanza
-            request_data_dict = {'_': None}
-
-        try:
-            request_data_validated = request_type(**request_data_dict)
-        except pydantic.ValidationError:
-            return HttpResponseBadRequest("Data form error: expecting " + str(func.__annotations__))
-
-        kwargs.update(request_data_validated.dict())
-        result = func(request, *args, **kwargs)
-        if result is None:
-            result = {}
-        if isinstance(result, HttpResponse):
-            return result
-        return JsonResponse(result, safe=False, json_dumps_params=dict(default=encode_extra))
-
-    return inner
-
-
-class ApiGenConfig:
-    extra = pydantic.Extra.forbid
-    validate_all = True
-
-
-def encode_extra(thing):
-    if isinstance(thing, Decimal):
-        return str(thing)
-    if isinstance(thing, datetime):
-        return thing.isoformat()
-
-    raise TypeError(f"Object of type {thing.__class__.__name__} is not serializable")
-
-
-######
-## actual views begin here
-######
-
 
 # checks if user with username has same employeelevel as level
 
@@ -172,20 +108,6 @@ def get_my_accounts(request):
 
 
 def schedule_appointment(request):
-    if request.is_ajax():
-        form = Appointment(request.POST)
-        if form.is_valid():
-            form.save()
-            fname = form.cleaned_data('fname')
-            lname = form.cleaned_data('lname')
-            time = form.cleaned_data('time')
-            form.customer.django_user.first_name = request.POST.get('fname')
-            form.customer.django_user.last_name = request.POST.get('lname')
-            messages.success(request, f'Appointment created for {fname} {lname} at {time}')
-            return JsonResponse({
-                'msg': 'Success'
-            })
-    return render(request, 'website/schedule_appointment.html', {'form': form})
 
 
 @transaction.atomic
@@ -276,7 +198,7 @@ def login_status(request):
     return {"logged_in": request.user.is_authenticated}
 
 
-  
+@api_function
 def bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
     try:
@@ -294,3 +216,117 @@ def bank_statement(request, account_id: int, month: int, year: int):
         'description': trans.description,
     } for trans in transactions]
 
+
+@api_function
+def get_all_info(request):
+    user = current_user(request)
+    return {
+        'name': user.name,
+        'username': user.username,
+        'email': user.email,
+        'phone': user.phone,
+        'address': user.address,
+    }
+
+
+@api_function
+def change_my_email(request, new_email: str):
+    user = current_user(request)
+    user.change_email(new_email)
+    return {
+        'my new email': user.email
+    }
+
+
+@api_function
+def change_my_phone(request, new_phone: str):
+    user = current_user(request)
+    user.phone = new_phone
+    user.save()
+    return {
+        'my new phone': user.phone
+    }
+
+
+@api_function
+def change_my_address(request, new_address: str):
+    user = current_user(request)
+    user.address = new_address
+    user.save()
+    return {
+        'my new address': user.address
+    }
+
+
+# transfer amount from the balance of bankaccount with acountnumb1 id
+@api_function
+def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
+    with transaction.atomic():
+        user = current_user(request)
+        account1 = BankAccount.objects.filter(id=accountnumb1).exclude(approval_status=ApprovalStatus.DECLINED)
+        if len(account1) == 1 and account1[0].owner.django_user.username == user.username:
+            if account1[0].balance < amount or amount <= 0:
+                return {
+                    'error': 'error insufficient funds'
+                }
+            account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
+            if len(account2) == 1:
+                account1[0].balance = account1[0].balance-amount
+                account1[0].save()
+                acc1statement = BankStatements.objects.create(
+                    transaction=-1*amount,
+                    balance=account1[0].balance,
+                    accountId=account1[0],
+                    description='sent '+str(amount)+' to '+str(accountnumb2),
+                    approval_status=ApprovalStatus.APPROVED
+
+                )
+                acc1statement.save()
+                account2[0].balance = account2[0].balance+amount
+                account2[0].save()
+                acc2statement = BankStatements.objects.create(
+
+                    transaction=amount,
+                    balance=account2[0].balance,
+                    accountId=account2[0],
+                    description='received '+str(amount)+' from '+str(accountnumb1),
+                    approval_status=ApprovalStatus.APPROVED
+                )
+                acc2statement.save()
+                return {
+                    'Account Balance': account1[0].balance
+                }
+
+            return {
+                'error': 'account number 2 does not exit'
+            }
+        return {
+            'error': 'account to debt does not exist or is not owned by user'
+        }
+
+@api_function
+def reset_password(request, email: str):
+    current_user(request, expect_not_logged_in=True)
+    try:
+        User.objects.get(django_user__email=email)
+    except User.DoesNotExist as exc:
+        raise Http404("No such email in our databases...") from exc
+    # TODO send an email here... lol
+    return {}
+
+class ResetPasswordForm(forms.Form):
+    email = forms.CharField(max_length=200)
+
+def reset_password_page(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/reset_password.html', {
+        'form': ResetPasswordForm(),
+        'api': urls.reverse(reset_password),
+        'success': urls.reverse(reset_password_sent)
+    })
+
+def reset_password_sent(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/reset_password_sent.html', {})
