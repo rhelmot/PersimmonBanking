@@ -12,7 +12,10 @@ MAX_REQUEST_LENGTH = 4096
 
 class HalfCsrfViewMiddleware(CsrfViewMiddleware):
     def process_view(self, request, callback, callback_args, callback_kwargs):
-        if not getattr(callback, 'api_wrapped', False) and request.method == "POST":
+        if not getattr(callback, 'api_wrapped', False):
+            return super().process_view(request, callback, callback_args, callback_kwargs)
+
+        if request.method != "POST":
             return self._reject(request, "Cannot POST to non-api methods")
         return None
 
