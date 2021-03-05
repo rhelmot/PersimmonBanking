@@ -5,5 +5,4 @@ from .models import User, BankAccount, Appointment, SignInHistory
 admin.site.register(Appointment)
 admin.site.register(User)
 admin.site.register(BankAccount)
-admin.site.register(Appointment)
 admin.site.register(SignInHistory)

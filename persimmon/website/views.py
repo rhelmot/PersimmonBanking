@@ -4,7 +4,6 @@ from datetime import datetime
 from django.db import transaction
 
 from django.http import HttpResponse, Http404
-from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django import forms, urls
 from django.template.response import TemplateResponse
 
@@ -105,9 +104,6 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
-
-
-def schedule_appointment(request):
 
 
 @transaction.atomic
@@ -314,6 +310,7 @@ def reset_password(request, email: str):
     # TODO send an email here... lol
     return {}
 
+
 class ResetPasswordForm(forms.Form):
     email = forms.CharField(max_length=200)
 
@@ -330,3 +327,10 @@ def reset_password_sent(request):
     current_user(request, expect_not_logged_in=True)
 
     return TemplateResponse(request, 'pages/reset_password_sent.html', {})
+
+
+def schedule_appointment(request, time: datetime):
+    user = current_user(request)
+    appointment = Appointment.objects.create(owner=user, Time=time)
+    return {'time': appointment.time}
+

@@ -26,6 +26,8 @@ urlpatterns = [
     path('api/session/logout', views.persimmon_logout),
     path('api/session/status', views.login_status),
 
+    path('api/appointment', views.schedule_appointment, name='appointment'),
+
     path('reset-password', views.reset_password_page),
     path('reset-password/sent', views.reset_password_sent)
 ]
