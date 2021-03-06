@@ -330,4 +330,5 @@ def reset_password_sent(request):
 
 
 def schedule_appointment(request):
-    return TemplateResponse(request, 'pages/schedule_appointment.html')
+    context = {}
+    return render(request, 'pages/schedule_appointment.html', context)

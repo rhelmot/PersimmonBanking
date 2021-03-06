@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 from django.utils import timezone
 
@@ -88,7 +87,8 @@ class SignInHistory(models.Model):
 
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
-    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee', limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
+                                 limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
     time = models.DateTimeField(default=timezone.now)
 
     class Meta:
