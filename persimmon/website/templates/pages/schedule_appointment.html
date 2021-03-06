@@ -1,0 +1,19 @@
+{% extends "main.html" %}
+{% block body %}
+    <h3>Appointment</h3>
+    <form id="appointment" method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Schedule Now</legend>
+                <label for="fname">First name:</label>
+                <input type="text" id="fname" name="fname" required><br><br>
+                <label for="lname">Last name:</label>
+                <input type="text" id="lname" name="lname" required><br><br>
+                <label for="time">Select a time:</label>
+                <input type="datetime-local" id="time" name="time" min="11:00" max="16:00" step="900" required><br><br>
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-info" type="submit" id="btnSubmit">Schedule</button>
+            </div>
+        </form>
+{% endblock %}

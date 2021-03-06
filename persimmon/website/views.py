@@ -329,8 +329,5 @@ def reset_password_sent(request):
     return TemplateResponse(request, 'pages/reset_password_sent.html', {})
 
 
-def schedule_appointment(request, time: datetime):
-    user = current_user(request)
-    appointment = Appointment.objects.create(owner=user, Time=time)
-    return {'time': appointment.time}
-
+def schedule_appointment(request):
+    return TemplateResponse(request, 'pages/schedule_appointment.html')
