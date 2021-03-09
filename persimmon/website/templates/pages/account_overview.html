@@ -1,0 +1,62 @@
+<html>
+<head>
+    <style>
+    table, th, td {
+  border: 1px solid black;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+</head>
+<body>
+{% csrf_token %}
+
+<table style="width:95%;" class="center">
+    <tr>
+        <td style="text-align:center; color:black; width:19%">Bank accounts</td>
+        <td style="text-align:center; color:black; width:19%">ask a bot</td>
+        <td style="text-align:center; color:black; width:19%">schedule an appointment</td>
+        <td style="text-align:center; color:black; width:19%">my info</td>
+        <td style="text-align:center;">
+            <form style="top: 50% -ms-transform: translateY(50%); transform: translateY(33%);"
+                  method="post" action="logout" class="inline">
+                {% csrf_token %}
+            <button style="" type="submit" name="submit_param" value="submit_value" class="link-button">
+            Logout
+            </button>
+</form>
+        </td>
+    </tr>
+</table>
+<H1>Hello {{name}}, Here are your accounts</H1>
+<table style="width:50%" class="center">
+  <tr>
+      <th>Account Number</th>
+      <th>Type</th>
+      <th>Balance</th>
+      <th>Account Statement</th>
+  </tr>
+{% for item in ls %}
+    <tr>
+        <td style="text-align:center">{{item.account}} </td>
+        <td style="text-align:center">{{item.type}}</td>
+        <td style="text-align:right">${{item.balance}}</td>
+        <td style="text-align:center;">
+            <form style="transform: translateY(33%)" method="post" action="account-statement/{{item.account}}" class="inline">
+                {% csrf_token %}
+            <button type="submit" name="submit_param" value="submit_value" class="link-button">
+            Statements
+            </button>
+</form>
+        </td>
+    </tr>
+{% endfor %}
+</table>
+
+
+
+
+</body>
+</html>

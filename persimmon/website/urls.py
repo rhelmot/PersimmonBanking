@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/bankaccount/new', views.create_bank_account),
     path('api/bankaccount/get-pending', views.get_pending_bank_accounts),
     path('api/bankaccount/approve', views.approve_bank_account),
-    path('api/bankaccount/get', views.get_my_accounts),
+    path('api/bankaccount/get', views.get_accounts),
     path('api/bankaccount/get-statement', views.bank_statement),
 
     path('api/creditdebitfunds/creditdebit', views.credit_debit_funds),
@@ -27,5 +27,11 @@ urlpatterns = [
     path('api/session/status', views.login_status),
 
     path('reset-password', views.reset_password_page),
-    path('reset-password/sent', views.reset_password_sent)
+    path('reset-password/sent', views.reset_password_sent),
+    path('create-account', views.create_user_page),
+    path('create-account-check', views.check_create_account),
+    path('create-account-success', views.create_user_success),
+    path('account-overview', views.account_overview_page),
+    path('account-statement/<int:number>', views.temp_statement_page),
+    path('logout', views.logout)
 ]
