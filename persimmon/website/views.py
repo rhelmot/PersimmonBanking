@@ -348,17 +348,14 @@ def check_create_account(request, first_name: str, last_name: str, email: str, m
     check = DjangoUser.objects.filter(username=my_user_name)
     if len(check) > 0:
         return {'error': "username unavailable"}
-
     check = DjangoUser.objects.filter(email=email)
     if len(check) > 0:
         return {'error': "email unavailable"}
-
     res = False
     for letter in password:
         if letter.isupper():
             res = True
             break
-
     if not res:
         return{'error': "password does not contain an capital letter"}
 
