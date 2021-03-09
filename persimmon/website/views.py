@@ -373,8 +373,8 @@ def check_create_account(request, first_name: str, last_name: str, email: str, m
     if not res:
         return {'error': "password does not contain a special character such as !, @, #, etc"}
     res = False
-    for x in password:
-        if x.isnumeric():
+    for letter in password:
+        if letter.isnumeric():
             res = True
             break
     if not res:

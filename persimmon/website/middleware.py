@@ -16,7 +16,7 @@ class HalfCsrfViewMiddleware(CsrfViewMiddleware):
             return super().process_view(request, callback, callback_args, callback_kwargs)
         if request.method != "POST":
             return self._reject(request, "Cannot POST to non-api methods")
-            return None
+        return None
 
     @classmethod
     def check_token(cls, request, token):
