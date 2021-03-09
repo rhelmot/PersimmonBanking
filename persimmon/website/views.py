@@ -448,7 +448,6 @@ def account_overview_page(request):
             acc[x]['type'] = 'Credit'
         x = x+1
     mydict = {"name": usr.name, 'ls': acc}
-
     return TemplateResponse(request, 'pages/account_overview.html', mydict)
 
 
