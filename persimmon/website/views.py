@@ -354,21 +354,20 @@ def check_create_account(request, first_name: str, last_name: str, email: str, m
         return {'error': "email unavailable"}
 
     res = False
-    for x in password:
-        if x.isupper():
+    for letter in password:
+        if letter.isupper():
             res = True
             break
 
     if not res:
-            return{'error': "password does not contain an capital letter"}
+        return{'error': "password does not contain an capital letter"}
 
     if len(password) < 8:
         return {'error': "password not long enough"}
     res = False
 
-    for x in password:
-        if (x == '!' or x == '@' or x == '#' or x == '$' or x == '%' or x == '^' or x == '&'
-                or x == '*' or x == '(' or x == ')' or x == '<' or x == '>' or x == '?'):
+    for letter in password:
+        if letter in ('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '<', '>', '?'):
             res = True
             break
     if not res:
@@ -391,7 +390,6 @@ def check_create_account(request, first_name: str, last_name: str, email: str, m
                          email=email,
                          phone=phone,
                          address=address)
-    #print("created")
     new_user.save()
     return {}
 
@@ -458,4 +456,3 @@ def temp_statement_page(request, number):
     current_user(request, expect_not_logged_in=False)
     statement = "this is where I would show statements for account " +str(number)
     return HttpResponse(statement)
-
