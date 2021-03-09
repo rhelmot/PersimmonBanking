@@ -342,10 +342,10 @@ def reset_password_sent(request):
 
 
 @api_function
-def check_create_account(request, first_name: str, last_name: str, email: str, myusername: str,
+def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
                          phone: str, address: str, password: str, confirm_password: str):
     current_user(request, expect_not_logged_in=True)
-    check = DjangoUser.objects.filter(username=myusername)
+    check = DjangoUser.objects.filter(username=my_user_name)
     if len(check) > 0:
         return {'error': "username unavailable"}
 
@@ -383,7 +383,7 @@ def check_create_account(request, first_name: str, last_name: str, email: str, m
     if password != confirm_password:
         return{'error': "passwords does not match"}
 
-    new_user = make_user(username=myusername,
+    new_user = make_user(username=my_user_name,
                          first_name=first_name,
                          last_name=last_name,
                          password=password,
@@ -435,18 +435,18 @@ def create_user_success(request):
 def account_overview_page(request):
     usr = current_user(request, expect_not_logged_in=False)
     acc = get_my_accounts(request)
-    x = 0
-    while x < len(acc):
-        if acc[x]['approval_status'] == 0:
-            acc.pop(x)
-            x = x-1
-        if acc[x]['type']== 0:
-            acc[x]['type'] = 'Checking'
-        if acc[x]['type'] == 1:
-            acc[x]['type'] = 'Savings'
-        if acc[x]['type'] == 2:
-            acc[x]['type'] = 'Credit'
-        x = x+1
+    number = 0
+    while number < len(acc):
+        if acc[number]['approval_status'] == 0:
+            acc.pop(number)
+            number = number-1
+        if acc[number]['type'] == 0:
+            acc[number]['type'] = 'Checking'
+        if acc[number]['type'] == 1:
+            acc[number]['type'] = 'Savings'
+        if acc[number]['type'] == 2:
+            acc[number]['type'] = 'Credit'
+        number = number+1
     mydict = {"name": usr.name, 'ls': acc}
     return TemplateResponse(request, 'pages/account_overview.html', mydict)
 
