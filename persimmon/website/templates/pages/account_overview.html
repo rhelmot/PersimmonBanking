@@ -20,13 +20,7 @@ table.center {
         <td style="text-align:center; color:black; width:19%">schedule an appointment</td>
         <td style="text-align:center; color:black; width:19%">my info</td>
         <td style="text-align:center;">
-            <form style="top: 50% -ms-transform: translateY(50%); transform: translateY(33%);"
-                  method="post" action="logout" class="inline">
-                {% csrf_token %}
-            <button style="" type="submit" name="submit_param" value="submit_value" class="link-button">
-            Logout
-            </button>
-</form>
+            <a href="logout">logout</a>
         </td>
     </tr>
 </table>
@@ -43,13 +37,7 @@ table.center {
         <td style="text-align:center">{{item.account}} </td>
         <td style="text-align:center">{{item.type}}</td>
         <td style="text-align:right">${{item.balance}}</td>
-        <td style="text-align:center;">
-            <form style="transform: translateY(33%)" method="post" action="account-statement/{{item.account}}" class="inline">
-                {% csrf_token %}
-            <button type="submit" name="submit_param" value="submit_value" class="link-button">
-            Statements
-            </button>
-</form>
+        <td style="text-align:center;"><a href="account-statement/{{item.account}}">Statements</a>
         </td>
     </tr>
 {% endfor %}
