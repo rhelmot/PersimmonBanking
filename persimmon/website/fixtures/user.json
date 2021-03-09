@@ -1,0 +1,14 @@
+[
+  {
+    "model": "website.user",
+    "pk": 1,
+    "fields": {
+      "django_user": [
+        { "id": 1, "username":  "GauravDeshpande", "first_name": "Gaurav", "last_name": "Deshpande", "email": "gauravemail@email.com", "password": "gauravspassword" }
+      ],
+      "phone": "8881818183",
+      "address": "fakeaddress",
+      "employee_level": 0
+    }
+  }
+]
