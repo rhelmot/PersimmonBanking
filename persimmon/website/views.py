@@ -10,6 +10,10 @@ from django.template.response import TemplateResponse
 from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements
 from .common import make_user
 from .middleware import api_function
+import asyncio
+
+from hfc.fabric import Client
+from hfc.fabric_network.gateway import Gateway
 
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
@@ -124,13 +128,18 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
     pendingtransaction.date = datetime.now()
     pendingtransaction.save()
+    pendingtransaction_date_time = pendingtransaction.date.strftime("%m/%d/%Y, %H:%M:%S")
+    respond = create_bank_statement_to_blockchain(request, pendingtransaction.id, date_time
+                                                  , pendingtransaction.transaction,pendingtransaction.balance
+                                                  , pendingtransaction.accountId.id, pendingtransaction.description)
     return [{
         'id': pendingtransaction.id,
         'transaction': pendingtransaction.transaction,
+        'date': pendingtransaction_date_time,
         'balance': pendingtransaction.balance,
         'accountId': pendingtransaction.accountId.id,
         'description': pendingtransaction.description,
-        'approval_status': pendingtransaction.approve_status
+        'approval_status': pendingtransaction.approve_status,
     }]
 
 
@@ -165,6 +174,53 @@ def get_pending_transactions(request, account_id: int):
         'description': creditdebit.description,
         'approval_status': creditdebit.approval_status,
     } for creditdebit in pendingtransactions]
+
+
+def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, transaction: Decimal, balance: Decimal
+                                        , account_id: int, description: str):
+    loop = asyncio.get_event_loop()
+    cli = Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
+    org1_admin = cli.get_user(org_name='Org1', name='Admin')
+    transaction_status = "approved"
+    transaction_id = str(transaction_id)
+    transaction = str(transaction)
+    balance = str(balance)
+    account_id = str(account_id)
+    arg = [transaction_id,date, transaction, balance, account_id, description, transaction_status]
+    new_gateway = Gateway()  # Creates a new gateway instance
+    options = {'wallet': ''}
+    loop.run_until_complete(
+        new_gateway.connect('/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json',
+                            options))
+    new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
+    new_contract = new_network.get_contract('bankcode')
+    response = loop.run_until_complete(new_contract.submit_transaction('mychannel', arg, org1_admin))
+    print(response)
+    return "success"
+
+
+@api_function
+def get_bank_statement_from_blockchain(request, account_id: int):
+    user = current_user(request)
+    try:
+        BankAccount.objects.get(id=account_id, owner=user)
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("No such account") from exc
+    loop = asyncio.get_event_loop()
+    cli = Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
+    org1_admin = cli.get_user(org_name='Org1', name='Admin')
+    account_id = str(account_id)
+    args = [account_id]
+    new_gateway = Gateway()  # Creates a new gateway instance
+    options = {'wallet': ''}
+    loop.run_until_complete(
+        new_gateway.connect('/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json',
+                            options))
+    new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
+    new_contract = new_network.get_contract('bankcode')
+    response = loop.run_until_complete(new_contract.evaluate_transaction('mychannel', args, org1_admin))
+    print(response)
+    return response
 
 
 @api_function

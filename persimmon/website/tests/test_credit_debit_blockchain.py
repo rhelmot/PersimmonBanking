@@ -32,7 +32,7 @@ class TestCreditDebitWorkFlow(TestCase):
 
         # test that successfully making credit request#
         req = client_user.post(reverse(views.credit_debit_funds), content_type="application/json",
-                               data={"account_id": req_data["account"], "transactionvalue": -100.0})
+                               data={"account_id": req_data["account"], "transactionvalue": 500.0})
         self.assertEqual(req.status_code, 200)
 
         # test that successfully making debit request#
@@ -45,10 +45,20 @@ class TestCreditDebitWorkFlow(TestCase):
                                 data={"account_id": req_data['account']})
         self.assertEqual(req.status_code, 200)
         req_pending_data = req.json()
-
-        # test that can approve pending transaction#
+        print(req_pending_data)
+        # test that can approve pending transaction and create bank statement to blockchain#
+        # before you test this please bring the blockchain network up#
         req = client_admin.post(reverse(views.approve_credit_debit_funds), content_type="application/json",
                                 data={"transaction_id": req_pending_data[0]["transactionid"],
                                       "approved": True})
         self.assertEqual(req.status_code, 200)
         self.assertEqual(len(req.json()[0]), 6)
+
+        # test that can get data from the blockchain successfully#
+        # before you test this please bring the blockchain network up#
+        req = client_user.post(
+            reverse(views.get_bank_statement_from_blockchain),
+            content_type='application/json',
+            data={"account_id": req_pending_data[0]["accountId"]})
+        self.assertEqual(req.status_code, 200)
+
