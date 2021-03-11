@@ -334,7 +334,7 @@ def reset_password_sent(request):
 
 @api_function
 def schedule(request, appointment_email: str, appointment_time: str):
-    current_user(request, expect_not_logged_in=False)
+    user = current_user(request, expect_not_logged_in=False)
     check = Appointment.objects.filter(time=appointment_time)
     if len(check) > 0:
         return {'error': " Time slot taken"}
@@ -342,7 +342,8 @@ def schedule(request, appointment_email: str, appointment_time: str):
         User.objects.get(django_user__email=appointment_email)
     except User.DoesNotExist as exc:
         raise Http404("No such email in our databases...") from exc
-
+    newapp = Appointment.objects.create(user, appointment_time)
+    newapp.save()
     return {}
 
 
