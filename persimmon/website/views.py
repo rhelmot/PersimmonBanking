@@ -1,6 +1,7 @@
 from decimal import Decimal
 from datetime import datetime
 
+from bootstrap_datepicker_plus import DateTimePickerInput
 from django.db import transaction
 
 from django.http import HttpResponse, Http404
@@ -205,7 +206,7 @@ def bank_statement(request, account_id: int, month: int, year: int):
     transactions = BankStatements.objects\
         .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
         .order_by("date")
-    return [ {
+    return [{
         'timestamp': trans.date,
         'transaction': trans.transaction,
         'balance': trans.balance,
@@ -300,6 +301,7 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
             'error': 'account to debt does not exist or is not owned by user'
         }
 
+
 @api_function
 def reset_password(request, email: str):
     current_user(request, expect_not_logged_in=True)
@@ -314,14 +316,15 @@ def reset_password(request, email: str):
 class ResetPasswordForm(forms.Form):
     email = forms.CharField(max_length=200)
 
+
 def reset_password_page(request):
     current_user(request, expect_not_logged_in=True)
-
     return TemplateResponse(request, 'pages/reset_password.html', {
         'form': ResetPasswordForm(),
         'api': urls.reverse(reset_password),
         'success': urls.reverse(reset_password_sent)
     })
+
 
 def reset_password_sent(request):
     current_user(request, expect_not_logged_in=True)
@@ -329,6 +332,43 @@ def reset_password_sent(request):
     return TemplateResponse(request, 'pages/reset_password_sent.html', {})
 
 
-def schedule_appointment(request):
-    context = {}
-    return render(request, 'pages/schedule_appointment.html', context)
+@api_function
+def schedule(request, appointment_email: str, appointment_time: str):
+    current_user(request, expect_not_logged_in=False)
+    check = Appointment.objects.filter(time=appointment_time)
+    if len(check) > 0:
+        return {'error': " Time slot taken"}
+    try:
+        User.objects.get(django_user__email=appointment_email)
+    except User.DoesNotExist as exc:
+        raise Http404("No such email in our databases...") from exc
+
+    return {}
+
+
+class ScheduleAppointment(forms.Form):
+    email = forms.CharField(error_messages={'required': 'Enter your email'},
+                            max_length=200,
+                            required=True)
+    time = forms.DateTimeField(widget=DateTimePickerInput(options={
+        "stepping": "15",
+        "useCurrent": True,
+        "sideBySide": True,
+        "daysOfWeekDisabled": [0, 6],
+        "disabledHours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 18, 19, 20, 21, 22, 23, 24],
+        "enabledHours": [9, 10, 11, 12, 13, 14, 15, 16]
+    }))
+
+
+def schedule_appointment_page(request):
+    return TemplateResponse(request, 'pages/schedule_appointment.html', {
+        'form': ScheduleAppointment(),
+        'api': urls.reverse(schedule),
+        'success': urls.reverse(schedule_success)
+    })
+
+
+def schedule_success(request):
+    current_user(request, expect_not_logged_in=False)
+
+    return TemplateResponse(request, 'pages/appointmentbooked.html', {})
