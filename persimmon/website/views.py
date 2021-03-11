@@ -5,14 +5,12 @@ from bootstrap_datepicker_plus import DateTimePickerInput
 from django.db import transaction
 
 from django.http import HttpResponse, Http404
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Appointment, BankStatements
-from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser, Appointment
 from .common import make_user
 from .middleware import api_function
 
@@ -22,7 +20,6 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
         if not request.user.is_authenticated:
             return None
         raise Http404("API unavailable to current authentication")
-
     if not request.user.is_authenticated:
         raise Http404("API unavailable to current authentication")
 
@@ -62,6 +59,7 @@ def create_user_account(request, username: str, first_name: str,
                          email=email,
                          phone=phone,
                          address=address)
+    print("created")
     new_user.save()
 
 
@@ -95,7 +93,6 @@ def approve_bank_account(request, account_number: int, approved: bool):
     account.save()
 
 
-@api_function
 def get_my_accounts(request):
     user = current_user(request)
     accounts = BankAccount.objects.filter(owner=user).exclude(approval_status=ApprovalStatus.DECLINED)
@@ -105,6 +102,10 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
+@api_function
+def get_accounts(request):
+    return get_my_accounts(request)
 
 
 @transaction.atomic
@@ -190,6 +191,11 @@ def persimmon_logout(request):
     return {}
 
 
+def logout(request):
+    persimmon_logout(request)
+    return HttpResponse("you have been logged out")
+
+
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
@@ -197,14 +203,18 @@ def login_status(request):
 
 @api_function
 def bank_statement(request, account_id: int, month: int, year: int):
+    return get_bank_statement(request, account_id, month, year)
+
+
+def get_bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
     try:
         BankAccount.objects.get(id=account_id, owner=user)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account") from exc
 
-    transactions = BankStatements.objects\
-        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED)\
+    transactions = BankStatements.objects \
+        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED) \
         .order_by("date")
     return [{
         'timestamp': trans.date,
@@ -268,25 +278,25 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
                 }
             account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
             if len(account2) == 1:
-                account1[0].balance = account1[0].balance-amount
+                account1[0].balance = account1[0].balance - amount
                 account1[0].save()
                 acc1statement = BankStatements.objects.create(
-                    transaction=-1*amount,
+                    transaction=-1 * amount,
                     balance=account1[0].balance,
                     accountId=account1[0],
-                    description='sent '+str(amount)+' to '+str(accountnumb2),
+                    description='sent ' + str(amount) + ' to ' + str(accountnumb2),
                     approval_status=ApprovalStatus.APPROVED
 
                 )
                 acc1statement.save()
-                account2[0].balance = account2[0].balance+amount
+                account2[0].balance = account2[0].balance + amount
                 account2[0].save()
                 acc2statement = BankStatements.objects.create(
 
                     transaction=amount,
                     balance=account2[0].balance,
                     accountId=account2[0],
-                    description='received '+str(amount)+' from '+str(accountnumb1),
+                    description='received ' + str(amount) + ' from ' + str(accountnumb1),
                     approval_status=ApprovalStatus.APPROVED
                 )
                 acc2statement.save()
@@ -372,3 +382,115 @@ def schedule_success(request):
     current_user(request, expect_not_logged_in=False)
 
     return TemplateResponse(request, 'pages/appointmentbooked.html', {})
+
+  
+def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
+                         phone: str, address: str, password: str, confirm_password: str):
+    current_user(request, expect_not_logged_in=True)
+    check = DjangoUser.objects.filter(username=my_user_name)
+    if len(check) > 0:
+        return {'error': "username unavailable"}
+    check = DjangoUser.objects.filter(email=email)
+    if len(check) > 0:
+        return {'error': "email unavailable"}
+    res = False
+    for letter in password:
+        if letter.isupper():
+            res = True
+            break
+    if not res:
+        return{'error': "password does not contain an capital letter"}
+
+    if len(password) < 8:
+        return {'error': "password not long enough"}
+    res = False
+
+    for letter in password:
+        if letter in ('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '<', '>', '?'):
+            res = True
+            break
+    if not res:
+        return {'error': "password does not contain a special character such as !, @, #, etc"}
+    res = False
+    for letter in password:
+        if letter.isnumeric():
+            res = True
+            break
+    if not res:
+        return {'error': "password does not contain a number"}
+
+    if password != confirm_password:
+        return{'error': "passwords does not match"}
+
+    new_user = make_user(username=my_user_name,
+                         first_name=first_name,
+                         last_name=last_name,
+                         password=password,
+                         email=email,
+                         phone=phone,
+                         address=address)
+    new_user.save()
+    return {}
+
+
+    # TODO send an email here... lol
+
+
+class CreateUserForm(forms.Form):
+    first_name = forms.CharField(label='First name',
+                                 error_messages={'required': 'Please enter your First name'},
+                                 max_length=30, required=True)
+    last_name = forms.CharField(label='Last Name',
+                                error_messages={'required': 'Please enter your Last name'},
+                                max_length=30, required=True)
+    email = forms.EmailField()
+    myusername = forms.CharField(label='Username',
+                               error_messages={'required': 'Please enter a Username'},
+                               max_length=30, required=True)
+    phone = forms.CharField(label='Phone Number', max_length=12,
+                            error_messages={'incomplete': 'Enter a phone number.'},
+                            validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
+                            , required=True)
+    address = forms.CharField(label='address', max_length=50, required=True)
+    password = forms.CharField(label='Password', max_length=18, required=True)
+    confirm_password = forms.CharField(label='Confirm Password', max_length=18, required=True)
+
+
+def create_user_page(request):
+    current_user(request, expect_not_logged_in=True)
+    return TemplateResponse(request, 'pages/create_account.html', {
+        'form': CreateUserForm(),
+        'api': urls.reverse(check_create_account),
+        'success': urls.reverse(create_user_success),
+
+    })
+
+
+def create_user_success(request):
+    current_user(request, expect_not_logged_in=True)
+    return TemplateResponse(request, 'pages/create_account_success.html', {})
+
+
+def account_overview_page(request):
+    usr = current_user(request, expect_not_logged_in=False)
+    acc = get_my_accounts(request)
+    number = 0
+    while number < len(acc):
+        if acc[number]['approval_status'] == 0:
+            acc.pop(number)
+            number = number-1
+        if acc[number]['type'] == 0:
+            acc[number]['type'] = 'Checking'
+        if acc[number]['type'] == 1:
+            acc[number]['type'] = 'Savings'
+        if acc[number]['type'] == 2:
+            acc[number]['type'] = 'Credit'
+        number = number+1
+    mydict = {"name": usr.name, 'ls': acc}
+    return TemplateResponse(request, 'pages/account_overview.html', mydict)
+
+
+def temp_statement_page(request, number):
+    current_user(request, expect_not_logged_in=False)
+    statement = "this is where I would show statements for account " +str(number)
+    return HttpResponse(statement)
