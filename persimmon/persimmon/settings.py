@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 
-import os
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,8 +24,6 @@ SECRET_KEY = ')dimn^b^qcbpf8stkoinv#5b$&_@@y4!+2v_zys5pt&8ky1ade'
 DEBUG = True
 
 ALLOWED_HOSTS = ['testserver', '127.0.0.1']
-
-os.environ['DJANGO_SETTINGS_MODULE'] = "persimmon.settings"
 
 # Application definition
 
