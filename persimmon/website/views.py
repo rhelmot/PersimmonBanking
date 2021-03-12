@@ -345,28 +345,25 @@ def reset_password_sent(request):
 
 
 @api_function
-def schedule(request, appointment_email: str, appointment_time: datetime):
+def schedule(request, appointment_time: str):
     user = current_user(request, expect_not_logged_in=False)
-    try:
-        User.objects.get(django_user__email=appointment_email)
-    except User.DoesNotExist as exc:
-        raise Http404("No such email in our databases...") from exc
-    newapp = Appointment.objects.create(user, appointment_time)
-    newapp.save()
+    for empteller in User.objects.get(employee_level=1):
+        if Appointment.objects.get(employee=empteller, apptime=appointment_time):
+            continue
+        else:
+            newapp = Appointment.objects.create(user, empteller, appointment_time)
+            newapp.save()
     return {}
 
 
 class ScheduleAppointment(forms.Form):
-    email = forms.CharField(error_messages={'required': 'Enter your email'},
-                            max_length=200,
-                            required=True)
     time = forms.DateTimeField(widget=DateTimePickerInput(options={
         "stepping": "15",
         "useCurrent": True,
         "sideBySide": True,
         "daysOfWeekDisabled": [0, 6],
-        "disabledHours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 18, 19, 20, 21, 22, 23, 24],
-        "enabledHours": [9, 10, 11, 12, 13, 14, 15, 16]
+        "disabledHours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 18, 19, 20, 21, 22, 23, 24],
+        "enabledHours": [9, 10, 11, 12, 15, 16]
     }))
 
 

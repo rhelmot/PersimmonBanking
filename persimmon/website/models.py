@@ -89,9 +89,9 @@ class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
                                  limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
-    time = models.DateTimeField()
+    apptime = models.DateTimeField()
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['employee', 'time'], name='employee_availability')
+            models.UniqueConstraint(fields=['employee', 'apptime'], name='employee_availability')
         ]
