@@ -129,15 +129,14 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
     pendingtransaction.date = datetime.now()
     pendingtransaction.save()
-    bank_statement = pendingtransaction
-    bank_statement_date_time = pendingtransaction.date.strftime("%m/%d/%Y, %H:%M:%S")
-    create_bank_statement_to_blockchain(request, bank_statement.id, bank_statement_date_time
-                                                  , bank_statement.transaction,bank_statement.balance
-                                                  , bank_statement.accountId.id, bank_statement.description)
+    pendingtransaction_date_time = pendingtransaction.date.strftime("%m/%d/%Y, %H:%M:%S")
+    create_bank_statement_to_blockchain(request, pendingtransaction.id, pendingtransaction_date_time
+                                                  , pendingtransaction.transaction,pendingtransaction.balance
+                                                  , pendingtransaction.accountId.id, pendingtransaction.description)
     return [{
         'id': pendingtransaction.id,
         'transaction': pendingtransaction.transaction,
-        'date': bank_statement_date_time,
+        'date': pendingtransaction,
         'balance': pendingtransaction.balance,
         'accountId': pendingtransaction.accountId.id,
         'description': pendingtransaction.description,
@@ -178,14 +177,13 @@ def get_pending_transactions(request, account_id: int):
     } for creditdebit in pendingtransactions]
 
 
-def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, transaction: Decimal, balance: Decimal
-                                        , account_id: int, description: str):
+def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, new_transaction: Decimal
+                                        , balance: Decimal, account_id: int, description: str):
     try:
         loop = asyncio.get_event_loop()
         cli = \
             Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
-
         new_gateway = Gateway()  # Creates a new gateway instance
         options = {'wallet': ''}
         loop.run_until_complete(
@@ -194,13 +192,12 @@ def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, 
                                 options))
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
-        transaction_status = "approved"
         transaction_id = str(transaction_id)
-        transaction = str(transaction)
+        new_transaction = str(new_transaction)
         balance = str(balance)
         account_id = str(account_id)
-        arg = [transaction_id,date, transaction, balance, account_id, description, transaction_status]
-        loop.run_until_complete(new_contract.submit_transaction('mychannel', arg, org1_admin))
+        args = [transaction_id,date, new_transaction, balance, account_id, description, "approved"]
+        loop.run_until_complete(new_contract.submit_transaction('mychannel', args, org1_admin))
         raise Http404("create bank statement fail")
     except Http404 as exc:
         print(exc)
@@ -212,7 +209,8 @@ def get_bank_statement_from_blockchain(request, account_id: int):
         user = current_user(request)
         BankAccount.objects.get(id=account_id, owner=user)
         loop = asyncio.get_event_loop()
-        cli = Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
+        cli = Client(net_profile=
+                     "/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
         account_id = str(account_id)
         args = [account_id]
