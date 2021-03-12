@@ -91,10 +91,6 @@ class Appointment(models.Model):
                                  limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
     time = models.DateTimeField()
 
-    @property
-    def time(self):
-        return '%s' % self.time
-
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['employee', 'time'], name='employee_availability')
