@@ -61,4 +61,3 @@ class TestCreditDebitWorkFlow(TestCase):
             content_type='application/json',
             data={"account_id": req_pending_data[0]["accountId"]})
         self.assertEqual(req.status_code, 200)
-
