@@ -385,7 +385,7 @@ def schedule_success(request):
     current_user(request, expect_not_logged_in=False)
     return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
-  
+
 def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
                          phone: str, address: str, password: str, confirm_password: str):
     current_user(request, expect_not_logged_in=True)
