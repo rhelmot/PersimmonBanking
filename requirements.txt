@@ -4,4 +4,3 @@ pylint
 pylint-django
 django-extensions==3.1.1
 bootstrap4
-bootstrap_datepicker_plus
