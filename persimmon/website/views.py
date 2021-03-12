@@ -345,11 +345,11 @@ def reset_password_sent(request):
 
 
 @api_function
-def schedule(request, appointment_time: str):
+def schedule(request, time: str):
     user = current_user(request, expect_not_logged_in=False)
     for empteller in User.objects.get(employee_level=1):
-        if not Appointment.objects.get(employee=empteller, apptime=appointment_time):
-            newapp = Appointment.objects.create(user, empteller, appointment_time)
+        if not Appointment.objects.get(employee=empteller, apptime=time):
+            newapp = Appointment.objects.create(user, empteller, time)
             newapp.save()
     return {}
 
