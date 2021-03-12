@@ -93,7 +93,7 @@ class Appointment(models.Model):
 
     @property
     def time(self):
-        return self.time
+        return '%s' % self.time
 
     class Meta:
         constraints = [
