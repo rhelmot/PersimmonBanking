@@ -348,7 +348,7 @@ def reset_password_sent(request):
 def schedule(request, time: str):
     user = current_user(request, expect_not_logged_in=False)
     for empteller in User.objects.get(employee_level=1):
-        if not Appointment.objects.get(employee=empteller, apptime=time):
+        if not Appointment.objects.get(employee=empteller, time=time):
             newapp = Appointment.objects.create(user, empteller, time)
             newapp.save()
     return {}
