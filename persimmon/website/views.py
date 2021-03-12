@@ -347,9 +347,6 @@ def reset_password_sent(request):
 @api_function
 def schedule(request, appointment_email: str, appointment_time: datetime):
     user = current_user(request, expect_not_logged_in=False)
-    check = Appointment.objects.filter(time=appointment_time)
-    if len(check) > 0:
-        return {'error': " Time slot taken"}
     try:
         User.objects.get(django_user__email=appointment_email)
     except User.DoesNotExist as exc:
