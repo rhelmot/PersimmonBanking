@@ -10,7 +10,8 @@ from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser, Appointment
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser,\
+    Appointment
 from .common import make_user
 from .middleware import api_function
 
@@ -102,6 +103,7 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
 
 @api_function
 def get_accounts(request):
@@ -381,7 +383,6 @@ def schedule_appointment_page(request):
 
 def schedule_success(request):
     current_user(request, expect_not_logged_in=False)
-
     return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
   

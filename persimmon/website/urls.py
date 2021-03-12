@@ -38,4 +38,3 @@ urlpatterns = [
     path('account-statement/<int:number>', views.temp_statement_page),
     path('logout', views.logout)
 ]
-
