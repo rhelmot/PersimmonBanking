@@ -129,7 +129,7 @@ def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
         pendingtransaction.approve_status = ApprovalStatus.DECLINED
     pendingtransaction.date = datetime.now()
     pendingtransaction.save()
-    bank_statement = pendingtransaction;
+    bank_statement = pendingtransaction
     bank_statement_date_time = pendingtransaction.date.strftime("%m/%d/%Y, %H:%M:%S")
     create_bank_statement_to_blockchain(request, bank_statement.id, bank_statement_date_time
                                                   , bank_statement.transaction,bank_statement.balance
@@ -182,13 +182,15 @@ def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, 
                                         , account_id: int, description: str):
     try:
         loop = asyncio.get_event_loop()
-        cli = Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
+        cli = \
+            Client(net_profile="/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json")
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
 
         new_gateway = Gateway()  # Creates a new gateway instance
         options = {'wallet': ''}
         loop.run_until_complete(
-            new_gateway.connect('/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json',
+            new_gateway
+                .connect('/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/connectionnew.json',
                                 options))
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
@@ -198,10 +200,10 @@ def create_bank_statement_to_blockchain(request,transaction_id: int, date: str, 
         balance = str(balance)
         account_id = str(account_id)
         arg = [transaction_id,date, transaction, balance, account_id, description, transaction_status]
-        response = loop.run_until_complete(new_contract.submit_transaction('mychannel', arg, org1_admin))
+        loop.run_until_complete(new_contract.submit_transaction('mychannel', arg, org1_admin))
         raise Http404("create bank statement fail")
     except Http404 as exc:
-        print(Http404)
+        print(exc)
 
 
 @api_function
@@ -222,9 +224,9 @@ def get_bank_statement_from_blockchain(request, account_id: int):
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
         response = loop.run_until_complete(new_contract.evaluate_transaction('mychannel', args, org1_admin))
-        raise Http404("create bank statement fail")
+        raise Http404("get bank statement fail")
     except Http404 as exc:
-        print(Http404)
+        print(exc)
     print(response)
     return response
 
