@@ -89,7 +89,7 @@ class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
                                  limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
-    apptime = models.DateTimeField(default=timezone.now())
+    apptime = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [
