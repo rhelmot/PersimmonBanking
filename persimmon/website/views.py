@@ -347,11 +347,16 @@ def reset_password_sent(request):
 @api_function
 def schedule(request, time: str):
     user = current_user(request, expect_not_logged_in=False)
-    for empteller in User.objects.get(employee_level=1):
-        if not Appointment.objects.get(employee=empteller, time=time):
-            newapp = Appointment.objects.create(user, empteller, time)
+    for empteller in User.objects.all().filter(employee_level=1):
+        if not Appointment.objects.filter(employee=empteller, time=time):
+            newapp = Appointment.objects.create(
+                employee=empteller,
+                customer=user,
+                time=time
+            )
             newapp.save()
-    return {}
+            return {}
+    return {"error": "No employees available at this time"}
 
 
 class ScheduleAppointment(forms.Form):
