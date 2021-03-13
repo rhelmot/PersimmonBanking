@@ -1,14 +1,17 @@
 from decimal import Decimal
 from datetime import datetime
 
+from bootstrap_datepicker_plus import DateTimePickerInput
 from django.db import transaction
+
 from django.http import HttpResponse, Http404
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser,\
+    Appointment
 from .common import make_user
 from .middleware import api_function
 
@@ -26,8 +29,8 @@ def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logge
         raise Http404("API unavailable to current authentication")
     return user
 
-
 # checks if user with username has same employeelevel as level
+
 def security_check(request, myusername, level):
     try:
         user = User.objects.get(username=myusername)
@@ -100,6 +103,7 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
 
 @api_function
 def get_accounts(request):
@@ -327,7 +331,6 @@ class ResetPasswordForm(forms.Form):
 
 def reset_password_page(request):
     current_user(request, expect_not_logged_in=True)
-
     return TemplateResponse(request, 'pages/reset_password.html', {
         'form': ResetPasswordForm(),
         'api': urls.reverse(reset_password),
@@ -342,6 +345,44 @@ def reset_password_sent(request):
 
 
 @api_function
+def schedule(request, time: str):
+    user = current_user(request, expect_not_logged_in=False)
+    for empteller in User.objects.all().filter(employee_level=1):
+        if not Appointment.objects.filter(employee=empteller, time=time):
+            newapp = Appointment.objects.create(
+                employee=empteller,
+                customer=user,
+                time=time
+            )
+            newapp.save()
+            return {}
+    return {"error": "No employees available at this time"}
+
+
+class ScheduleAppointment(forms.Form):
+    time = forms.DateTimeField(widget=DateTimePickerInput(options={
+        "stepping": "15",
+        "useCurrent": True,
+        "sideBySide": True,
+        "daysOfWeekDisabled": [0, 6],
+        "disabledHours": [0, 1, 2, 3, 4, 5, 6, 7, 8, 13, 14, 18, 19, 20, 21, 22, 23, 24],
+        "enabledHours": [9, 10, 11, 12, 15, 16]
+    }))
+
+
+def schedule_appointment_page(request):
+    return TemplateResponse(request, 'pages/schedule_appointment.html', {
+        'form': ScheduleAppointment(),
+        'api': urls.reverse(schedule),
+        'success': urls.reverse(schedule_success)
+    })
+
+
+def schedule_success(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/appointmentbooked.html', {})
+
+
 def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
                          phone: str, address: str, password: str, confirm_password: str):
     current_user(request, expect_not_logged_in=True)
