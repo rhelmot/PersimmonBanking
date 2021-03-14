@@ -4,13 +4,12 @@ from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.http import Http404
 
-from persimmon.website.common import make_user
-from persimmon.website.views.html_views import get_my_accounts
-from persimmon.website.views import current_user
-from persimmon.website.middleware import api_function
-from persimmon.website.models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
+from ..common import make_user
+from . import current_user
+from ..middleware import api_function
+from ..models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
-from persimmon.website.transaction_approval import check_approvals
+from ..transaction_approval import check_approvals
 
 
 @api_function
@@ -56,11 +55,6 @@ def approve_bank_account(request, account_number: int, approved: bool):
 
     account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
     account.save()
-
-
-@api_function
-def get_accounts(request):
-    return get_my_accounts(request)
 
 
 @transaction.atomic

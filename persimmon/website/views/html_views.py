@@ -16,17 +16,6 @@ def index(request):
     return HttpResponse("Hello world")
 
 
-def get_my_accounts(request):
-    user = current_user(request)
-    accounts = BankAccount.objects.filter(owner=user).exclude(approval_status=ApprovalStatus.DECLINED)
-    return [{
-        'account': account.account_number,
-        'type': account.type,
-        'balance': account.balance,
-        'approval_status': account.approval_status,
-    } for account in accounts]
-
-
 def logout(request):
     current_user(request)
     django_logout(request)
@@ -165,22 +154,12 @@ def create_user_success(request):
 
 
 def account_overview_page(request):
-    usr = current_user(request, expect_not_logged_in=False)
-    acc = get_my_accounts(request)
-    number = 0
-    while number < len(acc):
-        if acc[number]['approval_status'] == 0:
-            acc.pop(number)
-            number = number-1
-        if acc[number]['type'] == 0:
-            acc[number]['type'] = 'Checking'
-        if acc[number]['type'] == 1:
-            acc[number]['type'] = 'Savings'
-        if acc[number]['type'] == 2:
-            acc[number]['type'] = 'Credit'
-        number = number+1
-    mydict = {"name": usr.name, 'ls': acc}
-    return TemplateResponse(request, 'pages/account_overview.html', mydict)
+    user = current_user(request, expect_not_logged_in=False)
+    accounts = BankAccount.objects.filter(user=user, approval_status=ApprovalStatus.APPROVED).all()
+    return TemplateResponse(request, 'pages/account_overview.html', {
+        "user": user,
+        "accounts": accounts,
+    })
 
 
 def temp_statement_page(request, number):

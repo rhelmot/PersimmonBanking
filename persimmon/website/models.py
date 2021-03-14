@@ -23,6 +23,9 @@ class User(models.Model):
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
 
+    def __str__(self):
+        return f'<User {self.name}>'
+
     @property
     def email(self):
         return self.django_user.email
@@ -68,9 +71,22 @@ class BankAccount(models.Model):
     type = models.IntegerField(choices=AccountType.choices)
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
 
+    def __str__(self):
+        return f'<BankAccount {self.id} ({self.owner.name})>'
+
     @property
     def account_number(self):
         return '%016d' % self.id
+
+    @property
+    def pretty_type(self):
+        if self.type == AccountType.CHECKING:
+            return "Checking"
+        if self.type == AccountType.SAVINGS:
+            return "Savings"
+        if self.type == AccountType.CREDIT:
+            return "Credit"
+        raise ValueError("This should be unreachable")
 
     @property
     def transactions(self):
@@ -91,6 +107,9 @@ class Transaction(models.Model):
 
     class Meta:
         constraints = [models.constraints.CheckConstraint(check=models.Q(transaction__gt=0), name='positive_value')]
+
+    def __str__(self):
+        return f'<Transaction "{self.description}" ${self.transaction}>'
 
     @property
     def is_transfer(self):

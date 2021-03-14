@@ -3,11 +3,33 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <title>{{ title }}</title>
+    <title>{% block title %}Persimmon Banking{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script src="{% static "script.js" %}"></script>
+
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+        table.center {
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
 </head>
 <body>
+
+<table style="width:95%;" class="center">
+    <tr>
+        <td style="text-align:center; color:black; width:19%">Bank accounts</td>
+        <td style="text-align:center; color:black; width:19%">Ask a bot</td>
+        <td style="text-align:center; color:black; width:19%">Schedule an appointment</td>
+        <td style="text-align:center; color:black; width:19%">My info</td>
+        <td style="text-align:center;">
+            <a href="{% url 'logout' %}">Logout</a>
+        </td>
+    </tr>
+</table>
 
 {% block body %}{% endblock %}
 

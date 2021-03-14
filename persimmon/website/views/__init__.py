@@ -1,6 +1,6 @@
 from django.http import Http404
 
-from persimmon.website.models import EmployeeLevel, User
+from ..models import EmployeeLevel, User
 
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
