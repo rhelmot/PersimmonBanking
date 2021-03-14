@@ -52,7 +52,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that the accounts do not appear to another user
         req = client_admin.post(
-            reverse(views.get_accounts),
+            reverse(views.get_my_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
@@ -61,7 +61,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that the accounts appear as pending
         req = client_user.post(
-            reverse(views.get_accounts),
+            reverse(views.get_my_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
@@ -97,7 +97,7 @@ class TestAccountWorkflow(TestCase):
             content_type='application/json',
             data={'account_number': req_data[0]['account'],
                   'approved': True})
-        # print(req_data)
+        print(req_data)
         self.assertEqual(req.status_code, 200)
         req = client_admin.post(
             reverse(views.approve_bank_account),
@@ -132,7 +132,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that now the approved accounts appear to the user
         req = client_user.post(
-            reverse(views.get_accounts),
+            reverse(views.get_my_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
