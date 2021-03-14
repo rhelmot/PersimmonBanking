@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/bankaccount/get-statement', views.bank_statement),
 
     path('api/creditdebitfunds/creditdebit', views.credit_debit_funds),
-    path('api/creditdebitfunds/approve', views.approve_credit_debit_funds),
+    path('api/creditdebitfunds/approve', views.approve_transaction),
     path('api/creditdebitfunds/get-pending', views.get_pending_transactions),
 
     path('api/createuseraccount/create', views.create_user_account),

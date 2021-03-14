@@ -10,10 +10,11 @@ from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 
-from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, BankStatements, DjangoUser,\
+from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Transaction, DjangoUser,\
     Appointment
 from .common import make_user
 from .middleware import api_function
+from .transaction_approval import check_approvals
 
 
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
@@ -60,7 +61,6 @@ def create_user_account(request, username: str, first_name: str,
                          email=email,
                          phone=phone,
                          address=address)
-    print("created")
     new_user.save()
 
 
@@ -112,63 +112,63 @@ def get_accounts(request):
 
 @transaction.atomic
 @api_function
-def approve_credit_debit_funds(request, transaction_id: int, approved: bool):
-    current_user(request, required_auth=EmployeeLevel.TELLER)
+def approve_transaction(request, transaction_id: int, approved: bool):
+    user = current_user(request, required_auth=EmployeeLevel.TELLER)
     try:
-        pendingtransaction = BankStatements.objects.get(id=transaction_id, approval_status=ApprovalStatus.PENDING)
-    except BankStatements.DoesNotExist as exc:
-        raise Http404("No such transaction pending approval") from exc
+        pendingtransaction = Transaction.objects.get(id=transaction_id, approval_status=ApprovalStatus.PENDING)
+    except Transaction.DoesNotExist:
+        return {"error": "No such transaction pending approval"}
+
+    if not check_approvals(pendingtransaction, user):
+        return {"error": "You cannot approve this transaction"}
+
     if approved:
-        pendingtransaction.approve_status = ApprovalStatus.APPROVED
-        try:
-            account = BankAccount.objects.get(id=pendingtransaction.accountId.id,
-                                              approval_status=ApprovalStatus.PENDING)
-        except BankAccount.DoesNotExist as exc:
-            raise Http404("No such account") from exc
-        account.balance += pendingtransaction.transaction
-        pendingtransaction.balance = account.balance
-        account.save()
+        pendingtransaction.add_approval(user)
+        check_approvals(pendingtransaction, user)
     else:
-        pendingtransaction.approve_status = ApprovalStatus.DECLINED
-    pendingtransaction.date = datetime.now()
-    pendingtransaction.save()
-    return [{
-        'id': pendingtransaction.id,
-        'transaction': pendingtransaction.transaction,
-        'balance': pendingtransaction.balance,
-        'accountId': pendingtransaction.accountId.id,
-        'description': pendingtransaction.description,
-        'approval_status': pendingtransaction.approve_status
-    }]
+        pendingtransaction.decline()
+
+    return {}
 
 
 @api_function
 def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
     user = current_user(request)
+
+    if transactionvalue == 0:
+        return {"error": "Zero-dollar transaction"}
+
     try:
-        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.PENDING)
-    except BankAccount.DoesNotExist as exc:
-        raise Http404("No such account") from exc
-    bankstatement = BankStatements.objects.create(accountId=account, transaction=transactionvalue)
-    if transactionvalue < 0:
-        bankstatement.description = "credit"
-    else:
-        bankstatement.description = "debit"
+        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.APPROVED)
+    except BankAccount.DoesNotExist:
+        return {"error": "No such account"}
+
+    bankstatement = Transaction.objects.create(
+        description="credit" if transactionvalue < 0 else "debit",
+        account_add=account if transactionvalue > 0 else None,
+        account_subtract=account if transactionvalue < 0 else None,
+        transaction=abs(transactionvalue),
+        approval_status=ApprovalStatus.PENDING)
     bankstatement.save()
+
+    bankstatement.add_approval(user)
+    check_approvals(bankstatement, user)
+    return {}
 
 
 @api_function
 def get_pending_transactions(request, account_id: int):
-    current_user(request, required_auth=EmployeeLevel.MANAGER)
+    current_user(request, required_auth=EmployeeLevel.TELLER)
     try:
         account = BankAccount.objects.get(id=account_id)
-    except BankAccount.DoesNotExist as exc:
-        raise Http404("No such account") from exc
-    pendingtransactions = BankStatements.objects \
-        .filter(accountId=account, approval_status=ApprovalStatus.PENDING)
+    except BankAccount.DoesNotExist:
+        return {"error": "No such account"}
+
+    pendingtransactions = account.transactions.filter(approval_status=ApprovalStatus.PENDING)
     return [{
         'transactionid': creditdebit.id,
-        'accountId': creditdebit.accountId.id,
+        'account_add': creditdebit.account_add.id if creditdebit.account_add is not None else None,
+        'account_subtract': creditdebit.account_subtract.id if creditdebit.account_subtract is not None else None,
         'transaction': creditdebit.transaction,
         'description': creditdebit.description,
         'approval_status': creditdebit.approval_status,
@@ -211,19 +211,22 @@ def bank_statement(request, account_id: int, month: int, year: int):
 def get_bank_statement(request, account_id: int, month: int, year: int):
     user = current_user(request)
     try:
-        BankAccount.objects.get(id=account_id, owner=user)
+        account = BankAccount.objects.get(id=account_id, owner=user)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account") from exc
 
-    transactions = BankStatements.objects \
-        .filter(date__month=month, date__year=year, accountId=account_id, approval_status=ApprovalStatus.APPROVED) \
+    transactions = account.transactions.filter(date__month=month, date__year=year, approval_status=ApprovalStatus.APPROVED)\
         .order_by("date")
-    return [{
-        'timestamp': trans.date,
-        'transaction': trans.transaction,
-        'balance': trans.balance,
-        'description': trans.description,
-    } for trans in transactions]
+    result = []
+    for trans in transactions:
+        trans_slice = trans.for_one_account(account)
+        result.append({
+            'timestamp': trans_slice.date,
+            'transaction': trans_slice.transaction,
+            'balance': trans_slice.balance,
+            'description': trans_slice.description,
+        })
+    return result
 
 
 @api_function
@@ -270,48 +273,34 @@ def change_my_address(request, new_address: str):
 # transfer amount from the balance of bankaccount with acountnumb1 id
 @api_function
 def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
+    user = current_user(request)
+
+    if amount <= 0:
+        return {'error': 'Bad amount: must be positive'}
+
     with transaction.atomic():
-        user = current_user(request)
-        account1 = BankAccount.objects.filter(id=accountnumb1).exclude(approval_status=ApprovalStatus.DECLINED)
-        if len(account1) == 1 and account1[0].owner.django_user.username == user.username:
-            if account1[0].balance < amount or amount <= 0:
-                return {
-                    'error': 'error insufficient funds'
-                }
-            account2 = BankAccount.objects.filter(id=accountnumb2).exclude(approval_status=ApprovalStatus.DECLINED)
-            if len(account2) == 1:
-                account1[0].balance = account1[0].balance - amount
-                account1[0].save()
-                acc1statement = BankStatements.objects.create(
-                    transaction=-1 * amount,
-                    balance=account1[0].balance,
-                    accountId=account1[0],
-                    description='sent ' + str(amount) + ' to ' + str(accountnumb2),
-                    approval_status=ApprovalStatus.APPROVED
+        try:
+            account1 = BankAccount.objects.get(id=accountnumb1, owner=user, approval_status=ApprovalStatus.APPROVED)
+        except BankAccount.DoesNotExist:
+            return {'error': 'account to debit does not exist or is not owned by user'}
 
-                )
-                acc1statement.save()
-                account2[0].balance = account2[0].balance + amount
-                account2[0].save()
-                acc2statement = BankStatements.objects.create(
+        try:
+            account2 = BankAccount.objects.get(id=accountnumb2, approval_status=ApprovalStatus.APPROVED)
+        except BankAccount.DoesNotExist:
+            return {'error': 'Account to credit does not exist'}
 
-                    transaction=amount,
-                    balance=account2[0].balance,
-                    accountId=account2[0],
-                    description='received ' + str(amount) + ' from ' + str(accountnumb1),
-                    approval_status=ApprovalStatus.APPROVED
-                )
-                acc2statement.save()
-                return {
-                    'Account Balance': account1[0].balance
-                }
+        trans = Transaction.objects.create(
+            transaction=amount,
+            account_add=account2,
+            account_subtract=account1,
+            description=f'transfer from {account1.account_number} to {account2.account_number}',
+            approval_status=ApprovalStatus.PENDING,
+        )
 
-            return {
-                'error': 'account number 2 does not exit'
-            }
-        return {
-            'error': 'account to debt does not exist or is not owned by user'
-        }
+        trans.add_approval(user)
+        check_approvals(trans, user)
+
+        return {'status': 'pending' if trans.approval_status == ApprovalStatus.PENDING else 'complete'}
 
 
 @api_function

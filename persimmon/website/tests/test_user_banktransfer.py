@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from ..models import EmployeeLevel, BankAccount, AccountType, BankStatements
+from ..models import EmployeeLevel, BankAccount, AccountType, Transaction, ApprovalStatus
 from .. import views
 from ..common import make_user
 from .common_test_functions import view_pending_account, approve_account
@@ -58,7 +58,8 @@ class TestUserBankTransfer(TestCase):
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 1001, 'accountnumb2': 2})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'error': 'error insufficient funds'})
+        self.assertEqual(req.json(), {"status": "pending"})
+
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
         account1 = allofthem[0]
@@ -74,7 +75,8 @@ class TestUserBankTransfer(TestCase):
             content_type='application/json',
             data={'accountnumb1': 2, 'amount': 10, 'accountnumb2': 1})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'error': 'account to debt does not exist or is not owned by user'})
+        self.assertIn('error', req.json())
+
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
         account1 = allofthem[0]
@@ -90,7 +92,8 @@ class TestUserBankTransfer(TestCase):
             content_type='application/json',
             data={'accountnumb1': 3, 'amount': 10, 'accountnumb2': 1})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'error': 'account to debt does not exist or is not owned by user'})
+        self.assertIn("error", req.json())
+
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
         account1 = allofthem[0]
@@ -106,7 +109,8 @@ class TestUserBankTransfer(TestCase):
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 4})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'error': 'account number 2 does not exit'})
+        self.assertIn("error", req.json())
+
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
         account1 = allofthem[0]
@@ -122,7 +126,7 @@ class TestUserBankTransfer(TestCase):
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 2})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'Account Balance': '990.00'})
+        self.assertEqual(req.json(), {'status': 'complete'})
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
         account1 = allofthem[0]
@@ -132,13 +136,13 @@ class TestUserBankTransfer(TestCase):
         current_balance = account2.balance
         self.assertEqual(current_balance, 510)
 
-        # check if bankstatements were created
-        all_statements = BankStatements.objects.filter()
-        self.assertEqual(len(all_statements), 2)
+        # check if transactions were created
+        all_statements = Transaction.objects.filter(approval_status=ApprovalStatus.APPROVED).all()
+        self.assertEqual(len(all_statements), 1)
 
-        self.assertEqual(all_statements[0].description, 'sent 10 to 2' )
-        self.assertEqual(all_statements[0].balance, 990.00)
-        self.assertEqual(all_statements[0].accountId, account1)
-        self.assertEqual(all_statements[1].description, 'received 10 from 1')
-        self.assertEqual(all_statements[1].balance, 510.00)
-        self.assertEqual(all_statements[1].accountId, account2)
+        self.assertEqual(all_statements[0].description, 'transfer from 0000000000000001 to 0000000000000002')
+        self.assertEqual(all_statements[0].approval_status, ApprovalStatus.APPROVED)
+        self.assertEqual(all_statements[0].balance_subtract, 990.00)
+        self.assertEqual(all_statements[0].account_subtract, account1)
+        self.assertEqual(all_statements[0].balance_add, 510.00)
+        self.assertEqual(all_statements[0].account_add, account2)

@@ -3,7 +3,7 @@ import datetime
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus, BankStatements
+from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus, Transaction
 from .. import views
 from ..common import make_user
 
@@ -154,10 +154,10 @@ class TestAccountWorkflow(TestCase):
                                    type=AccountType.CHECKING)
 
         def create_transaction(balance, description, date, approved):
-            BankStatements.objects.create(
-                accountId=account,
+            Transaction.objects.create(
+                account_add=account,
                 transaction=1,
-                balance=balance,
+                balance_add=balance,
                 description=description,
                 date=date,
                 approval_status=ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING)
