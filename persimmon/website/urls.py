@@ -33,7 +33,7 @@ urlpatterns = [
 
     path('api/login', views.login_page, name='login'),
     path('api/login/login_success', views.login_success),
-    path('api/login/otp', views.otp_enter),
-    path('api/login/otp_check', views.otp_check),
+    path('api/login/otp', views.otpEnter),
+    path('api/login/otp_check', views.otp_Check),
     path('api/login/otp_success', views.otp_success)
 ]
