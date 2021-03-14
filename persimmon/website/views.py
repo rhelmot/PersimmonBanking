@@ -167,6 +167,13 @@ def get_pending_transactions(request, account_id: int):
     } for creditdebit in pendingtransactions]
 
 
+class LoginForm(forms.Form):
+    Username = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-keyboard-input',
+                                                             'id': 'login'}))
+    Password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'use-keyboard-input',
+                                                             'id': 'password'}))
+
+
 @api_function
 def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
@@ -177,6 +184,40 @@ def persimmon_login(request, username: str, password: str):
     django_login(request, django_user)
     return {}
 
+
+def login_page(request):
+    return TemplateResponse(request, 'pages/login.html', {
+        'form': LoginForm(),
+        'api': urls.reverse(persimmon_login),
+        'success': urls.reverse(login_success)
+    })
+
+
+def login_success(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/otp.html', {})
+
+
+class OtpForm(forms.Form):
+    Otp = forms.CharField()
+
+
+def otpEnter(request):
+    return TemplateResponse(request, 'pages/otp.html', {
+        'form': OtpForm(),
+        'api': urls.reverse(otp_Check),
+        'success': urls.reverse(otp_success)
+    })
+
+
+def otp_success(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'main.html', {})
+
+
+@api_function
+def otp_Check(request, otp: str):
+    return {}
 
 @api_function
 def persimmon_logout(request):
