@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+from django.db import models
 from django.utils import timezone
 
 

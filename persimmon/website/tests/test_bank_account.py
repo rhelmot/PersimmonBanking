@@ -3,8 +3,8 @@ import datetime
 from django.test import TestCase, Client
 from django.urls import reverse
 
+import persimmon.website.views.apis
 from ..models import EmployeeLevel, BankAccount, AccountType, ApprovalStatus, Transaction
-from .. import views
 from ..common import make_user
 
 
@@ -23,24 +23,24 @@ class TestAccountWorkflow(TestCase):
 
         # test that creating an invalid bank account errors
         req = client_user.post(
-            reverse(views.create_bank_account),
+            reverse(persimmon.website.views.apis.create_bank_account),
             content_type='application/json',
             data={"account_type": 9000})
         self.assertEqual(req.status_code, 400)
 
         # test that we can create bank accounts
         req = client_user.post(
-            reverse(views.create_bank_account),
+            reverse(persimmon.website.views.apis.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.CHECKING})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
-            reverse(views.create_bank_account),
+            reverse(persimmon.website.views.apis.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.SAVINGS})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
-            reverse(views.create_bank_account),
+            reverse(persimmon.website.views.apis.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.CREDIT})
         self.assertEqual(req.status_code, 200)
@@ -52,7 +52,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that the accounts do not appear to another user
         req = client_admin.post(
-            reverse(views.get_accounts),
+            reverse(persimmon.website.views.apis.get_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
@@ -61,7 +61,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that the accounts appear as pending
         req = client_user.post(
-            reverse(views.get_accounts),
+            reverse(persimmon.website.views.apis.get_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
@@ -71,19 +71,19 @@ class TestAccountWorkflow(TestCase):
 
         # test that the user cannot access the admin functions
         req = client_user.post(
-            reverse(views.get_pending_bank_accounts),
+            reverse(persimmon.website.views.apis.get_pending_bank_accounts),
             content_type='application/json',
             data={})
         self.assertEqual(req.status_code, 404)
         req = client_user.post(
-            reverse(views.approve_bank_account),
+            reverse(persimmon.website.views.apis.approve_bank_account),
             content_type='application/json',
             data={'account_number': 0, 'approved': True})
         self.assertEqual(req.status_code, 404)
 
         # test the admin function for viewing pending accounts
         req = client_admin.post(
-            reverse(views.get_pending_bank_accounts),
+            reverse(persimmon.website.views.apis.get_pending_bank_accounts),
             content_type='application/json',
             data={})
         self.assertEqual(req.status_code, 200)
@@ -93,20 +93,20 @@ class TestAccountWorkflow(TestCase):
 
         # test approving the accounts
         req = client_admin.post(
-            reverse(views.approve_bank_account),
+            reverse(persimmon.website.views.apis.approve_bank_account),
             content_type='application/json',
             data={'account_number': req_data[0]['account'],
                   'approved': True})
         # print(req_data)
         self.assertEqual(req.status_code, 200)
         req = client_admin.post(
-            reverse(views.approve_bank_account),
+            reverse(persimmon.website.views.apis.approve_bank_account),
             content_type='application/json',
             data={'account_number': req_data[1]['account'],
                   'approved': True})
         self.assertEqual(req.status_code, 200)
         req = client_admin.post(
-            reverse(views.approve_bank_account),
+            reverse(persimmon.website.views.apis.approve_bank_account),
             content_type='application/json',
             data={'account_number': req_data[2]['account'],
                   'approved': False})
@@ -114,7 +114,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that we can't approve something twice
         req = client_admin.post(
-            reverse(views.approve_bank_account),
+            reverse(persimmon.website.views.apis.approve_bank_account),
             content_type='application/json',
             data={'account_number': req_data[2]['account'],
                   'approved': True})
@@ -122,7 +122,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that the requests no longer appear on the admin end
         req = client_admin.post(
-            reverse(views.get_pending_bank_accounts),
+            reverse(persimmon.website.views.apis.get_pending_bank_accounts),
             content_type='application/json',
             data={})
         self.assertEqual(req.status_code, 200)
@@ -132,7 +132,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that now the approved accounts appear to the user
         req = client_user.post(
-            reverse(views.get_accounts),
+            reverse(persimmon.website.views.apis.get_accounts),
             content_type='application/json',
             data={})
         req_data = req.json()
@@ -171,7 +171,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that we get back only relevant entries
         req = client_user.post(
-            reverse(views.bank_statement),
+            reverse(persimmon.website.views.apis.bank_statement),
             content_type='application/json',
             data={"account_id": account.id, "month": 2, "year": 2021})
         self.assertEqual(req.status_code, 200)
@@ -182,7 +182,7 @@ class TestAccountWorkflow(TestCase):
 
         # test that you can't get entries for other users
         req = client_admin.post(
-            reverse(views.bank_statement),
+            reverse(persimmon.website.views.apis.bank_statement),
             content_type='application/json',
             data={"account_id": account.id, "month": 2, "year": 2021})
         self.assertEqual(req.status_code, 404)
