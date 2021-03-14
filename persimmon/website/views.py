@@ -213,7 +213,7 @@ class OtpForm(forms.Form):
 def otp_enter(request):
     return TemplateResponse(request, 'pages/otp.html', {
         'form': OtpForm(),
-        'api': urls.reverse(otp_Check),
+        'api': urls.reverse(otp_check),
         'success': urls.reverse(otp_success)
     })
 
