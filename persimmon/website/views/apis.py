@@ -2,7 +2,11 @@ from decimal import Decimal
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
-from django.http import Http404
+from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, \
+    HttpResponseRedirect
+from django import forms
+from django.template.response import TemplateResponse
+from django.views.decorators.http import require_POST
 
 from ..common import make_user
 from . import current_user
@@ -10,6 +14,10 @@ from ..middleware import api_function
 from ..models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
+
+
+class HttpRedirectDone(HttpResponseRedirect):
+    status_code = 303
 
 
 @api_function
@@ -45,37 +53,63 @@ def get_pending_bank_accounts(request):
     } for account in accounts]
 
 
-@api_function
-def approve_bank_account(request, account_number: int, approved: bool):
+class ApproveAccountForm(forms.Form):
+    account_number = forms.IntegerField()
+    approved = forms.BooleanField()
+    back = forms.CharField()
+
+
+@require_POST
+def approve_bank_account(request):
     current_user(request, required_auth=EmployeeLevel.MANAGER)
+    form = ApproveAccountForm(request.POST)
+    if not form.is_valid():
+        return HttpResponseBadRequest("Bad parameters")
+
     try:
-        account = BankAccount.objects.get(id=account_number, approval_status=ApprovalStatus.PENDING)
+        account = BankAccount.objects.get(id=form.cleaned_data['account_number'], approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account pending approval") from exc
 
-    account.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.DECLINED
+    account.approval_status = ApprovalStatus.APPROVED if form.cleaned_data['approved'] else ApprovalStatus.DECLINED
     account.save()
+
+    return TemplateResponse(request, 'pages/account_approval_success.html', {
+        'link': form.cleaned_data['back']
+    })
+
+
+class ApproveTransactionForm(forms.Form):
+    transaction_id = forms.IntegerField()
+    approved = forms.BooleanField()
+    back = forms.CharField()
 
 
 @transaction.atomic
-@api_function
-def approve_transaction(request, transaction_id: int, approved: bool):
+@require_POST
+def approve_transaction(request):
     user = current_user(request)
+    form = ApproveTransactionForm(request.POST)
+    if not form.is_valid():
+        return HttpResponseBadRequest("Bad parameters")
+
     try:
-        pendingtransaction = Transaction.objects.get(id=transaction_id, approval_status=ApprovalStatus.PENDING)
+        pendingtransaction = Transaction.objects.get(id=form.cleaned_data['transaction_id'], approval_status=ApprovalStatus.PENDING)
     except Transaction.DoesNotExist:
-        return {"error": "No such transaction pending approval"}
+        return HttpResponseNotFound("No such transaction pending approval")
 
     if not check_approvals(pendingtransaction, user):
-        return {"error": "You cannot approve this transaction"}
+        return HttpResponseForbidden("You cannot approve this transaction")
 
-    if approved:
+    if form.cleaned_data['approved']:
         pendingtransaction.add_approval(user)
         check_approvals(pendingtransaction, user)
     else:
         pendingtransaction.decline()
 
-    return {}
+    return TemplateResponse(request, 'pages/transaction_approval_success.html', {
+        'link': form.cleaned_data['back'],
+    })
 
 
 @api_function
@@ -133,36 +167,9 @@ def persimmon_login(request, username: str, password: str):
     return {}
 
 
-
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
-
-
-@api_function
-def bank_statement(request, account_id: int, month: int, year: int):
-    return get_bank_statement(request, account_id, month, year)
-
-
-def get_bank_statement(request, account_id: int, month: int, year: int):
-    user = current_user(request)
-    try:
-        account = BankAccount.objects.get(id=account_id, owner=user)
-    except BankAccount.DoesNotExist as exc:
-        raise Http404("No such account") from exc
-
-    transactions = account.transactions.filter(date__month=month, date__year=year, approval_status=ApprovalStatus.APPROVED)\
-        .order_by("date")
-    result = []
-    for trans in transactions:
-        trans_slice = trans.for_one_account(account)
-        result.append({
-            'timestamp': trans_slice.date,
-            'transaction': trans_slice.transaction,
-            'balance': trans_slice.balance,
-            'description': trans_slice.description,
-        })
-    return result
 
 
 @api_function

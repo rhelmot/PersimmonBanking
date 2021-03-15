@@ -1,11 +1,11 @@
 from django.urls import reverse
 
-import persimmon.website.views.apis
+from ..views import apis
 
 
 def view_pending_account(client):
     req = client.post(
-            reverse(persimmon.website.views.apis.get_pending_bank_accounts),
+            reverse(apis.get_pending_bank_accounts),
             content_type='application/json',
             data={})
     return req
@@ -13,8 +13,8 @@ def view_pending_account(client):
 
 def approve_account(client, req_data, number):
     req = client.post(
-        reverse(persimmon.website.views.apis.approve_bank_account),
-        content_type='application/json',
+        reverse(apis.approve_bank_account),
         data={'account_number': req_data[number]['account'],
-              'approved': True})
+              'approved': True,
+              'back': 'foo'})
     return req

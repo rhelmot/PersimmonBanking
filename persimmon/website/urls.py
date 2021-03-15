@@ -7,11 +7,10 @@ urlpatterns = [
 
     path('api/bankaccount/new', apis.create_bank_account),
     path('api/bankaccount/get-pending', apis.get_pending_bank_accounts),
-    path('api/bankaccount/approve', apis.approve_bank_account),
-    path('api/bankaccount/get-statement', apis.bank_statement),
+    path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
 
     path('api/creditdebitfunds/creditdebit', apis.credit_debit_funds),
-    path('api/creditdebitfunds/approve', apis.approve_transaction),
+    path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
     path('api/creditdebitfunds/get-pending', apis.get_pending_transactions),
 
     path('api/createuseraccount/create', apis.create_user_account),
@@ -30,9 +29,10 @@ urlpatterns = [
     path('create-account', html_views.create_user_page),
     path('create-account-check', html_views.check_create_account),
     path('create-account-success', html_views.create_user_success),
-    path('account-overview', html_views.account_overview_page),
-    path('account-statement/<int:number>', html_views.temp_statement_page, name='statement'),
+    path('account-overview/<int:user_id>', html_views.account_overview_page, name='user'),
+    path('account-statement/<int:number>', html_views.statement_page, name='statement'),
     path('logout', html_views.logout, name="logout"),
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
     path('appointment_success', html_views.schedule_success),
+    path('employee-view', html_views.employee_page, name='employee')
 ]

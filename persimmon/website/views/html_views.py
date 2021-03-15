@@ -1,14 +1,15 @@
 from bootstrap_datepicker_plus import DateTimePickerInput
 
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 from django.contrib.auth import logout as django_logout
 
-from ..models import BankAccount, ApprovalStatus, DjangoUser
+from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User
 from ..common import make_user
 from . import current_user, apis
+from ..transaction_approval import check_approvals, applicable_approvals
 
 
 # index for website/ to check if url views are working
@@ -153,16 +154,53 @@ def create_user_success(request):
     return TemplateResponse(request, 'pages/create_account_success.html', {})
 
 
-def account_overview_page(request):
-    user = current_user(request, expect_not_logged_in=False)
-    accounts = BankAccount.objects.filter(user=user, approval_status=ApprovalStatus.APPROVED).all()
+def account_overview_page(request, user_id):
+    login_user = current_user(request)
+    try:
+        view_user = User.objects.get(id=user_id)
+        if view_user != login_user and login_user.employee_level < EmployeeLevel.TELLER:
+            raise User.DoesNotExist
+    except User.DoesNotExist as exc:
+        raise Http404("This account cannot be viewed") from exc
+
+    accounts = BankAccount.objects.filter(owner=view_user).exclude(approval_status=ApprovalStatus.DECLINED).all()
     return TemplateResponse(request, 'pages/account_overview.html', {
-        "user": user,
+        "view_user": view_user,
         "accounts": accounts,
     })
 
 
-def temp_statement_page(request, number):
-    current_user(request, expect_not_logged_in=False)
-    statement = "this is where I would show statements for account " +str(number)
-    return HttpResponse(statement)
+def statement_page(request, number):
+    user = current_user(request, expect_not_logged_in=False)
+
+    try:
+        account = BankAccount.objects.get(id=number)
+        if user != account.owner and user.employee_level < EmployeeLevel.TELLER:
+            raise BankAccount.DoesNotExist
+    except BankAccount.DoesNotExist as exc:
+        raise Http404("This account cannot be viewed") from exc
+
+    transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED)\
+        .order_by('approval_status', '-date')
+    statement = []
+    for transaction in transactions:
+        entry = transaction.for_one_account(account)
+        if transaction.approval_status == ApprovalStatus.PENDING and check_approvals(transactions, user):
+            entry.can_approve = True
+        statement.append(entry)
+
+    return TemplateResponse(request, 'pages/bank_account.html', {
+        "account": account,
+        "statement": statement,
+    })
+
+
+def employee_page(request):
+    user = current_user(request, required_auth=EmployeeLevel.TELLER)
+    transactions = applicable_approvals(user)
+    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.PENDING)
+
+    return TemplateResponse(request, 'pages/employee_page.html', {
+        "pending_transactions": transactions,
+        "pending_accounts": accounts,
+    })

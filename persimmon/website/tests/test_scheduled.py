@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-import persimmon.website.views.apis
+from ..views import apis
 from ..models import EmployeeLevel, Appointment
 from ..common import make_user
 
@@ -26,13 +26,13 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
@@ -57,13 +57,13 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-16 14:30"})
         self.assertEqual(req.status_code, 200)
@@ -88,13 +88,13 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(persimmon.website.views.apis.schedule),
+            reverse(apis.schedule),
             content_type='application/json',
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)

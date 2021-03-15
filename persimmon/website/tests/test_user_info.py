@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-import persimmon.website.views.apis
+from ..views import apis
 from ..models import EmployeeLevel
 from ..common import make_user
 
@@ -18,7 +18,7 @@ class TestUserInformation(TestCase):
 
         # test if client can change there address successfully
         req = client.post(
-            reverse(persimmon.website.views.apis.change_my_address),
+            reverse(apis.change_my_address),
             content_type='application/json',
             data={'new_address': '123 fake street'})
         self.assertEqual(req.status_code, 200)
@@ -26,9 +26,9 @@ class TestUserInformation(TestCase):
         # print(req_data)
         self.assertEqual(req_data, {'my new address': '123 fake street'})
 
-        # test if client can change there phone number
+        # test if client can change their phone number
         req = client.post(
-            reverse(persimmon.website.views.apis.change_my_phone),
+            reverse(apis.change_my_phone),
             content_type='application/json',
             data={'new_phone': '0987654321'})
         self.assertEqual(req.status_code, 200)
@@ -38,7 +38,7 @@ class TestUserInformation(TestCase):
 
         # test if client can change there email
         req = client.post(
-            reverse(persimmon.website.views.apis.change_my_email),
+            reverse(apis.change_my_email),
             content_type='application/json',
             data={'new_email': 'new@example.com'})
         self.assertEqual(req.status_code, 200)

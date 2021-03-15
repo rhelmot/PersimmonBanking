@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-import persimmon.website.views.apis
+from ..views import apis
 from ..models import EmployeeLevel, BankAccount, AccountType, Transaction, ApprovalStatus
 from ..common import make_user
 from .common_test_functions import view_pending_account, approve_account
@@ -22,13 +22,13 @@ class TestUserBankTransfer(TestCase):
 
         # add accounts for client users
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.create_bank_account),
+            reverse(apis.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.CHECKING})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(persimmon.website.views.apis.create_bank_account),
+            reverse(apis.create_bank_account),
             content_type='application/json',
             data={"account_type": AccountType.CHECKING})
         self.assertEqual(req.status_code, 200)
@@ -55,7 +55,7 @@ class TestUserBankTransfer(TestCase):
 
         # check for error if transfer to much funds
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.transfer_funds),
+            reverse(apis.transfer_funds),
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 1001, 'accountnumb2': 2})
         self.assertEqual(req.status_code, 200)
@@ -72,7 +72,7 @@ class TestUserBankTransfer(TestCase):
 
         # check error for accounts do not belong to client 1
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.transfer_funds),
+            reverse(apis.transfer_funds),
             content_type='application/json',
             data={'accountnumb1': 2, 'amount': 10, 'accountnumb2': 1})
         self.assertEqual(req.status_code, 200)
@@ -89,7 +89,7 @@ class TestUserBankTransfer(TestCase):
 
         # check error for account1 does not exist
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.transfer_funds),
+            reverse(apis.transfer_funds),
             content_type='application/json',
             data={'accountnumb1': 3, 'amount': 10, 'accountnumb2': 1})
         self.assertEqual(req.status_code, 200)
@@ -106,7 +106,7 @@ class TestUserBankTransfer(TestCase):
 
         # check error for account 2 does not exist
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.transfer_funds),
+            reverse(apis.transfer_funds),
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 4})
         self.assertEqual(req.status_code, 200)
@@ -123,7 +123,7 @@ class TestUserBankTransfer(TestCase):
 
         # check for if no error
         req = client_user1.post(
-            reverse(persimmon.website.views.apis.transfer_funds),
+            reverse(apis.transfer_funds),
             content_type='application/json',
             data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 2})
         self.assertEqual(req.status_code, 200)

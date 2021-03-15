@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-import persimmon.website.views.apis
+from ..views import apis
 from .test_bank_account import make_user
 from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus
 
@@ -22,31 +22,31 @@ class TestCreditDebitWorkFlow(TestCase):
         account = BankAccount.objects.create(type=AccountType.CREDIT, owner=user, approval_status=ApprovalStatus.APPROVED)
 
         # test that can't make credit request due to missing parameters
-        req = client_user.post(reverse(persimmon.website.views.apis.credit_debit_funds), content_type="application/json",
+        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
                                data={"account_id": account.id})
         self.assertEqual(req.status_code, 400)
 
         # test that successfully making credit request
-        req = client_user.post(reverse(persimmon.website.views.apis.credit_debit_funds), content_type="application/json",
+        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
                                data={"account_id": account.id, "transactionvalue": -100.0})
         self.assertEqual(req.status_code, 200)
         assert 'error' not in req.json()
 
         # test that successfully making debit request
-        req = client_user.post(reverse(persimmon.website.views.apis.credit_debit_funds), content_type="application/json",
+        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
                                data={"account_id": account.id, "transactionvalue": 100.0})
         self.assertEqual(req.status_code, 200)
         assert 'error' not in req.json()
 
         # test that can get pending transaction
-        req = client_admin.post(reverse(persimmon.website.views.apis.get_pending_transactions), content_type="application/json",
+        req = client_admin.post(reverse(apis.get_pending_transactions), content_type="application/json",
                                 data={"account_id": account.id})
         self.assertEqual(req.status_code, 200)
         req_pending_data = req.json()
 
         # test that can approve pending transaction
-        req = client_admin.post(reverse(persimmon.website.views.apis.approve_transaction), content_type="application/json",
+        req = client_admin.post(reverse(apis.approve_transaction),
                                 data={"transaction_id": req_pending_data[0]["transactionid"],
-                                      "approved": True})
+                                      "approved": True,
+                                      "back": "foo"})
         self.assertEqual(req.status_code, 200)
-        self.assertNotIn("error", req.json())

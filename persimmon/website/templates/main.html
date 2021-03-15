@@ -6,30 +6,28 @@
     <title>{% block title %}Persimmon Banking{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script src="{% static "script.js" %}"></script>
-
-    <style>
-        table, th, td {
-            border: 1px solid black;
-        }
-        table.center {
-            margin-left: auto;
-            margin-right: auto;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{% static "style.css" %}">
 </head>
 <body>
 
-<table style="width:95%;" class="center">
-    <tr>
-        <td style="text-align:center; color:black; width:19%">Bank accounts</td>
-        <td style="text-align:center; color:black; width:19%">Ask a bot</td>
-        <td style="text-align:center; color:black; width:19%">Schedule an appointment</td>
-        <td style="text-align:center; color:black; width:19%">My info</td>
-        <td style="text-align:center;">
-            <a href="{% url 'logout' %}">Logout</a>
-        </td>
-    </tr>
-</table>
+{% if user %}
+<div class="topbar">
+    <ul>
+        <li><a href="{% url 'user' user.id %}">My Account</a></li>
+        <li>Mobile ATM</li>
+        <li>Transfer Money</li>
+        <li>Ask a Bot</li>
+        <li>Schedule an Appointment</li>
+        {% if user.employee_level >= 1 %}
+            <li><a href="{% url 'employee' %}">Employee Portal</a></li>
+        {% endif %}
+        {% if user.employee_level >= 3 %}
+            <li><a href="{% url 'admin:index' %}">Admin Portal</a></li>
+        {% endif %}
+        <li><a href="{% url 'logout' %}">Logout</a></li>
+    </ul>
+</div>
+{% endif %}
 
 {% block body %}{% endblock %}
 

@@ -151,9 +151,9 @@ class Transaction(models.Model):
 
     def for_one_account(self, account):
         if self.account_add == account:
-            return BankStatementEntry(self.date, self.transaction, self.balance_add, self.description)
+            return BankStatementEntry(self.id, self.date, self.transaction, self.balance_add, self.description)
         if self.account_subtract == account:
-            return BankStatementEntry(self.date, -self.transaction, self.balance_add, self.description)
+            return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_add, self.description)
         raise Exception("Called for_one_account with account not associated with transaction")
 
 
@@ -162,11 +162,13 @@ class BankStatementEntry:
     Small data class to contain a slice of a Transaction related to a single account. use Transaction.for_one_account
     to get one of these.
     """
-    def __init__(self, date, transaction, balance, description):
+    def __init__(self, ident, date, transaction, balance, description):
+        self.id = ident
         self.date = date
         self.transaction = transaction
         self.balance = balance
         self.description = description
+        self.can_approve = False
 
 
 class TransactionApproval(models.Model):
