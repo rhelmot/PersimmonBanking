@@ -155,6 +155,7 @@ class Transaction(models.Model):
         if self.account_add == account:
             return BankStatementEntry(self.id, self.date, self.transaction, self.balance_add, self.description)
         if self.account_subtract == account:
+            # pylint: disable=invalid-unary-operand-type
             return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_add, self.description)
         raise Exception("Called for_one_account with account not associated with transaction")
 
@@ -165,7 +166,7 @@ class BankStatementEntry:
     to get one of these.
     """
     def __init__(self, ident, date, transaction, balance, description):
-        self.id = ident
+        self.id = ident  # pylint: disable=invalid-name
         self.date = date
         self.transaction = transaction
         self.balance = balance

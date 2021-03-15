@@ -2,7 +2,7 @@ import string
 from bootstrap_datepicker_plus import DateTimePickerInput
 
 from django.core import signing, mail
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import Http404, HttpResponseBadRequest
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
@@ -87,7 +87,11 @@ class CreateUserForm(forms.Form):
                             , required=True)
     address = forms.CharField(label='address', max_length=50, required=True)
     password = forms.CharField(label='Password', max_length=50, required=True, widget=forms.PasswordInput())
-    confirm_password = forms.CharField(label='Confirm Password', max_length=50, required=True, widget=forms.PasswordInput())
+    confirm_password = forms.CharField(
+        label='Confirm Password',
+        max_length=50,
+        required=True,
+        widget=forms.PasswordInput())
 
     def clean(self):
         cleaned = super().clean()

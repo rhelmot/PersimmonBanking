@@ -1,8 +1,9 @@
 from django.http import Http404
 
+from .views import current_user
+
 
 def auth(request):
-    from .views import current_user
     try:
         user = current_user(request)
     except Http404:

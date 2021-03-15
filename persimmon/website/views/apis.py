@@ -7,10 +7,9 @@ from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
 
-from ..common import make_user
 from . import current_user
 from ..middleware import api_function
-from ..models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
+from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
 
@@ -54,7 +53,9 @@ def approve_bank_account(request):
         return HttpResponseBadRequest("Bad parameters")
 
     try:
-        account = BankAccount.objects.get(id=form.cleaned_data['account_number'], approval_status=ApprovalStatus.PENDING)
+        account = BankAccount.objects.get(
+            id=form.cleaned_data['account_number'],
+            approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
         raise Http404("No such account pending approval") from exc
 
@@ -81,7 +82,9 @@ def approve_transaction(request):
         return HttpResponseBadRequest("Bad parameters")
 
     try:
-        pendingtransaction = Transaction.objects.get(id=form.cleaned_data['transaction_id'], approval_status=ApprovalStatus.PENDING)
+        pendingtransaction = Transaction.objects.get(
+            id=form.cleaned_data['transaction_id'],
+            approval_status=ApprovalStatus.PENDING)
     except Transaction.DoesNotExist:
         return HttpResponseNotFound("No such transaction pending approval")
 

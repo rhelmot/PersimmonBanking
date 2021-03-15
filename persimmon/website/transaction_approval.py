@@ -25,8 +25,10 @@ def required_approvals(stmt: Transaction):
     # if the transaction is a debit/credit then we need T1
     # if this would bankrupt the debtor then we need T1 also
     # otherwise nobody
-    user1_volume = stmt.account_add.owner.transaction_volume() + stmt.transaction if stmt.account_add is not None else 0
-    user2_volume = stmt.account_subtract.owner.transaction_volume() + stmt.transaction if stmt.account_subtract is not None else 0
+    user1_volume = stmt.account_add.owner.transaction_volume() + stmt.transaction \
+        if stmt.account_add is not None else 0
+    user2_volume = stmt.account_subtract.owner.transaction_volume() + stmt.transaction \
+        if stmt.account_subtract is not None else 0
     if user1_volume > CRITICAL_THRESHOLD or user2_volume > CRITICAL_THRESHOLD:
         employee_approval = EmployeeLevel.MANAGER
     elif not stmt.is_transfer:

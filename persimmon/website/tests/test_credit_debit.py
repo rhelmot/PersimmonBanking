@@ -19,7 +19,10 @@ class TestCreditDebitWorkFlow(TestCase):
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
 
-        account = BankAccount.objects.create(type=AccountType.CREDIT, owner=user, approval_status=ApprovalStatus.APPROVED)
+        account = BankAccount.objects.create(
+            type=AccountType.CREDIT,
+            owner=user,
+            approval_status=ApprovalStatus.APPROVED)
 
         # test that can't make credit request due to missing parameters
         req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
