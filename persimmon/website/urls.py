@@ -26,6 +26,7 @@ urlpatterns = [
     path('reset-password', html_views.reset_password_page),
     path('reset-password/sent', html_views.reset_password_sent),
     path('create-account', html_views.create_user_page, name='create-account'),
+    path('verify-email', html_views.verify_email),
     path('account-overview/<int:user_id>', html_views.account_overview_page, name='user'),
     path('account-statement/<int:number>', html_views.statement_page, name='statement'),
     path('logout', html_views.logout, name="logout"),

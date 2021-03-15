@@ -123,3 +123,7 @@ STATIC_URL = '/static/'
 BOOTSTRAP4 = {
     'include_jquery': True,
 }
+
+# service integration
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

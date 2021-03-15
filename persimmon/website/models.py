@@ -22,6 +22,8 @@ class User(models.Model):
     phone = models.CharField(max_length=10)
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
+    email_verified = models.BooleanField(default=False)
+    phone_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return f'<User {self.name}>'

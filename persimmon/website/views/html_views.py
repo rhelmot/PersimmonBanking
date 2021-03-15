@@ -1,11 +1,14 @@
 import string
 from bootstrap_datepicker_plus import DateTimePickerInput
 
-from django.http import HttpResponse, Http404
+from django.core import signing, mail
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
-from django.contrib.auth import logout as django_logout
+from django.contrib.auth import logout as django_logout, login as django_login
+from django.urls import reverse
+from django.views.decorators.http import require_GET
 
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User
 from ..common import make_user
@@ -126,7 +129,23 @@ def create_user_page(request):
                                  phone=form.cleaned_data['phone'],
                                  address=form.cleaned_data['address'])
             new_user.save()
-            return TemplateResponse(request, 'pages/create_account_success.html', {})
+
+            try:
+                encoded_signed = bytes.hex(signing.Signer().sign(new_user.email).encode())
+                mail.send_mail(
+                    "Persimmon Account Verification",
+                    f'Please visit the following link to verify your account: '
+                    f'{request.build_absolute_uri(reverse(verify_email) + "?email=" + encoded_signed)}',
+                    'noreply@persimmon.rhelmot.io',
+                    [new_user.email])
+            except Exception:  # pylint: disable=broad-except
+                new_user.delete()
+                new_user.django_user.delete()  # is this legal
+                form.add_error("email", "Could not send email")
+            else:
+                return TemplateResponse(request, 'pages/create_account_success.html', {
+                    "email": new_user.email,
+                })
 
     else:
         form = CreateUserForm()
@@ -134,6 +153,21 @@ def create_user_page(request):
     return TemplateResponse(request, 'pages/create_account.html', {
         'form': form,
     })
+
+
+@require_GET
+def verify_email(request):
+    try:
+        email = signing.Signer().unsign(bytes.fromhex(request.GET["email"]).decode())
+        account = User.objects.get(django_user__email=email)
+    except (ValueError, KeyError, signing.BadSignature, User.DoesNotExist):
+        return HttpResponseBadRequest("No. Absolutely not.")
+
+    account.email_verified = True
+    account.save()
+    django_login(request, account.django_user)
+
+    return TemplateResponse(request, 'pages/email_verified.html', {})
 
 
 def account_overview_page(request, user_id):
