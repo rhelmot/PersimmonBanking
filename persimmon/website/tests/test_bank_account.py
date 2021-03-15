@@ -26,25 +26,21 @@ class TestAccountWorkflow(TestCase):
         # test that creating an invalid bank account errors
         req = client_user.post(
             reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": 9000})
-        self.assertEqual(req.status_code, 400)
+            data={"type": 9000})
+        self.assertEqual(BankAccount.objects.count(), 0)
 
         # test that we can create bank accounts
         req = client_user.post(
             reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": AccountType.CHECKING})
+            data={"type": AccountType.CHECKING})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
             reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": AccountType.SAVINGS})
+            data={"type": AccountType.SAVINGS})
         self.assertEqual(req.status_code, 200)
         req = client_user.post(
             reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": AccountType.CREDIT})
+            data={"type": AccountType.CREDIT})
         self.assertEqual(req.status_code, 200)
 
         # test that creating the accounts manipulates the database correctly
