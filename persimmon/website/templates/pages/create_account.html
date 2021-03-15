@@ -2,7 +2,7 @@
 {% block title %}New Account{% endblock %}
 {% block body %}
     <p>Please enter your information to create an account:</p>
-    <form action="{{ request.path }}">
+    <form action="{{ request.path }}" method="POST">
         {% csrf_token %}
         {{ form.as_p }}
         <p><input type="submit"></p>

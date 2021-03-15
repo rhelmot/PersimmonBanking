@@ -5,8 +5,6 @@ from .views import html_views, apis
 urlpatterns = [
     path('', html_views.index, name='index'),
 
-    path('api/bankaccount/new', apis.create_bank_account),
-
     path('api/creditdebitfunds/creditdebit', apis.credit_debit_funds),
     path('api/creditdebitfunds/get-pending', apis.get_pending_transactions),
 
@@ -22,6 +20,7 @@ urlpatterns = [
 
     path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
     path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
+    path('api/bankaccount/new', apis.create_bank_account, name='create-bank-account'),
 
     path('reset-password', html_views.reset_password_page),
     path('reset-password/sent', html_views.reset_password_sent),

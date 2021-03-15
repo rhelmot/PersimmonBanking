@@ -15,11 +15,29 @@ from ..models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Tr
 from ..transaction_approval import check_approvals
 
 
-@api_function
-def create_bank_account(request, account_type: AccountType):
+class CreateBankAccountForm(forms.ModelForm):
+    class Meta:
+        model = BankAccount
+        fields = ('type',)
+
+
+def create_bank_account(request):
     user = current_user(request)
-    account = BankAccount.objects.create(owner=user, type=account_type)
-    return {'account': account.account_number}
+
+    if request.method == 'POST':
+        form = CreateBankAccountForm(request.POST)
+        if form.is_valid():
+            form.instance.owner = user
+            form.save()
+            return TemplateResponse(request, 'pages/new_bank_account_success.html', {
+                'account': form.instance,
+            })
+    else:
+        form = CreateBankAccountForm()
+
+    return TemplateResponse(request, 'pages/new_bank_account.html', {
+        'form': form,
+    })
 
 
 class ApproveAccountForm(forms.Form):

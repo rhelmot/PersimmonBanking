@@ -18,13 +18,13 @@ from ..transaction_approval import check_approvals, applicable_approvals
 
 # index for website/ to check if url views are working
 def index(request):
-    return HttpResponse("Hello world")
+    return TemplateResponse(request, 'pages/home.html', {})
 
 
 def logout(request):
     current_user(request)
     django_logout(request)
-    return HttpResponse("you have been logged out")
+    return TemplateResponse(request, 'pages/logout.html', {})
 
 
 class ResetPasswordForm(forms.Form):
