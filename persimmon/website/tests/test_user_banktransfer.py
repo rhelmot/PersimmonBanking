@@ -4,7 +4,6 @@ from django.urls import reverse
 from ..views import apis
 from ..models import EmployeeLevel, BankAccount, AccountType, Transaction, ApprovalStatus
 from ..common import make_user
-from .common_test_functions import view_pending_account, approve_account
 
 
 class TestUserBankTransfer(TestCase):
@@ -13,45 +12,23 @@ class TestUserBankTransfer(TestCase):
         make_user('admin', employee_level=EmployeeLevel.ADMIN)
         client_admin = Client()
         self.assertTrue(client_admin.login(username='admin', password='password'))
-        make_user('user1')
+        user1 = make_user('user1')
         client_user1 = Client()
         self.assertTrue(client_user1.login(username='user1', password='password'))
-        make_user('user2')
+        user2 = make_user('user2')
         client_user2 = Client()
         self.assertTrue(client_user2.login(username='user2', password='password'))
 
-        # add accounts for client users
-        req = client_user1.post(
-            reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": AccountType.CHECKING})
-        self.assertEqual(req.status_code, 200)
-
-        req = client_user2.post(
-            reverse(apis.create_bank_account),
-            content_type='application/json',
-            data={"account_type": AccountType.CHECKING})
-        self.assertEqual(req.status_code, 200)
-
-        # approve accounts
-        req = view_pending_account(client_admin)
-        self.assertEqual(req.status_code, 200)
-        req_data = req.json()
-        self.assertIs(type(req_data), list)
-
-        req = approve_account(client_admin, req_data, 0)
-        self.assertEqual(req.status_code, 200)
-
-        req = approve_account(client_admin, req_data, 1)
-        self.assertEqual(req.status_code, 200)
-        # add money to accounts
-        all_acc = BankAccount.objects.all()
-        account1 = all_acc[0]
-        account1.balance = 1000
-        account1.save()
-        account2 = all_acc[1]
-        account2.balance = 500
-        account2.save()
+        BankAccount.objects.create(
+            owner=user1,
+            type=AccountType.CHECKING,
+            approval_status=ApprovalStatus.APPROVED,
+            balance=1000)
+        BankAccount.objects.create(
+            owner=user2,
+            type=AccountType.CHECKING,
+            approval_status=ApprovalStatus.APPROVED,
+            balance=500)
 
         # check for error if transfer to much funds
         req = client_user1.post(

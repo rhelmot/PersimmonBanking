@@ -1,3 +1,4 @@
+import string
 from bootstrap_datepicker_plus import DateTimePickerInput
 
 from django.http import HttpResponse, Http404
@@ -66,59 +67,6 @@ def schedule_success(request):
     return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
 
-# TODO this should be an API function
-def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
-                         phone: str, address: str, password: str, confirm_password: str):
-    current_user(request, expect_not_logged_in=True)
-    check = DjangoUser.objects.filter(username=my_user_name)
-    if len(check) > 0:
-        return {'error': "username unavailable"}
-    check = DjangoUser.objects.filter(email=email)
-    if len(check) > 0:
-        return {'error': "email unavailable"}
-    res = False
-    for letter in password:
-        if letter.isupper():
-            res = True
-            break
-    if not res:
-        return{'error': "password does not contain an capital letter"}
-
-    if len(password) < 8:
-        return {'error': "password not long enough"}
-    res = False
-
-    for letter in password:
-        if letter in ('!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '<', '>', '?'):
-            res = True
-            break
-    if not res:
-        return {'error': "password does not contain a special character such as !, @, #, etc"}
-    res = False
-    for letter in password:
-        if letter.isnumeric():
-            res = True
-            break
-    if not res:
-        return {'error': "password does not contain a number"}
-
-    if password != confirm_password:
-        return{'error': "passwords does not match"}
-
-    new_user = make_user(username=my_user_name,
-                         first_name=first_name,
-                         last_name=last_name,
-                         password=password,
-                         email=email,
-                         phone=phone,
-                         address=address)
-    new_user.save()
-    return {}
-
-
-    # TODO send an email here... lol
-
-
 class CreateUserForm(forms.Form):
     first_name = forms.CharField(label='First name',
                                  error_messages={'required': 'Please enter your First name'},
@@ -127,7 +75,7 @@ class CreateUserForm(forms.Form):
                                 error_messages={'required': 'Please enter your Last name'},
                                 max_length=30, required=True)
     email = forms.EmailField()
-    myusername = forms.CharField(label='Username',
+    username = forms.CharField(label='Username',
                                error_messages={'required': 'Please enter a Username'},
                                max_length=30, required=True)
     phone = forms.CharField(label='Phone Number', max_length=12,
@@ -135,23 +83,57 @@ class CreateUserForm(forms.Form):
                             validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
                             , required=True)
     address = forms.CharField(label='address', max_length=50, required=True)
-    password = forms.CharField(label='Password', max_length=18, required=True)
-    confirm_password = forms.CharField(label='Confirm Password', max_length=18, required=True)
+    password = forms.CharField(label='Password', max_length=50, required=True, widget=forms.PasswordInput())
+    confirm_password = forms.CharField(label='Confirm Password', max_length=50, required=True, widget=forms.PasswordInput())
+
+    def clean(self):
+        cleaned = super().clean()
+        password1 = cleaned.get("password")
+        password2 = cleaned.get("confirm_password")
+
+        if password1 != password2:
+            raise forms.ValidationError("Your passwords do not match!")
+
+        if DjangoUser.objects.filter(username=cleaned.get("username")).exists():
+            raise forms.ValidationError("Username is already taken")
+        if DjangoUser.objects.filter(email=cleaned.get("email")).exists():
+            raise forms.ValidationError("Email is already in use")
+
+        password = cleaned.get("password")
+        special = '!@#$%^&*()<>?'
+
+        if len(password) < 8:
+            raise forms.ValidationError("Password not long enough")
+        if not any(letter in password for letter in string.ascii_uppercase):
+            raise forms.ValidationError("Password does not contain a capital letter")
+        if not any(letter in password for letter in string.digits):
+            raise forms.ValidationError("Password does not contain a number")
+        if not any(letter in password for letter in special):
+            raise forms.ValidationError("Password does not contain a special character: one of " + special)
 
 
 def create_user_page(request):
     current_user(request, expect_not_logged_in=True)
+
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            new_user = make_user(username=form.cleaned_data['username'],
+                                 first_name=form.cleaned_data['first_name'],
+                                 last_name=form.cleaned_data['last_name'],
+                                 password=form.cleaned_data['password'],
+                                 email=form.cleaned_data['email'],
+                                 phone=form.cleaned_data['phone'],
+                                 address=form.cleaned_data['address'])
+            new_user.save()
+            return TemplateResponse(request, 'pages/create_account_success.html', {})
+
+    else:
+        form = CreateUserForm()
+
     return TemplateResponse(request, 'pages/create_account.html', {
-        'form': CreateUserForm(),
-        'api': urls.reverse(check_create_account),
-        'success': urls.reverse(create_user_success),
-
+        'form': form,
     })
-
-
-def create_user_success(request):
-    current_user(request, expect_not_logged_in=True)
-    return TemplateResponse(request, 'pages/create_account_success.html', {})
 
 
 def account_overview_page(request, user_id):

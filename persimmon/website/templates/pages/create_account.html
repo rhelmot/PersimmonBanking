@@ -1,5 +1,10 @@
 {% extends "main.html" %}
+{% block title %}New Account{% endblock %}
 {% block body %}
-    <p>Please enter your information to create an account</p>
-    {% include "magic_form.html" with form=form api=api success=success %}
+    <p>Please enter your information to create an account:</p>
+    <form action="{{ request.path }}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p><input type="submit"></p>
+    </form>
 {% endblock %}

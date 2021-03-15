@@ -2,8 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
-from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, \
-    HttpResponseRedirect
+from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
@@ -16,41 +15,11 @@ from ..models import AccountType, BankAccount, EmployeeLevel, ApprovalStatus, Tr
 from ..transaction_approval import check_approvals
 
 
-class HttpRedirectDone(HttpResponseRedirect):
-    status_code = 303
-
-
-@api_function
-def create_user_account(request, username: str, first_name: str,
-                        last_name: str, password: str, email: str,
-                        phone: str, address: str):
-    current_user(request, expect_not_logged_in=True)
-    new_user = make_user(username=username,
-                         first_name=first_name,
-                         last_name=last_name,
-                         password=password,
-                         email=email,
-                         phone=phone,
-                         address=address)
-    new_user.save()
-
-
 @api_function
 def create_bank_account(request, account_type: AccountType):
     user = current_user(request)
     account = BankAccount.objects.create(owner=user, type=account_type)
     return {'account': account.account_number}
-
-
-@api_function
-def get_pending_bank_accounts(request):
-    current_user(request, required_auth=EmployeeLevel.MANAGER)
-    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.PENDING)
-    return [{
-        'account': account.account_number,
-        'owner': account.owner_id,
-        'type': account.type
-    } for account in accounts]
 
 
 class ApproveAccountForm(forms.Form):

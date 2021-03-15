@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..views import apis
+from ..views import html_views
 from ..models import User
 
 
@@ -11,27 +11,40 @@ class TestAccountWorkflow(TestCase):
     """
 
     def test_workflow(self):
+        client = Client()
+
         # test that we can create a user account
-
-        client_user1 = Client()
-
-        req1 = client_user1.post(reverse(apis.create_user_account), content_type='application/json',
-                                 data={"username": "gdeshpande", "first_name": "Gaurav", "last_name": "Deshpande",
-                                       "password": "password", "email": "test_email", "phone": "4803333141",
-                                       "address": "address"})
-        self.assertEqual(req1.status_code, 200)
+        req = client.post(reverse(html_views.create_user_page), data={
+            "username": "gdeshpande",
+            "first_name": "Gaurav",
+            "last_name": "Deshpande",
+            "password": "passwordA1!",
+            "confirm_password": "passwordA1!",
+            "email": "test@example.com",
+            "phone": "4803333141",
+            "address": "address"})
+        self.assertEqual(len(User.objects.all()), 1)  # assert that account has been created
 
         # test that we can't create a user account due to missing parameters
+        req = client.post(reverse(html_views.create_user_page), data={
+            "username": "gdeshpande",
+            "first_name": "Gaurav",
+            "last_name": "Deshpande",
+            "password": "passwordA1!",
+            "confirm_password": "passwordA1!",
+            "phone": "4803333141",
+            "address": "address"})
+        self.assertEqual(len(User.objects.all()), 1)  # assert that account has NOT been created
 
-        client_user2 = Client()
+        # test that we can't create a user account due to failed validation
+        req = client.post(reverse(html_views.create_user_page), data={
+            "username": "gdeshpande",
+            "first_name": "Gaurav",
+            "last_name": "Deshpande",
+            "password": "password111",  # not a valid password
+            "confirm_password": "password111",
+            "email": "test@example.com",
+            "phone": "4803333141",
+            "address": "address"})
+        self.assertEqual(len(User.objects.all()), 1)  # assert that account has NOT been created
 
-        req2 = client_user2.post(reverse(apis.create_user_account), content_type='application/json',
-                                 data={"username": "new_user", "last_name": "Deshpande",
-                                       "password": "password", "email": "test_email", "phone": "4803333141",
-                                       "address": "address"})
-        self.assertEqual(req2.status_code, 400)
-
-        # test that a new user account has been created
-
-        user_accounts = list(User.objects.all())
-        self.assertEqual(len(user_accounts), 1)

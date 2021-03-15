@@ -10,24 +10,27 @@
 </head>
 <body>
 
-{% if user %}
 <div class="topbar">
     <ul>
-        <li><a href="{% url 'user' user.id %}">My Account</a></li>
-        <li>Mobile ATM</li>
-        <li>Transfer Money</li>
-        <li>Ask a Bot</li>
-        <li>Schedule an Appointment</li>
-        {% if user.employee_level >= 1 %}
-            <li><a href="{% url 'employee' %}">Employee Portal</a></li>
+        {% if user %}
+            <li><a href="{% url 'user' user.id %}">My Account</a></li>
+            <li><a href="">Mobile ATM</a></li>
+            <li><a href="">Transfer Money</a></li>
+            <li>Ask a Bot</li>
+            <li><a href="{% url 'appointment' %}">Schedule an Appointment</a></li>
+            {% if user.employee_level >= 1 %}
+                <li><a href="{% url 'employee' %}">Employee Portal</a></li>
+            {% endif %}
+            {% if user.employee_level >= 3 %}
+                <li><a href="{% url 'admin:index' %}">Admin Portal</a></li>
+            {% endif %}
+            <li><a href="{% url 'logout' %}">Logout</a></li>
+        {% else %}
+            <li><a href="">Login</a></li>
+            <li><a href="{% url 'create-account' %}">Create Account</a></li>
         {% endif %}
-        {% if user.employee_level >= 3 %}
-            <li><a href="{% url 'admin:index' %}">Admin Portal</a></li>
-        {% endif %}
-        <li><a href="{% url 'logout' %}">Logout</a></li>
     </ul>
 </div>
-{% endif %}
 
 {% block body %}{% endblock %}
 

@@ -6,14 +6,10 @@ urlpatterns = [
     path('', html_views.index, name='index'),
 
     path('api/bankaccount/new', apis.create_bank_account),
-    path('api/bankaccount/get-pending', apis.get_pending_bank_accounts),
-    path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
 
     path('api/creditdebitfunds/creditdebit', apis.credit_debit_funds),
-    path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
     path('api/creditdebitfunds/get-pending', apis.get_pending_transactions),
 
-    path('api/createuseraccount/create', apis.create_user_account),
     path('api/bankaccount/transfer_funds', apis.transfer_funds),
     path('api/user/myinfo', apis.get_all_info),
     path('api/user/changeaddress', apis.change_my_address),
@@ -24,11 +20,12 @@ urlpatterns = [
     path('api/session/status', apis.login_status),
     path('api/schedule', apis.schedule),
 
+    path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
+    path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
+
     path('reset-password', html_views.reset_password_page),
     path('reset-password/sent', html_views.reset_password_sent),
-    path('create-account', html_views.create_user_page),
-    path('create-account-check', html_views.check_create_account),
-    path('create-account-success', html_views.create_user_success),
+    path('create-account', html_views.create_user_page, name='create-account'),
     path('account-overview/<int:user_id>', html_views.account_overview_page, name='user'),
     path('account-statement/<int:number>', html_views.statement_page, name='statement'),
     path('logout', html_views.logout, name="logout"),
