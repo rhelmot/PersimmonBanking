@@ -309,4 +309,3 @@ def edit_name_page(request):
         'api': urls.reverse(apis.change_my_name),
         'success': urls.reverse(edit_name_success)
     })
-
