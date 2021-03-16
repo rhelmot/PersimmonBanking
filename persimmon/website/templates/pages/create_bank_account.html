@@ -1,0 +1,5 @@
+{% extends "main.html" %}
+{% block body %}
+    <p>Please select an account type</p>
+    {% include "magic_form.html" with form=form api=api success=success %}
+{% endblock %}

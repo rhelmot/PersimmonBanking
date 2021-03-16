@@ -61,11 +61,16 @@ def create_user_account(request, username: str, first_name: str,
     new_user.save()
 
 
-@api_function
-def create_bank_account(request, account_type: AccountType):
+def create_bank_account_api(request, account_type: AccountType):
     user = current_user(request)
     account = BankAccount.objects.create(owner=user, type=account_type)
     return {'account': account.account_number}
+
+
+@api_function
+def create_bank_account(request, account_type: AccountType):
+    print("work")
+    return create_bank_account_api(request, account_type)
 
 
 @api_function
@@ -100,6 +105,7 @@ def get_my_accounts(request):
         'balance': account.balance,
         'approval_status': account.approval_status,
     } for account in accounts]
+
 
 @api_function
 def get_accounts(request):
@@ -222,8 +228,7 @@ def get_bank_statement(request, account_id: int, month: int, year: int):
     } for trans in transactions]
 
 
-@api_function
-def get_all_info(request):
+def get_my_info(request):
     user = current_user(request)
     return {
         'name': user.name,
@@ -233,14 +238,21 @@ def get_all_info(request):
         'address': user.address,
     }
 
-
 @api_function
-def change_my_email(request, new_email: str):
+def get_all_info(request):
+    return get_my_info(request)
+
+
+def change_email(request, new_email: str):
     user = current_user(request)
     user.change_email(new_email)
     return {
         'my new email': user.email
     }
+
+@api_function
+def change_my_email(request, new_email: str):
+    return change_email(request, new_email)
 
 
 @api_function
@@ -344,6 +356,7 @@ def reset_password_sent(request):
 @api_function
 def check_create_account(request, first_name: str, last_name: str, email: str, my_user_name: str,
                          phone: str, address: str, password: str, confirm_password: str):
+    print("help")
     current_user(request, expect_not_logged_in=True)
     check = DjangoUser.objects.filter(username=my_user_name)
     if len(check) > 0:
@@ -402,7 +415,7 @@ class CreateUserForm(forms.Form):
                                 error_messages={'required': 'Please enter your Last name'},
                                 max_length=30, required=True)
     email = forms.EmailField()
-    myusername = forms.CharField(label='Username',
+    my_user_name = forms.CharField(label='Username',
                                error_messages={'required': 'Please enter a Username'},
                                max_length=30, required=True)
     phone = forms.CharField(label='Phone Number', max_length=12,
@@ -420,7 +433,6 @@ def create_user_page(request):
         'form': CreateUserForm(),
         'api': urls.reverse(check_create_account),
         'success': urls.reverse(create_user_success),
-
     })
 
 
@@ -432,19 +444,25 @@ def create_user_success(request):
 def account_overview_page(request):
     usr = current_user(request, expect_not_logged_in=False)
     acc = get_my_accounts(request)
+    pend = []
     number = 0
     while number < len(acc):
-        if acc[number]['approval_status'] == 0:
-            acc.pop(number)
-            number = number-1
         if acc[number]['type'] == 0:
             acc[number]['type'] = 'Checking'
         if acc[number]['type'] == 1:
             acc[number]['type'] = 'Savings'
         if acc[number]['type'] == 2:
             acc[number]['type'] = 'Credit'
+        if acc[number]['approval_status'] == 0:
+            acc[number]['approval_status'] = 'PENDING'
+        if acc[number]['approval_status'] == 0:
+            acc[number]['approval_status'] = 'Declined'
+        if acc[number]['approval_status'] != 1:
+            pend.append(acc.pop(number))
+            number = number - 1
         number = number+1
-    mydict = {"name": usr.name, 'ls': acc}
+    print(pend)
+    mydict = {"name": usr.name, 'ls': acc, 'pend': pend}
     return TemplateResponse(request, 'pages/account_overview.html', mydict)
 
 
@@ -452,3 +470,85 @@ def temp_statement_page(request, number):
     current_user(request, expect_not_logged_in=False)
     statement = "this is where I would show statements for account " +str(number)
     return HttpResponse(statement)
+
+
+def create_bank_account_done(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/create_bank_account_done.html', {})
+
+
+ACCOUNT_CHOICES = [
+    (0, 'Checking'),
+    (1, 'Savings'),
+    (2, 'Credit')
+    ]
+
+
+class NewBankAccountForm(forms.Form):
+    my_type = forms.CharField(label='Account Type', widget=forms.Select(choices=ACCOUNT_CHOICES))
+
+
+def go_create_bank(request):
+    return TemplateResponse(request, 'pages/create_bank_account_done.html', {})
+
+@api_function
+def bank_check(request, my_type: int):
+    current_user(request, expect_not_logged_in=False)
+    if my_type == 0:
+        account_type = AccountType.CHECKING
+    elif my_type == 1:
+        account_type = AccountType.SAVINGS
+    else:
+        account_type = AccountType.CREDIT
+
+    create_bank_account_api(request, account_type)
+    return {}
+
+
+def new_bank_account_page(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/create_bank_account.html', {
+        'form': NewBankAccountForm,
+        'api': urls.reverse(bank_check),
+        'success': urls.reverse(go_create_bank),
+    })
+
+
+def show_user_info(request):
+    current_user(request, expect_not_logged_in=False)
+    myinfo = get_my_info(request)
+    mydic = {'info': myinfo}
+    return TemplateResponse(request, 'pages/show_info.html', mydic)
+
+
+class EditEmail(forms.Form):
+    email = forms.CharField(label="New Email", max_length=30, required=True)
+
+
+@api_function
+def prep_email_edit(request, email: str):
+    current_user(request, expect_not_logged_in=False)
+    print(email)
+    return {}
+    #res = change_email(request, new_email)
+    #print(res)
+    #return {}
+
+
+def email_done(request):
+    return TemplateResponse(request, 'pages/edit_email_done.html', {})
+
+
+def edit_email(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/edit_email.html', {
+        'form': EditEmail,
+        'api': urls.reverse(prep_email_edit),
+        'success': urls.reverse(email_done),
+    })
+
+
+
+
+
+

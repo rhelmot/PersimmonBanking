@@ -1,0 +1,44 @@
+<html>
+<head>
+    <style>
+    table, th, td {
+  border: 1px solid black;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+</head>
+<body>
+{% csrf_token %}
+
+{% include "magic_menu_bar.html" %}
+<h1 style="text-align:center">Here is your current information</h1>
+<div style="text-align:center">
+<table style="text-align:center; width:50%" class="center">
+    <tr>
+        <td>Name</td>
+        <td>{{info.name}}</td>
+        <td>edit</td>
+    </tr>
+    <tr>
+        <td>Email</td>
+        <td>{{info.email}}</td>
+        <td>edit</td>
+    </tr>
+    <tr>
+        <td>Phone Number</td>
+        <td>{{info.phone}}</td>
+        <td>edit</td>
+    </tr>
+    <tr>
+        <td>Address</td>
+        <td>{{info.address}}</td>
+        <td>edit</td>
+    </tr>
+</table>
+</div>
+
+</body>
+</html>

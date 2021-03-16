@@ -33,5 +33,14 @@ urlpatterns = [
     path('create-account-success', views.create_user_success),
     path('account-overview', views.account_overview_page),
     path('account-statement/<int:number>', views.temp_statement_page),
-    path('logout', views.logout)
+    path('logout', views.logout),
+    path('bank-account-created', views.create_bank_account_done),
+    path('create-bank-account', views.new_bank_account_page),
+    path('go-create-bank', views.go_create_bank),
+    path('bank-check', views.bank_check),
+    path('my-info', views.show_user_info),
+
+    path('edit-email', views.edit_email),
+    path('api/edit/email', views.prep_email_edit),
+    path('edit-email-done', views.email_done)
 ]
