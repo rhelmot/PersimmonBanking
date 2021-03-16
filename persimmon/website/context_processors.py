@@ -10,5 +10,5 @@ def auth(request):
         user = None
 
     return {
-        "user": user
+        "persimmon_user": user
     }

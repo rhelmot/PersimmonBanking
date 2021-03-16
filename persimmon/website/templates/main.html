@@ -12,16 +12,16 @@
 
 <div class="topbar">
     <ul>
-        {% if user %}
-            <li><a href="{% url 'user' user.id %}">My Account</a></li>
+        {% if persimmon_user %}
+            <li><a href="{% url 'user' persimmon_user.id %}">My Account</a></li>
             <li><a href="">Mobile ATM</a></li>
             <li><a href="">Transfer Money</a></li>
             <li>Ask a Bot</li>
             <li><a href="{% url 'appointment' %}">Schedule an Appointment</a></li>
-            {% if user.employee_level >= 1 %}
+            {% if persimmon_user.employee_level >= 1 %}
                 <li><a href="{% url 'employee' %}">Employee Portal</a></li>
             {% endif %}
-            {% if user.employee_level >= 3 %}
+            {% if persimmon_user.employee_level >= 3 %}
                 <li><a href="{% url 'admin:index' %}">Admin Portal</a></li>
             {% endif %}
             <li><a href="{% url 'logout' %}">Logout</a></li>
