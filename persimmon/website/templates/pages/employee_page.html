@@ -46,7 +46,7 @@
             <a href="{% url 'user' account.owner.id %}">{{ account.owner.name }}</a>
             <form action="{% url 'approve-account' %}" method="POST">
                 {% csrf_token %}
-                <input type="hidden" name="account_number" value="{{ transaction.id }}">
+                <input type="hidden" name="account_number" value="{{ account.id }}">
                 <input type="hidden" name="back" value="{{ request.path }}">
                 <button name="approved" value="true" type="submit">Approve</button>
                 <button name="approved" value="false" type="submit">Decline</button>

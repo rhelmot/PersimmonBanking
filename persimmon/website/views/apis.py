@@ -41,7 +41,7 @@ def create_bank_account(request):
 
 class ApproveAccountForm(forms.Form):
     account_number = forms.IntegerField()
-    approved = forms.BooleanField()
+    approved = forms.BooleanField(required=False)
     back = forms.CharField()
 
 
@@ -69,7 +69,7 @@ def approve_bank_account(request):
 
 class ApproveTransactionForm(forms.Form):
     transaction_id = forms.IntegerField()
-    approved = forms.BooleanField()
+    approved = forms.BooleanField(required=False)
     back = forms.CharField()
 
 
