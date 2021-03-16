@@ -229,8 +229,7 @@ def employee_page(request):
 
 
 def show_info_page(request):
-    user = current_user(request, expect_not_logged_in=False)
-    print("hello")
+    current_user(request, expect_not_logged_in=False)
     myinfo = apis.get_my_info(request)
     print(myinfo)
     mydic = {'info': myinfo}
@@ -310,6 +309,4 @@ def edit_name_page(request):
         'api': urls.reverse(apis.change_my_name),
         'success': urls.reverse(edit_name_success)
     })
-
-
 

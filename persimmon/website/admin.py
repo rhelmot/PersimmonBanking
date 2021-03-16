@@ -7,4 +7,3 @@ admin.site.register(User)
 admin.site.register(BankAccount)
 admin.site.register(SignInHistory)
 admin.site.register(Transaction)
-
