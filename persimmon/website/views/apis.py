@@ -41,7 +41,7 @@ def create_bank_account(request):
 
 class ApproveAccountForm(forms.Form):
     account_number = forms.IntegerField()
-    approved = forms.BooleanField()
+    approved = forms.BooleanField(required=False)
     back = forms.CharField()
 
 
@@ -69,7 +69,7 @@ def approve_bank_account(request):
 
 class ApproveTransactionForm(forms.Form):
     transaction_id = forms.IntegerField()
-    approved = forms.BooleanField()
+    approved = forms.BooleanField(required=False)
     back = forms.CharField()
 
 
@@ -108,7 +108,6 @@ def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
 
     if transactionvalue == 0:
         return {"error": "Zero-dollar transaction"}
-
     try:
         account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.APPROVED)
     except BankAccount.DoesNotExist:
@@ -162,8 +161,7 @@ def login_status(request):
     return {"logged_in": request.user.is_authenticated}
 
 
-@api_function
-def get_all_info(request):
+def get_my_info(request):
     user = current_user(request)
     return {
         'name': user.name,
@@ -172,6 +170,11 @@ def get_all_info(request):
         'phone': user.phone,
         'address': user.address,
     }
+
+
+@api_function
+def get_all_info(request):
+    return get_my_info(request)
 
 
 @api_function
@@ -198,6 +201,16 @@ def change_my_address(request, new_address: str):
     user = current_user(request)
     user.address = new_address
     user.save()
+    return {
+        'my new address': user.address
+    }
+
+@api_function
+def change_my_name(request, new_first: str, new_last: str):
+    user = current_user(request)
+    user.django_user.first_name = new_first
+    user.django_user.last_name = new_last
+    user.django_user.save()
     return {
         'my new address': user.address
     }

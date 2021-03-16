@@ -203,9 +203,11 @@ def statement_page(request, number):
     transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED)\
         .order_by('approval_status', '-date')
     statement = []
+
     for transaction in transactions:
+
         entry = transaction.for_one_account(account)
-        if transaction.approval_status == ApprovalStatus.PENDING and check_approvals(transactions, user):
+        if transaction.approval_status == ApprovalStatus.PENDING and check_approvals(transaction, user):
             entry.can_approve = True
         statement.append(entry)
 
@@ -224,3 +226,90 @@ def employee_page(request):
         "pending_transactions": transactions,
         "pending_accounts": accounts,
     })
+
+
+def show_info_page(request):
+    user = current_user(request, expect_not_logged_in=False)
+    print("hello")
+    myinfo = apis.get_my_info(request)
+    print(myinfo)
+    mydic = {'info': myinfo}
+    return TemplateResponse(request,'pages/show_info.html', mydic)
+
+
+def edit_email_success(request):
+    return TemplateResponse(request, 'pages/edit_email_success.html', {})
+
+
+class EditEmail(forms.Form):
+    new_email = forms.EmailField()
+
+
+def edit_email_page(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/edit_email.html', {
+        'form': EditEmail(),
+        'api': urls.reverse(apis.change_my_email),
+        'success': urls.reverse(edit_email_success)
+    })
+
+
+def edit_address_success(request):
+    return TemplateResponse(request, 'pages/edit_email_success.html', {})
+
+
+class EditAddress(forms.Form):
+    new_address = forms.CharField(label="New Address")
+
+
+def edit_address_page(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/edit_address.html', {
+        'form': EditAddress(),
+        'api': urls.reverse(apis.change_my_address),
+        'success': urls.reverse(edit_address_success)
+    })
+
+
+def edit_phone_success(request):
+    return TemplateResponse(request, 'pages/edit_phone_success.html', {})
+
+
+class EditPhone(forms.Form):
+    new_phone = forms.CharField(label='Phone Number', max_length=12,
+                            error_messages={'incomplete': 'Enter a phone number.'},
+                            validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
+                            , required=True)
+
+
+def edit_phone_page(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/edit_phone.html', {
+        'form': EditPhone(),
+        'api': urls.reverse(apis.change_my_phone),
+        'success': urls.reverse(edit_phone_success)
+    })
+
+def edit_name_success(request):
+    return TemplateResponse(request, 'pages/edit_name_success.html', {})
+
+
+class EditName(forms.Form):
+    new_first = forms.CharField(label='First name',
+                                 error_messages={'required': 'Please enter your First name'},
+                                 max_length=30, required=True)
+    new_last = forms.CharField(label='Last Name',
+                                error_messages={'required': 'Please enter your Last name'},
+                                max_length=30, required=True)
+
+
+def edit_name_page(request):
+    current_user(request, expect_not_logged_in=False)
+    return TemplateResponse(request, 'pages/edit_name.html', {
+        'form': EditName(),
+        'api': urls.reverse(apis.change_my_name),
+        'success': urls.reverse(edit_name_success)
+    })
+
+
+
