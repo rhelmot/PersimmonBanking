@@ -1,6 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
-
+import json
 from django.db import transaction
 from django.http import HttpResponse, Http404
 from django.contrib.auth import authenticate, login as django_login, logout as django_logout
@@ -10,6 +10,7 @@ from .models import User, AccountType, BankAccount, EmployeeLevel, ApprovalStatu
 from .common import make_user
 
 from django.core.validators import RegexValidator
+from django.core import serializers
 from django import forms, urls
 from django.template.response import TemplateResponse
 
@@ -212,6 +213,10 @@ def tier1_users(request):
 
 def tier1_users_view(request):
     if request.method == 'POST':
+        user = User.objects.get(pk= 1)
+        user_array = json.loads(serializers.serialize("json", [user], ensure_ascii=False))
+        username = DjangoUser.objects.get(id= user_array[0]['fields']['django_user'])
+        print(username)
         return render(request, 'website/tier1_viewPage.html')
 
 
