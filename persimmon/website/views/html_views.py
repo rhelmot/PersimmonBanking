@@ -14,10 +14,14 @@ from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, Use
 from ..common import make_user
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
+from chatterbot import ChatBot
+from chatterbot.trainers import ListTrainer
 
 
 # index for website/ to check if url views are working
 def index(request):
+
+
     return TemplateResponse(request, 'pages/home.html', {})
 
 
@@ -224,3 +228,26 @@ def employee_page(request):
         "pending_transactions": transactions,
         "pending_accounts": accounts,
     })
+
+def chatbot_page(request):
+    # Create a new chat bot named Persimmon
+    chatbot = ChatBot('Persimmon')
+
+    trainer = ListTrainer(chatbot)
+
+    trainer.train([
+        "Hi, can I help you?",
+        "Sure, I'd like to book a flight to Iceland.",
+        "Your flight has been booked."
+    ])
+
+    # Get a response to the input text 'I would like to book a flight.'
+    response = chatbot.get_response('I would like to book a flight.')
+
+    print(response)
+    # Get a response to the input text 'I would like to book a flight.'
+    # response = chatbot.get_response('I would like to book a flight.')
+
+    # print(response)
+
+    return TemplateResponse(request, 'pages/chat_bot.html')

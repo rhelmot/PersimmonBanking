@@ -31,5 +31,6 @@ urlpatterns = [
     path('logout', html_views.logout, name="logout"),
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
     path('appointment_success', html_views.schedule_success),
-    path('employee-view', html_views.employee_page, name='employee')
+    path('employee-view', html_views.employee_page, name='employee'),
+    path('chatbot', html_views.chatbot_page, name='chatbot')
 ]
