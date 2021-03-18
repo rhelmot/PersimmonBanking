@@ -46,12 +46,10 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 }
 
 func createBankStatement(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-	//检查参数个数
 	if len(args) != 7 {
 		return shim.Error("Incorrect number of arguments. Expecting 7")
 	}
 
-	//检查参数正确性
 	id := args[0]
 	date := args[1]
 	transaction := args[2]
@@ -91,19 +89,15 @@ func createBankStatement(APIstub shim.ChaincodeStubInterface, args []string) sc.
 }
 
 func getBankStatement(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-	//检查参数个数
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	//验证参数是否正确
 	accountId := args[0]
 	if accountId == "" {
 		return shim.Error("invalid args")
 	}
 
-
-	//查询数据
 	keys := make([]string, 0)
 	keys = append(keys, accountId)
 
