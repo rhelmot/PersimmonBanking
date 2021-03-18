@@ -6,7 +6,6 @@ urlpatterns = [
     path('', html_views.index, name='index'),
 
     path('api/creditdebitfunds/creditdebit', apis.credit_debit_funds),
-    path('api/creditdebitfunds/get-pending', apis.get_pending_transactions),
 
     path('api/bankaccount/transfer_funds', apis.transfer_funds),
     path('api/user/myinfo', apis.get_all_info),

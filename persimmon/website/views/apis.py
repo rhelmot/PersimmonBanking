@@ -127,25 +127,6 @@ def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
 
 
 @api_function
-def get_pending_transactions(request, account_id: int):
-    current_user(request, required_auth=EmployeeLevel.TELLER)
-    try:
-        account = BankAccount.objects.get(id=account_id)
-    except BankAccount.DoesNotExist:
-        return {"error": "No such account"}
-
-    pendingtransactions = account.transactions.filter(approval_status=ApprovalStatus.PENDING)
-    return [{
-        'transactionid': creditdebit.id,
-        'account_add': creditdebit.account_add.id if creditdebit.account_add is not None else None,
-        'account_subtract': creditdebit.account_subtract.id if creditdebit.account_subtract is not None else None,
-        'transaction': creditdebit.transaction,
-        'description': creditdebit.description,
-        'approval_status': creditdebit.approval_status,
-    } for creditdebit in pendingtransactions]
-
-
-@api_function
 def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
     django_user = authenticate(request, username=username, password=password)
