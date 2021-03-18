@@ -280,6 +280,7 @@ class UserLookupForm(forms.Form):
 
 
 def user_lookup(request):
+    current_user(request, required_auth=EmployeeLevel.TELLER)
     form = UserLookupForm(request.POST)
 
     if form.is_valid():
