@@ -1,0 +1,29 @@
+{% extends "main.html" %}
+{% block body %}
+<h1 style="text-align:center">Here is your current information</h1>
+<div style="text-align:center">
+<table style="text-align:center; width:50%" class="center">
+    <tr>
+        <td>Name</td>
+        <td>{{info.name}}</td>
+        <td><a href="{% url 'editname'%}">edit</a></td>
+    </tr>
+    <tr>
+        <td>Email</td>
+        <td>{{info.email}}</td>
+        <td><a href="{% url 'editemail'%}">edit</a></td>
+    </tr>
+    <tr>
+        <td>Phone Number</td>
+        <td>{{info.phone}}</td>
+        <td><a href="{% url 'editphone'%}">edit</a></td>
+    </tr>
+    <tr>
+        <td>Address</td>
+        <td>{{info.address}}</td>
+        <td><a href="{% url 'editaddress'%}">edit</a></td>
+    </tr>
+</table>
+</div>
+
+{% endblock %}

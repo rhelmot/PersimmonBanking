@@ -10,6 +10,7 @@ urlpatterns = [
 
     path('api/bankaccount/transfer_funds', apis.transfer_funds),
     path('api/user/myinfo', apis.get_all_info),
+    path('api/user/changename', apis.change_my_name),
     path('api/user/changeaddress', apis.change_my_address),
     path('api/user/changephone', apis.change_my_phone),
     path('api/user/changeemail', apis.change_my_email),
@@ -31,5 +32,14 @@ urlpatterns = [
     path('logout', html_views.logout, name="logout"),
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
     path('appointment_success', html_views.schedule_success),
-    path('employee-view', html_views.employee_page, name='employee')
-]
+    path('employee-view', html_views.employee_page, name='employee'),
+    path('user-info', html_views.show_info_page, name='userinfo'),
+    path('edit-email', html_views.edit_email_page, name='editemail'),
+    path('edit-email-success', html_views.edit_email_success),
+    path('edit-address', html_views.edit_address_page, name='editaddress'),
+    path('edit-address-success', html_views.edit_address_success),
+    path('edit-phone', html_views.edit_phone_page, name='editphone'),
+    path('edit-phone-success', html_views.edit_phone_success),
+    path('edit-name', html_views.edit_name_page, name='editname'),
+    path('edit-name-success', html_views.edit_name_success)
+    ]
