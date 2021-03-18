@@ -20,7 +20,7 @@ class User(models.Model):
     id = models.AutoField(primary_key=True)
     django_user = models.OneToOneField(DjangoUser, on_delete=models.CASCADE)
     phone = models.CharField(max_length=10)
-    address = models.CharField(max_length=200)
+    address = models.CharField()
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
 
     def __str__(self):
