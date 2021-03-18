@@ -1,31 +1,45 @@
 from django.urls import path
-from . import views
+
+from .views import html_views, apis
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('seccheck/<str:myusername>/<int:level>/', views.security_check, name='security_check'),
+    path('', html_views.index, name='index'),
 
-    path('api/bankaccount/new', views.create_bank_account),
-    path('api/bankaccount/get-pending', views.get_pending_bank_accounts),
-    path('api/bankaccount/approve', views.approve_bank_account),
-    path('api/bankaccount/get', views.get_my_accounts),
-    path('api/bankaccount/get-statement', views.bank_statement),
+    path('api/creditdebitfunds/creditdebit', apis.credit_debit_funds),
+    path('api/creditdebitfunds/get-pending', apis.get_pending_transactions),
 
-    path('api/creditdebitfunds/creditdebit', views.credit_debit_funds),
-    path('api/creditdebitfunds/approve', views.approve_credit_debit_funds),
-    path('api/creditdebitfunds/get-pending', views.get_pending_transactions),
+    path('api/bankaccount/transfer_funds', apis.transfer_funds),
+    path('api/user/myinfo', apis.get_all_info),
+    path('api/user/changename', apis.change_my_name),
+    path('api/user/changeaddress', apis.change_my_address),
+    path('api/user/changephone', apis.change_my_phone),
+    path('api/user/changeemail', apis.change_my_email),
+    path('api/resetpassword', apis.reset_password),
+    path('api/session/login', apis.persimmon_login),
+    path('api/session/status', apis.login_status),
+    path('api/schedule', apis.schedule),
 
-    path('api/createuseraccount/create', views.create_user_account),
-    path('api/bankaccount/transfer_funds', views.transfer_funds),
-    path('api/user/myinfo', views.get_all_info),
-    path('api/user/changeaddress', views.change_my_address),
-    path('api/user/changephone', views.change_my_phone),
-    path('api/user/changeemail', views.change_my_email),
-    path('api/resetpassword', views.reset_password),
-    path('api/session/login', views.persimmon_login),
-    path('api/session/logout', views.persimmon_logout),
-    path('api/session/status', views.login_status),
+    path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
+    path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
+    path('api/bankaccount/new', apis.create_bank_account, name='create-bank-account'),
 
-    path('reset-password', views.reset_password_page),
-    path('reset-password/sent', views.reset_password_sent)
-]
+    path('reset-password', html_views.reset_password_page),
+    path('reset-password/sent', html_views.reset_password_sent),
+    path('create-account', html_views.create_user_page, name='create-account'),
+    path('verify-email', html_views.verify_email),
+    path('account-overview/<int:user_id>', html_views.account_overview_page, name='user'),
+    path('account-statement/<int:number>', html_views.statement_page, name='statement'),
+    path('logout', html_views.logout, name="logout"),
+    path('appointment', html_views.schedule_appointment_page, name='appointment'),
+    path('appointment_success', html_views.schedule_success),
+    path('employee-view', html_views.employee_page, name='employee'),
+    path('user-info', html_views.show_info_page, name='userinfo'),
+    path('edit-email', html_views.edit_email_page, name='editemail'),
+    path('edit-email-success', html_views.edit_email_success),
+    path('edit-address', html_views.edit_address_page, name='editaddress'),
+    path('edit-address-success', html_views.edit_address_success),
+    path('edit-phone', html_views.edit_phone_page, name='editphone'),
+    path('edit-phone-success', html_views.edit_phone_success),
+    path('edit-name', html_views.edit_name_page, name='editname'),
+    path('edit-name-success', html_views.edit_name_success)
+    ]

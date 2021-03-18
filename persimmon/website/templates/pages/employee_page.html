@@ -1,0 +1,58 @@
+{% extends "main.html" %}
+{% block title %}Employee Page{% endblock %}
+{% block body %}
+    <h2>Transactions needing approval</h2>
+
+    <ul>
+        {% for transaction in pending_transactions %}
+            <li>
+                ${{ transaction.transaction }}
+                {% if transaction.account_subtract %}
+                    From <a href="{% url 'statement' transaction.account_subtract.account_number %}">
+                        {{ transaction.account_subtract.account_id }}
+                    </a>
+                    (<a href="{% url 'user' transaction.account_subtract.id %}">
+                        {{ transaction.account_subtract.owner.name }}
+                    </a>
+                    volume {{ transaction.account_subtract.owner.transaction_volume }})
+                {% endif %}
+                {% if transaction.account_add %}
+                    To <a href="{% url 'statement' transaction.account_add.id %}">
+                        {{ transaction.account_add.account_id }}
+                    </a>
+                        (<a href="{% url 'user' transaction.account_add.account_number %}">
+                        {{ transaction.account_add.owner.name }}
+                    </a>
+                    volume {{ transaction.account_add.owner.transaction_volume }})
+                {% endif %}
+                <form action="{% url 'approve-transaction' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="transaction_id" value="{{ transaction.id }}">
+                    <input type="hidden" name="back" value="{{ request.path }}">
+                    <button name="approved" value="true" type="submit">Approve</button>
+                    <button name="approved" value="false" type="submit">Decline</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    {% if persimmon_user.employee_level >= 2 %}
+    <h2>New Accounts Needing Approval</h2>
+
+    <ul>
+    {% for account in pending_accounts %}
+        <li>
+            {{ account.account_number }} - {{ account.pretty_type }} for
+            <a href="{% url 'user' account.owner.id %}">{{ account.owner.name }}</a>
+            <form action="{% url 'approve-account' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="account_number" value="{{ account.id }}">
+                <input type="hidden" name="back" value="{{ request.path }}">
+                <button name="approved" value="true" type="submit">Approve</button>
+                <button name="approved" value="false" type="submit">Decline</button>
+            </form>
+        </li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+{% endblock %}

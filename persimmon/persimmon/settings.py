@@ -25,7 +25,11 @@ SECRET_KEY = ')dimn^b^qcbpf8stkoinv#5b$&_@@y4!+2v_zys5pt&8ky1ade'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testserver', '127.0.0.1']
+
+ALLOWED_HOSTS = ['testserver',
+                 '127.0.0.1',
+                 'localhost']
+
 
 
 # Application definition
@@ -62,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
+                'website.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
         },
@@ -119,3 +124,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+BOOTSTRAP4 = {
+    'include_jquery': True,
+}
+
+# service integration
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
