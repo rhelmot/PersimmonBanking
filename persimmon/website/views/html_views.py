@@ -5,13 +5,11 @@ from django.http import Http404, HttpResponseBadRequest
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
-from django.contrib.auth import logout as django_logout, login as django_login, password_validation, forms as auth_forms
-from django.urls import reverse
+from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
 from django.conf import settings
 from django.views.decorators.http import require_GET
 
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User
-from ..common import make_user
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 
@@ -75,6 +73,7 @@ class CreatePersimmonUserForm(forms.ModelForm):
         model = User
         fields = ('address', 'phone')
 
+    address = forms.CharField(max_length=200)
     phone = forms.CharField(
         label='Phone Number',
         max_length=12,
