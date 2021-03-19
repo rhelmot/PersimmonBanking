@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -134,5 +134,6 @@ BOOTSTRAP4 = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 SMS_BACKEND = 'sms.backends.twilio.SmsBackend'
-TWILIO_ACCOUNT_SID = 'AC88091a4e6df181eb542cbf0198ee4337'
-TWILIO_AUTH_TOKEN = 'a208dfc33393ee98effb965dbb3c7569'
+os.environ['TWILIO_ACCOUNT_SID'] = 'AC88091a4e6df181eb542cbf0198ee4337'
+os.environ['TWILIO_AUTH_TOKEN'] = 'a208dfc33393ee98effb965dbb3c7569'
+

@@ -1,5 +1,6 @@
 import random
 from decimal import Decimal
+import os
 
 from django import forms
 from django.contrib.auth import authenticate, login as django_login
@@ -158,8 +159,8 @@ def persimmon_login(request, username: str, password: str):
         return {"error": "wrong username or password"}
 
     user = User.objects.get(django_user=django_user)
-    account_sid = 'AC88091a4e6df181eb542cbf0198ee4337'
-    auth_token = 'a208dfc33393ee98effb965dbb3c7569'
+    account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    auth_token = os.environ['TWILIO_AUTH_TOKEN']
     client = Client(account_sid, auth_token)
 
     # sending OTP
