@@ -316,7 +316,7 @@ def mobile_atm_page(request):
     print(user.employee_level)
     myaccounts = BankAccount.objects.filter(owner=user, approval_status=ApprovalStatus.APPROVED)
     otheraccounts = []
-    if(user.employee_level>=EmployeeLevel.TELLER):
+    if user.employee_level>=EmployeeLevel.TELLER :
         otheraccounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED)
         print(otheraccounts)
     return TemplateResponse(request, 'pages/mobile_atm.html', {'accounts':myaccounts, 'level':user.employee_level,
