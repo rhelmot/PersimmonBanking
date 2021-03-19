@@ -5,3 +5,4 @@ pylint-django
 django-bootstrap-datepicker-plus
 django-bootstrap4
 twilio
+sms

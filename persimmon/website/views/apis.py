@@ -8,14 +8,13 @@ from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, H
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
 from twilio.base.exceptions import TwilioRestException
-from twilio.rest import Client
+from sms import send_sms
 
 from . import current_user
 from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
-from sms import send_sms
 
 # phone number is +13236949222
 
