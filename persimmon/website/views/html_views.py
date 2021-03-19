@@ -1,4 +1,3 @@
-import string
 from bootstrap_datepicker_plus import DateTimePickerInput
 
 from django.core import signing, mail
@@ -6,12 +5,11 @@ from django.http import Http404, HttpResponseBadRequest
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
-from django.contrib.auth import logout as django_logout, login as django_login
-from django.urls import reverse
+from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
+from django.conf import settings
 from django.views.decorators.http import require_GET
 
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User
-from ..common import make_user
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 
@@ -70,92 +68,85 @@ def schedule_success(request):
     return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
 
-class CreateUserForm(forms.Form):
-    first_name = forms.CharField(label='First name',
-                                 error_messages={'required': 'Please enter your First name'},
-                                 max_length=30, required=True)
-    last_name = forms.CharField(label='Last Name',
-                                error_messages={'required': 'Please enter your Last name'},
-                                max_length=30, required=True)
-    email = forms.EmailField()
-    username = forms.CharField(label='Username',
-                               error_messages={'required': 'Please enter a Username'},
-                               max_length=30, required=True)
-    phone = forms.CharField(label='Phone Number', max_length=12,
-                            error_messages={'incomplete': 'Enter a phone number.'},
-                            validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
-                            , required=True)
-    address = forms.CharField(label='address', max_length=50, required=True)
-    password = forms.CharField(label='Password', max_length=50, required=True, widget=forms.PasswordInput())
-    confirm_password = forms.CharField(
-        label='Confirm Password',
-        max_length=50,
-        required=True,
-        widget=forms.PasswordInput())
+class CreatePersimmonUserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('address', 'phone')
+
+    address = forms.CharField(max_length=200)
+    phone = forms.CharField(
+        label='Phone Number',
+        max_length=12,
+        validators=[RegexValidator(r'^[0-9]{10}$', 'Enter a 10-digit phone number, e.g. 0123456789.')])
+
+
+class CreateDjangoUserForm(auth_forms.UserCreationForm):
+    class Meta:
+        model = DjangoUser
+        fields = ('first_name', 'last_name', 'email', 'username')
+
+    # these are for some reason autocreated incorrectly wrt the 'required' field. do it manually
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    email = forms.CharField()
 
     def clean(self):
         cleaned = super().clean()
-        password1 = cleaned.get("password")
-        password2 = cleaned.get("confirm_password")
-
-        if password1 != password2:
-            raise forms.ValidationError("Your passwords do not match!")
 
         if DjangoUser.objects.filter(username=cleaned.get("username")).exists():
             raise forms.ValidationError("Username is already taken")
         if DjangoUser.objects.filter(email=cleaned.get("email")).exists():
             raise forms.ValidationError("Email is already in use")
 
-        password = cleaned.get("password")
-        special = '!@#$%^&*()<>?'
-
-        if len(password) < 8:
-            raise forms.ValidationError("Password not long enough")
-        if not any(letter in password for letter in string.ascii_uppercase):
-            raise forms.ValidationError("Password does not contain a capital letter")
-        if not any(letter in password for letter in string.digits):
-            raise forms.ValidationError("Password does not contain a number")
-        if not any(letter in password for letter in special):
-            raise forms.ValidationError("Password does not contain a special character: one of " + special)
+        return cleaned
 
 
 def create_user_page(request):
     current_user(request, expect_not_logged_in=True)
 
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
-        if form.is_valid():
-            new_user = make_user(username=form.cleaned_data['username'],
-                                 first_name=form.cleaned_data['first_name'],
-                                 last_name=form.cleaned_data['last_name'],
-                                 password=form.cleaned_data['password'],
-                                 email=form.cleaned_data['email'],
-                                 phone=form.cleaned_data['phone'],
-                                 address=form.cleaned_data['address'])
-            new_user.save()
+    form1 = CreatePersimmonUserForm(request.POST or None)
+    form2 = CreateDjangoUserForm(request.POST or None)
+    form2.fields['password1'].widget.render_value = True
+    form2.fields['password2'].widget.render_value = True
 
+    if form1.is_valid() and form2.is_valid():
+        verification_code = apis.make_verification_code(form2.cleaned_data['username'], form2.cleaned_data['email'])
+        form2.fields['email_verification'] = forms.CharField()
+        form2.full_clean()
+        if not form2.is_valid():
+            mail.send_mail(
+                "Persimmon verification code",
+                f"Here is the code to verify your email: {verification_code}",
+                settings.EMAIL_SENDER,
+                [form2.cleaned_data['email']],
+            )
+            form2.errors.clear()
+            form2.add_error(
+                'email_verification',
+                'Please check your email and enter the code we sent you here')
+        elif form2.cleaned_data['email_verification'] != verification_code:
+            form2.add_error('email_verification', 'Invalid code')
+
+    if form1.is_valid() and form2.is_valid():
+        try:
+            django_user = form2.save()
+        except Exception as exc:  # pylint: disable=broad-except
+            form2.add_error(None, str(exc))
+        else:
+            form1.instance.django_user = django_user
+            form1.instance.employee_level = EmployeeLevel.CUSTOMER
             try:
-                encoded_signed = bytes.hex(signing.Signer().sign(new_user.email).encode())
-                mail.send_mail(
-                    "Persimmon Account Verification",
-                    f'Please visit the following link to verify your account: '
-                    f'{request.build_absolute_uri(reverse(verify_email) + "?email=" + encoded_signed)}',
-                    'noreply@persimmon.rhelmot.io',
-                    [new_user.email])
-            except Exception:  # pylint: disable=broad-except
-                new_user.delete()
-                new_user.django_user.delete()  # is this legal
-                form.add_error("email", "Could not send email")
+                form1.save()
+            except Exception as exc:  # pylint: disable=broad-except
+                django_user.delete()
+                form1.add_error(None, str(exc))
             else:
-                return TemplateResponse(request, 'pages/create_account_success.html', {
-                    "email": new_user.email,
-                })
-
-    else:
-        form = CreateUserForm()
+                django_login(request, django_user)
+                return TemplateResponse(request, 'pages/create_account_success.html', {})
 
     return TemplateResponse(request, 'pages/create_account.html', {
-        'form': form,
+        'form1': form1,
+        'form2': form2,
     })
 
 
