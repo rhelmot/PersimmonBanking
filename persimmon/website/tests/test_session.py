@@ -35,7 +35,7 @@ class TestSessions(TestCase):
 
         # successful login should work
         session = client.session
-        session['sent_otp'] = '111111'
+        session['sent_otp'] = '111112'
         session['user'] = user.django_user.username
         session.save()
         req = client.post(
@@ -49,7 +49,7 @@ class TestSessions(TestCase):
         req = client.post(
             reverse(apis.otp_check),
             content_type='application/json',
-            data={"otp": "111111"})
+            data={"otp": "111112"})
         self.assertEqual(req.status_code, 200)
         req_data1 = req.json()
         self.assertEqual("error", req_data1)
