@@ -133,4 +133,3 @@ BOOTSTRAP4 = {
 # service integration
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-

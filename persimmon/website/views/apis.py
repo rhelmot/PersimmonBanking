@@ -1,22 +1,22 @@
-from decimal import Decimal
 import random
+from decimal import Decimal
 
+from django import forms
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
-from django import forms
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
-from django.shortcuts import redirect
+from twilio.rest import Client
 
 from . import current_user
 from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
+from .html_views import otp_page
 
-import twilio
-from twilio.rest import Client
 # phone number is +13236949222
 
 
@@ -166,7 +166,7 @@ def persimmon_login(request, username: str, password: str):
     auth_token = 'a208dfc33393ee98effb965dbb3c7569'
     client = Client(account_sid, auth_token)
 
-    message = client.messages.create(
+    client.messages.create(
         body='Your OTP is-'+str(sent_otp),
         from_='+13236949222',
         to=user.phone
@@ -307,6 +307,3 @@ def schedule(request, time: str):
             newapp.save()
             return {}
     return {"error": "No employees available at this time"}
-
-
-
