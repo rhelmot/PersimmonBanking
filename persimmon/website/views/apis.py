@@ -284,23 +284,21 @@ def mobile_atm_handel(request):
     if myaccount.owner == user or user.employee_level>=EmployeeLevel.TELLER:
         if act == "True":
             if myaccount.balance >= ammount > 0:
-                trans = Transaction.objects.create(
+                bankstatement = Transaction.objects.create(
+                    description="Mobile ATM Debit",
+                    account_add=myaccount,
+                    account_subtract= None,
                     transaction=ammount,
-                    account_subtract=myaccount,
-                    description='Mobile ATM Credit',
-                    approval_status=ApprovalStatus.PENDING,
-
-                )
-                trans.save()
+                    approval_status=ApprovalStatus.PENDING)
+                bankstatement.save()
                 return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
-        trans = Transaction.objects.create(
+        bankstatement = Transaction.objects.create(
+            description="Mobile ATM Credit",
+            account_add=None,
+            account_subtract=myaccount,
             transaction=ammount,
-            account_add=myaccount,
-            description='Mobile ATM Debit',
-            approval_status=ApprovalStatus.PENDING,
-
-        )
-        trans.save()
+            approval_status=ApprovalStatus.PENDING)
+        bankstatement.save()
         return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
 
     return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})
