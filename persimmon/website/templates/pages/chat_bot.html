@@ -5,6 +5,20 @@
     <title>Chat Bot</title>
 </head>
 <body>
-    <h1>Chat Bot life</h1>
+    <h1>Persimmon ChatBot</h1>
 </body>
+
+<form method="post">
+    {% csrf_token %}
+
+    <textarea rows=20 cols=60>{{conv}}</textarea>
+
+    <br><br>
+    <input type="textbox" name="user_input" value=""/>
+
+    <button type="submit">Submit</button>
+
+    <input type="hidden" name =conv  value="{{conv}}" />
+    {{resp}}
+</form>
 </html>
