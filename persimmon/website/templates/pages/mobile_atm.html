@@ -50,12 +50,12 @@
         <td style="text-align:center">{{account.pretty_type}}</td>
         <td style="text-align:right">${{account.balance}}</td>
         <td>
-            <form action="{%url 'mobilehandle'%}", method="post">
+            <form action="{% url 'mobilehandle' %}" method="post">
             {% csrf_token %}
             <input type="hidden" name="acc" value="{{ account.account_number }}">
             <input name="number" type="number">
-            <button name="act" value="False" type="submit">Debit</button>
-            <button name="act" value="True" type="submit">Credit</button>
+            <button name="act" value="True" type="submit">Debit</button>
+            <button name="act" value="False" type="submit">Credit</button>
             </form>
 
         </td>
