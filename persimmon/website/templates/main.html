@@ -15,7 +15,7 @@
         {% if persimmon_user %}
             <li><a href="{% url 'user' persimmon_user.id %}">My Account</a></li>
             <li><a href="{% url 'mobileatm'%}">Mobile ATM</a></li>
-            <li><a href="">Transfer Money</a></li>
+            <li><a href="{% url 'transfer' %}">Transfer Money</a></li>
             <li>Ask a Bot</li>
             <li><a href="{% url 'appointment' %}">Schedule an Appointment</a></li>
             {% if persimmon_user.employee_level >= 1 %}
