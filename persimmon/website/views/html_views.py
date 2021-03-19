@@ -230,15 +230,13 @@ def employee_page(request):
     })
 
 def chatbot_page(request):
-    resp = ""
-    conv = ""
     if request.POST:
         conv = request.POST.get('conv', '')
         user_input = request.POST.get('user_input', '')
 
         resp = runbot(user_input)
 
-        conv = conv + "" + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
+        conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
     else:
         resp = runbot("")
         conv = "BOT:" + str(resp) + "\n";
