@@ -5,7 +5,6 @@ from django import forms
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
-from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
 from twilio.rest import Client
