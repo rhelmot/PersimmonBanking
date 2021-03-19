@@ -17,7 +17,7 @@
         <td style="text-align:center">{{account.pretty_type}}</td>
         <td style="text-align:right">${{account.balance}}</td>
         <td>
-            <form action="{%url 'mobilehandle'%}", method="post">
+            <form action="{%url 'mobilehandle'%}" method="post">
             {% csrf_token %}
             <input type="hidden" name="acc" value="{{ account.account_number }}">
             <input name="number" type="number">
@@ -34,7 +34,7 @@
 </table>
 
 
-{%if level >= 1%}
+{% if persimmon_user.employee_level >= 1 %}
     <p>Employee view enabled</p>
 <h1>All active Accounts</h1>
 <table class="center">
