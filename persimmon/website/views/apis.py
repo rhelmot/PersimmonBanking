@@ -3,6 +3,7 @@ import hashlib
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
+from django.db.models import Q
 from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django import forms
 from django.template.response import TemplateResponse
@@ -362,3 +363,30 @@ def schedule(request, time: str):
             newapp.save()
             return {}
     return {"error": "No employees available at this time"}
+
+
+class UserLookupForm(forms.Form):
+    search_term = forms.CharField()
+
+
+def user_lookup(request):
+    current_user(request, required_auth=EmployeeLevel.TELLER)
+    form = UserLookupForm(request.POST)
+
+    if form.is_valid():
+        terms = form.cleaned_data['search_term'].split()
+        query = User.objects
+        for term in terms:
+            query = query.filter(Q(django_user__first_name__icontains=term) |
+                                 Q(django_user__last_name__icontains=term) |
+                                 Q(django_user__email__icontains=term) |
+                                 Q(django_user__username__icontains=term) |
+                                 Q(phone__icontains=term) |
+                                 Q(address__icontains=term))
+    else:
+        query = None
+
+    return TemplateResponse(request, 'pages/user_lookup.html', {
+        'form': form,
+        'query': query,
+    })

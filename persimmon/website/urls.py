@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
     path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
     path('api/bankaccount/new', apis.create_bank_account, name='create-bank-account'),
+    path('user-lookup', apis.user_lookup, name='user-lookup'),
 
     path('reset-password', html_views.reset_password_page),
     path('reset-password/sent', html_views.reset_password_sent),
@@ -41,5 +42,5 @@ urlpatterns = [
     path('edit-phone', html_views.edit_phone_page, name='editphone'),
     path('edit-phone-success', html_views.edit_phone_success),
     path('edit-name', html_views.edit_name_page, name='editname'),
-    path('edit-name-success', html_views.edit_name_success)
+    path('edit-name-success', html_views.edit_name_success),
     ]
