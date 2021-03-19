@@ -1,0 +1,12 @@
+{% extends 'main.html' %}
+{% block title %}User Information{% endblock %}
+{% block body %}
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form2.as_p }}
+        {{ form1.as_p }}
+        <p>
+            <input type="submit">
+        </p>
+    </form>
+{% endblock %}

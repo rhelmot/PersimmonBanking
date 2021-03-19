@@ -1,4 +1,5 @@
 from decimal import Decimal
+import hashlib
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
@@ -6,12 +7,25 @@ from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, H
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
+from django.core import signing, mail
 
 from . import current_user
 from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
-    Appointment
+    Appointment, DjangoUser
 from ..transaction_approval import check_approvals
+
+
+def hashit(string):
+    return hashlib.sha256(string.encode()).hexdigest()
+
+
+def signit(string):
+    return signing.Signer().sign(string)
+
+
+def make_verification_code(*args, digits=6):
+    return str(int(hashit(signit(''.join(hashit(arg) for arg in args))), 16) % (10 ** digits))
 
 
 class CreateBankAccountForm(forms.ModelForm):
@@ -127,25 +141,6 @@ def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
 
 
 @api_function
-def get_pending_transactions(request, account_id: int):
-    current_user(request, required_auth=EmployeeLevel.TELLER)
-    try:
-        account = BankAccount.objects.get(id=account_id)
-    except BankAccount.DoesNotExist:
-        return {"error": "No such account"}
-
-    pendingtransactions = account.transactions.filter(approval_status=ApprovalStatus.PENDING)
-    return [{
-        'transactionid': creditdebit.id,
-        'account_add': creditdebit.account_add.id if creditdebit.account_add is not None else None,
-        'account_subtract': creditdebit.account_subtract.id if creditdebit.account_subtract is not None else None,
-        'transaction': creditdebit.transaction,
-        'description': creditdebit.description,
-        'approval_status': creditdebit.approval_status,
-    } for creditdebit in pendingtransactions]
-
-
-@api_function
 def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
     django_user = authenticate(request, username=username, password=password)
@@ -159,6 +154,100 @@ def persimmon_login(request, username: str, password: str):
 @api_function
 def login_status(request):
     return {"logged_in": request.user.is_authenticated}
+
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('address', 'phone')
+
+
+class DjangoUserForm(forms.ModelForm):
+    class Meta:
+        model = DjangoUser
+        fields = ('first_name', 'last_name', 'email')
+
+
+def edit_user(request, user_id):
+    # load the users we're working with - the editor and the to-be-edited
+    user_editor = current_user(request)
+    try:
+        user_edited = User.objects.get(id=user_id)
+    except User.DoesNotExist as exc:
+        raise Http404("No such user") from exc
+    original_email = user_edited.email
+
+    # check if editing this user is allowed, and furthermore,
+    # whether we are allowed to bypass the verification steps.
+    # we use editing_self to indicate whether verification is required
+    if user_editor == user_edited:
+        editing_self = True
+    elif user_editor.employee_level >= EmployeeLevel.MANAGER:
+        editing_self = False
+    else:
+        raise Http404("Cannot edit this user")
+
+    # collect the post data into form objects
+    form1 = UserForm(request.POST or None, instance=user_edited, prefix='persimmon')
+    form2 = DjangoUserForm(request.POST or None, instance=user_edited.django_user, prefix='django')
+
+    # handle the complex case: email verification required
+    # we make two verification codes to certify the transition from one email to another
+    # we ad-hoc add new fields to our form and re-collect the post data
+    # if this is first submission, this just shows the user more fields to fill in
+    # if this is the second submission, this retroactively accounts for the fact that we added these fields
+    #
+    # this logic could mayyyyybe live inside the clean() method
+    # maybe it's even supposed to
+    # but the logic with the verification fields being required sometimes but not others,
+    # which can only be figured out after clean has happened? COMPLICATED
+    if form1.is_valid() and form2.is_valid() and editing_self and form2.cleaned_data['email'] != original_email:
+        # code 1 says username wants to change to new email, certified by old email
+        verification_code_1 = make_verification_code(
+            user_edited.username,
+            form2.cleaned_data['email'],
+            original_email)
+        # code 2 says username wants to change to new email, certified by new email
+        verification_code_2 = make_verification_code(
+            user_edited.username,
+            form2.cleaned_data['email'],
+            form2.cleaned_data['email'])
+        form2.fields['email_verification_1'] = forms.CharField()
+        form2.fields['email_verification_2'] = forms.CharField()
+        form2.full_clean()
+        if not form2.is_valid():
+            mail.send_mail(
+                "Persimmon verification code",
+                f"Here is the code 1 to update your email: {verification_code_1}",
+                'noreply@persimmon.rhelmot.io',
+                [original_email]
+            )
+            mail.send_mail(
+                "Persimmon verification code",
+                f"Here is the code 2 to update your email: {verification_code_2}",
+                'noreply@persimmon.rhelmot.io',
+                [form2.cleaned_data['email']]
+            )
+            form2.errors.clear()
+            form2.add_error(
+                'email_verification_1',
+                'Please check both your emails and enter the codes we sent you here')
+        elif form2.cleaned_data['email_verification_1'] != verification_code_1 or \
+                form2.cleaned_data['email_verification_2'] != verification_code_2:
+            form2.add_error('email_verification_1', 'Invalid codes')
+
+    # if after all that checking the forms are valid, take any actions we need to
+    if form1.is_valid() and form2.is_valid():
+        form1.save()
+        form2.save()
+        form2.fields.pop('email_verification_1', None)
+        form2.fields.pop('email_verification_2', None)
+        form2.add_error(None, "Update success!")
+
+    return TemplateResponse(request, 'pages/edit_user.html', {
+        'form1': form1,
+        'form2': form2,
+    })
 
 
 def get_my_info(request):
@@ -204,6 +293,7 @@ def change_my_address(request, new_address: str):
     return {
         'my new address': user.address
     }
+
 
 @api_function
 def change_my_name(request, new_first: str, new_last: str):
