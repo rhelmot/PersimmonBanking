@@ -364,6 +364,37 @@ def schedule(request, time: str):
             return {}
     return {"error": "No employees available at this time"}
 
+@require_POST
+def mobile_atm_handel(request):
+    user = current_user(request, expect_not_logged_in=False)
+    accountnumber = request.POST.get('acc')
+    ammount = int(request.POST.get('number'))
+    debit = request.POST.get('act') == "True"
+    try:
+        myaccount = BankAccount.objects.get(id=accountnumber)
+    except BankAccount.DoesNotExist:
+        myaccount = None
+    if myaccount is None or ammount <= 0 or (myaccount.owner != user and user.employee_level < EmployeeLevel.TELLER):
+        return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})
+
+    if debit:
+        bankstatement = Transaction.objects.create(
+            description="Mobile ATM Debit",
+            account_add=None,
+            account_subtract=myaccount,
+            transaction=ammount,
+            approval_status=ApprovalStatus.PENDING)
+        bankstatement.add_approval(user)
+    else:
+        bankstatement = Transaction.objects.create(
+            description="Mobile ATM Credit",
+            account_add=myaccount,
+            account_subtract=None,
+            transaction=ammount,
+            approval_status=ApprovalStatus.PENDING)
+        bankstatement.add_approval(user)
+    return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
+
 
 class UserLookupForm(forms.Form):
     search_term = forms.CharField()

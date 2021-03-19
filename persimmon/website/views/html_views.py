@@ -300,3 +300,16 @@ def edit_name_page(request):
         'api': urls.reverse(apis.change_my_name),
         'success': urls.reverse(edit_name_success)
     })
+
+
+def mobile_atm_page(request):
+    user = current_user(request, expect_not_logged_in=False)
+    myaccounts = BankAccount.objects.filter(owner=user, approval_status=ApprovalStatus.APPROVED)
+    otheraccounts = []
+    if user.employee_level >= EmployeeLevel.TELLER:
+        otheraccounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED)
+
+    return TemplateResponse(request, 'pages/mobile_atm.html', {
+        'accounts': myaccounts,
+        'other': otheraccounts
+    })
