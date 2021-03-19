@@ -41,5 +41,8 @@ urlpatterns = [
     path('edit-phone', html_views.edit_phone_page, name='editphone'),
     path('edit-phone-success', html_views.edit_phone_success),
     path('edit-name', html_views.edit_name_page, name='editname'),
-    path('edit-name-success', html_views.edit_name_success)
+    path('edit-name-success', html_views.edit_name_success),
+    path('mobile-atm', html_views.mobile_atm_page, name='mobileatm'),
+    path('mobile-atm-handel', apis.mobile_atm_handel, name='mobilehandle')
+
     ]

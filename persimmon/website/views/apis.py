@@ -272,3 +272,41 @@ def schedule(request, time: str):
             newapp.save()
             return {}
     return {"error": "No employees available at this time"}
+
+@require_POST
+def mobile_atm_handel(request):
+    user = current_user(request, expect_not_logged_in=False)
+    accountnumber = request.POST.get('acc')
+    ammount = int(request.POST.get('number'))
+    act = request.POST.get('act')
+    ammount = abs(ammount)
+    myaccount = BankAccount.objects.get(id=accountnumber)
+    if myaccount.owner == user or user.employee_level>=EmployeeLevel.TELLER:
+        if act == "True":
+            if myaccount.balance >= ammount and ammount > 0:
+                myaccount.balance = myaccount.balance-ammount
+                myaccount.save()
+                trans = Transaction.objects.create(
+                    transaction=ammount,
+                    account_subtract=myaccount,
+                    description=f'Mobile ATM Credit',
+                    approval_status=ApprovalStatus.APPROVED,
+                    balance_subtract=myaccount.balance,
+                    balance_add=0
+                )
+                trans.save()
+                return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
+        myaccount.balance = myaccount.balance + ammount
+        myaccount.save()
+        trans = Transaction.objects.create(
+            transaction=ammount,
+            account_add=myaccount,
+            description=f'Mobile ATM Debit',
+            approval_status=ApprovalStatus.APPROVED,
+            balance_add=myaccount.balance,
+            balance_subtract=0
+        )
+        trans.save()
+        return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
+
+    return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})

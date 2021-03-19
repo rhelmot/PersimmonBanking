@@ -1,0 +1,69 @@
+{% extends "main.html" %}
+{% block title %}Mobile ATM{% endblock %}
+{% block body %}
+<meta charset="UTF-8">
+
+<h1>Here are your accounts</h1>
+<table class="center">
+    <tr>
+        <th>Account Number</th>
+        <th>Type</th>
+        <th>Current Balance</th>
+        <th>Ammount to Credit/Debit</th>
+    </tr>
+    {% for account in accounts %}
+    <tr>
+        <td style="text-align:center">{{account.account_number}} </td>
+        <td style="text-align:center">{{account.pretty_type}}</td>
+        <td style="text-align:right">${{account.balance}}</td>
+        <td>
+            <form action="{%url 'mobilehandle'%}", method="post">
+            {% csrf_token %}
+            <input type="hidden" name="acc" value="{{ account.account_number }}">
+            <input name="number" type="number">
+            <button name="act" value="True" type="submit">Debit</button>
+            <button name="act" value="False" type="submit">Credit</button>
+            </form>
+
+        </td>
+
+
+    </tr>
+    {%endfor%}
+
+</table>
+
+
+{%if level >= 1%}
+    <p>Employee view enabled</p>
+<h1>All active Accounts</h1>
+<table class="center">
+    <tr>
+        <th>Account Number</th>
+        <th>Type</th>
+        <th>Current Balance</th>
+        <th>Ammount to Credit/Debit</th>
+    </tr>
+    {% for account in other %}
+    <tr>
+        <td style="text-align:center">{{account.account_number}} </td>
+        <td style="text-align:center">{{account.pretty_type}}</td>
+        <td style="text-align:right">${{account.balance}}</td>
+        <td>
+            <form action="{%url 'mobilehandle'%}", method="post">
+            {% csrf_token %}
+            <input type="hidden" name="acc" value="{{ account.account_number }}">
+            <input name="number" type="number">
+            <button name="act" value="False" type="submit">Debit</button>
+            <button name="act" value="True" type="submit">Credit</button>
+            </form>
+
+        </td>
+
+
+    </tr>
+    {%endfor%}
+
+</table>
+{%endif%}
+{% endblock %}
