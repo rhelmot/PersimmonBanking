@@ -8,3 +8,5 @@ django-bootstrap4
 django-bootstrap-datepicker-plus
 twilio
 django-sms
+pillow
+num2words

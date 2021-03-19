@@ -84,7 +84,7 @@ class CreatePersimmonUserForm(forms.ModelForm):
         model = User
         fields = ('address', 'phone')
 
-    address = forms.CharField(max_length=200)
+    address = forms.CharField(max_length=200, widget=forms.Textarea)
     phone = forms.CharField(
         label='Phone Number',
         max_length=12,
@@ -314,22 +314,46 @@ def edit_name_page(request):
     })
 
 
-def mobile_atm_page(request):
-    user = current_user(request, expect_not_logged_in=False)
-    myaccounts = BankAccount.objects.filter(owner=user, approval_status=ApprovalStatus.APPROVED)
-    otheraccounts = []
-    if user.employee_level >= EmployeeLevel.TELLER:
-        otheraccounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED)
-
-    return TemplateResponse(request, 'pages/mobile_atm.html', {
-        'accounts': myaccounts,
-        'other': otheraccounts
-    })
-
-
 class OwnAccountField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.str_with_balance()
+
+
+class MobileATMForm(forms.Form):
+    amount = forms.DecimalField(decimal_places=2, min_value=0.01)
+    account = OwnAccountField(None)
+    transfer_type = forms.ChoiceField(choices=[('CREDIT', "Deposit"), ('DEBIT', "Withdrawal")])
+    check_recipient = forms.CharField(widget=forms.Textarea(), required=False)
+
+    def __init__(self, qs_1, is_employee, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if is_employee:
+            self.fields['account'] = forms.ModelChoiceField(None)
+        self.fields['account'].queryset = qs_1
+
+
+def mobile_atm_page(request):
+    user = current_user(request, expect_not_logged_in=False)
+    filter_owner = {'owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
+    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
+    form = MobileATMForm(accounts, user.employee_level != EmployeeLevel.CUSTOMER, request.POST or None)
+
+    if form.is_valid():
+        debit = form.cleaned_data['transfer_type'] == 'DEBIT'
+        trans = Transaction.objects.create(
+            description="Mobile ATM Debit" if debit else "Mobile ATM Credit",
+            account_add=None if debit else form.cleaned_data['account'],
+            account_subtract=form.cleaned_data['account'] if debit else None,
+            transaction=form.cleaned_data['amount'],
+            approval_status=ApprovalStatus.PENDING,
+            check_recipient=form.cleaned_data['check_recipient'] or None)
+
+        trans.add_approval(user)
+        return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
+
+    return TemplateResponse(request, 'pages/mobile_atm.html', {
+        'form': form,
+    })
 
 
 class TransferForm(forms.Form):

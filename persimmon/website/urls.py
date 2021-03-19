@@ -45,6 +45,7 @@ urlpatterns = [
     path('mobile-atm', html_views.mobile_atm_page, name='mobileatm'),
     path('mobile-atm-handel', apis.mobile_atm_handel, name='mobilehandle'),
     path('transfer', html_views.transfer_page, name='transfer'),
+    path('transaction/<int:tid>/check.png', apis.check_image, name='check')
 
     path('login', apis.persimmon_login, name='login'),
     path('otp', html_views.otp_page, name='otp'),
