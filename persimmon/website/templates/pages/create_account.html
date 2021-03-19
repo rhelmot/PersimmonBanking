@@ -4,7 +4,8 @@
     <p>Please enter your information to create an account:</p>
     <form action="{{ request.path }}" method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
-        <p><input type="submit"></p>
+        {{ form2.as_p }}
+        {{ form1.as_p }}
+        <p><input type="submit" value="Sign Up"></p>
     </form>
 {% endblock %}

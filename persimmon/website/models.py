@@ -22,11 +22,9 @@ class User(models.Model):
     phone = models.CharField(max_length=10)
     address = models.CharField(max_length=200)
     employee_level = models.IntegerField(choices=EmployeeLevel.choices)
-    email_verified = models.BooleanField(default=False)
-    phone_verified = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'<User {self.name}>'
+        return f'{self.name} ({self.id})'
 
     @property
     def email(self):
@@ -74,7 +72,10 @@ class BankAccount(models.Model):
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
 
     def __str__(self):
-        return f'<BankAccount {self.id} ({self.owner.name})>'
+        return f'{self.account_number} ({self.owner.name} {self.pretty_type})'
+
+    def str_with_balance(self):
+        return f'{self.account_number} (${self.balance} {self.pretty_type})'
 
     @property
     def account_number(self):
@@ -156,7 +157,7 @@ class Transaction(models.Model):
             return BankStatementEntry(self.id, self.date, self.transaction, self.balance_add, self.description)
         if self.account_subtract == account:
             # pylint: disable=invalid-unary-operand-type
-            return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_add, self.description)
+            return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_subtract, self.description)
         raise Exception("Called for_one_account with account not associated with transaction")
 
 
