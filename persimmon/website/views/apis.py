@@ -9,6 +9,7 @@ from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
 from twilio.base.exceptions import TwilioRestException
 from sms import send_sms
+from twilio.rest import Client
 
 from . import current_user
 from ..middleware import api_function
@@ -17,6 +18,7 @@ from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, Us
 from ..transaction_approval import check_approvals
 
 # phone number is +13236949222
+from ...persimmon import settings
 
 
 class CreateBankAccountForm(forms.ModelForm):
@@ -158,16 +160,18 @@ def persimmon_login(request, username: str, password: str):
         return {"error": "wrong username or password"}
 
     user = User.objects.get(django_user=django_user)
+    account_sid = settings.TWILIO_ACCOUNT_SID
+    auth_token = settings.TWILIO_AUTH_TOKEN
+    client = Client(account_sid, auth_token)
 
     # sending OTP
-    sent_otp = random.randint(100000, 999999)
+    sent_otp = str(random.randint(100000, 999999))
     try:
-        message= send_sms(
-            'Your OTP is-'+str(sent_otp),
-            '+13236949222',
-            user.phone,
-            fail_silently=False
 
+        message = client.messages.create(
+            body='Your required otp is '+sent_otp,
+            from_='+15017122661',
+            to=user.phone
         )
         print(message)
     except TwilioRestException as ex:
