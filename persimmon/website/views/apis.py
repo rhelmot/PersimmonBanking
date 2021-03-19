@@ -15,7 +15,7 @@ from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
 from django.conf import settings
-from django.core import signing, mail, files
+from django.core import signing, mail
 from sms import send_sms
 
 from . import current_user
@@ -420,20 +420,6 @@ def reset_password(request, email: str):
         raise Http404("No such email in our databases...") from exc
     # TODO send an email here... lol
     return {}
-
-
-@require_POST
-def mobile_atm_handel(request):
-    user = current_user(request, expect_not_logged_in=False)
-    accountnumber = request.POST.get('acc')
-    ammount = int(request.POST.get('number'))
-    debit = request.POST.get('act') == "True"
-    try:
-        myaccount = BankAccount.objects.get(id=accountnumber)
-    except BankAccount.DoesNotExist:
-        myaccount = None
-    if myaccount is None or ammount <= 0 or (myaccount.owner != user and user.employee_level < EmployeeLevel.TELLER):
-        return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})
 
 
 
