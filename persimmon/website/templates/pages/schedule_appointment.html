@@ -1,18 +1,12 @@
 {% extends "main.html" %}
 {% block body %}
-    <div style="position:center">
-        <div style="position:center; padding-left: 30%;padding-top :10% ; padding-right: 30%">
-            <fieldset style="border: 2px solid black; padding: 25px">
-                <legend>Appointment:</legend>
-                <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-                {% load bootstrap4 %}
-                {% bootstrap_css %}
-                {% bootstrap_javascript jquery='full' %}
-                {{ form.media }}
-                {% include "magic_form.html" with form=form api=api success=success %}
-            </fieldset>
-        </div>
-    </div>
+    <fieldset>
+        <legend>Appointment:</legend>
+        {{ form.media }}
+        <form action="{{ request.path }}" method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <p><input type="submit" value="Submit"></p>
+        </form>
+    </fieldset>
 {% endblock %}

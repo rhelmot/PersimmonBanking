@@ -9,7 +9,7 @@ from django.contrib.auth import logout as django_logout, login as django_login, 
 from django.conf import settings
 from django.views.decorators.http import require_GET
 
-from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction
+from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 
@@ -56,16 +56,27 @@ class ScheduleAppointment(forms.Form):
 
 
 def schedule_appointment_page(request):
+    user = current_user(request)
+    form = ScheduleAppointment(request.POST or None)
+
+    if form.is_valid():
+        for teller in User.objects.filter(employee_level=1):
+            if not Appointment.objects.filter(employee=teller, time=form.cleaned_data['time']):
+                newapp = Appointment.objects.create(
+                    employee=teller,
+                    customer=user,
+                    time=form.cleaned_data['time'],
+                )
+                newapp.save()
+                return TemplateResponse(request, 'pages/appointmentbooked.html', {
+                    'teller': teller.name,
+                    'time': form.cleaned_data['time'],
+                })
+        form.add_error(None, "No employees available at given time")
+
     return TemplateResponse(request, 'pages/schedule_appointment.html', {
-        'form': ScheduleAppointment(),
-        'api': urls.reverse(apis.schedule),
-        'success': urls.reverse(schedule_success)
+        'form': form,
     })
-
-
-def schedule_success(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
 
 class CreatePersimmonUserForm(forms.ModelForm):
