@@ -9,7 +9,7 @@ from django.contrib.auth import logout as django_logout, login as django_login, 
 from django.conf import settings
 from django.views.decorators.http import require_GET
 
-from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User
+from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 
@@ -312,4 +312,51 @@ def mobile_atm_page(request):
     return TemplateResponse(request, 'pages/mobile_atm.html', {
         'accounts': myaccounts,
         'other': otheraccounts
+    })
+
+
+class OwnAccountField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.str_with_balance()
+
+
+class TransferForm(forms.Form):
+    amount = forms.DecimalField(decimal_places=2, min_value=0.01)
+    account_1 = OwnAccountField(None)
+    transfer_type = forms.ChoiceField(choices=[('SEND', "Send To"), ('RECV', "Request From")])
+    account_2 = forms.ModelChoiceField(None)
+
+    def __init__(self, qs_1, qs_2, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['account_1'].queryset = qs_1
+        self.fields['account_2'].queryset = qs_2
+
+
+def transfer_page(request):
+    user = current_user(request)
+    qs_2 = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED)
+    if user.employee_level == 0:
+        qs_1 = BankAccount.objects.filter(owner=user, approval_status=ApprovalStatus.APPROVED)
+    else:
+        qs_1 = qs_2
+    form = TransferForm(qs_1, qs_2, request.POST or None)
+    if form.is_valid():
+        send = form.cleaned_data['transfer_type'] == 'SEND'
+        sender = form.cleaned_data['account_1'] if send else form.cleaned_data['account_2']
+        receiver = form.cleaned_data['account_2'] if send else form.cleaned_data['account_1']
+        trans = Transaction.objects.create(
+            transaction=form.cleaned_data['amount'],
+            account_add=receiver,
+            account_subtract=sender,
+            description=f'transfer from {sender.account_number} to {receiver.account_number}',
+            approval_status=ApprovalStatus.PENDING,
+        )
+
+        trans.add_approval(user)
+        check_approvals(trans, user)
+
+        return TemplateResponse(request, 'pages/transfer_success.html', {})
+
+    return TemplateResponse(request, 'pages/transfer.html', {
+        'form': form,
     })
