@@ -15,7 +15,6 @@ from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
-from .html_views import otp_page
 
 # phone number is +13236949222
 
@@ -175,7 +174,7 @@ def persimmon_login(request, username: str, password: str):
     # django_login(request, django_user)
     request.session['sent_otp'] = sent_otp
     request.session['user'] = django_user
-    return redirect(otp_page)
+    return {}
 
 
 @api_function
