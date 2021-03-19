@@ -133,3 +133,6 @@ BOOTSTRAP4 = {
 # service integration
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+SMS_BACKEND = 'sms.backends.twilio.SmsBackend'
+TWILIO_ACCOUNT_SID = 'AC88091a4e6df181eb542cbf0198ee4337'
+TWILIO_AUTH_TOKEN = 'a208dfc33393ee98effb965dbb3c7569'

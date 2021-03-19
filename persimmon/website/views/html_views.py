@@ -16,8 +16,6 @@ from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 
 
-
-
 # index for website/ to check if url views are working
 def index(request):
     return TemplateResponse(request, 'pages/home.html', {})

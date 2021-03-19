@@ -1,6 +1,5 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-
 from ..views import apis, html_views
 from ..common import make_user
 
@@ -14,7 +13,7 @@ class TestSessions(TestCase):
             data={}).json()['logged_in']
 
     def test_login_logout(self):
-        make_user('username', password='password')
+        user = make_user('username', password='password', phone="+14809557649")
         client = Client()
 
         # login with invalid creds should fail
@@ -35,6 +34,10 @@ class TestSessions(TestCase):
         self.assertFalse(self.is_logged_in(client))
 
         # successful login should work
+        session = client.session
+        session['sent_otp'] = '111111'
+        session['user'] = user.django_user.username
+        session.save()
         req = client.post(
             reverse(apis.persimmon_login),
             content_type='application/json',
@@ -42,8 +45,15 @@ class TestSessions(TestCase):
         self.assertEqual(req.status_code, 200)
         req_data = req.json()
         self.assertNotIn("error", req_data)
-        self.assertTrue(self.is_logged_in(client))
 
+        req = client.post(
+            reverse(apis.otp_check),
+            content_type='application/json',
+            data={"otp": "111111"})
+        self.assertEqual(req.status_code, 200)
+        req_data1 = req.json()
+        self.assertEqual("error", req_data1)
+        self.assertTrue(self.is_logged_in(client))
         # login should not work once you're logged in
         req = client.post(
             reverse(apis.persimmon_login),
