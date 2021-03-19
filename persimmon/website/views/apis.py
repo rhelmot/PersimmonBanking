@@ -1,4 +1,5 @@
 from decimal import Decimal
+import random
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
@@ -6,12 +7,17 @@ from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, H
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
+from django.shortcuts import redirect
 
 from . import current_user
 from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
     Appointment
 from ..transaction_approval import check_approvals
+
+import twilio
+from twilio.rest import Client
+# phone number is +13236949222
 
 
 class CreateBankAccountForm(forms.ModelForm):
@@ -150,10 +156,39 @@ def persimmon_login(request, username: str, password: str):
     current_user(request, expect_not_logged_in=True)
     django_user = authenticate(request, username=username, password=password)
     if django_user is None:
-        return {"error": "could not authenticate"}
+        return {"error": "wrong username or password"}
 
-    django_login(request, django_user)
-    return {}
+    user = User.objects.filter(django_user=django_user)
+
+    # sending OTP
+    sent_otp = random.randint(100000, 999999)
+    account_sid = 'AC88091a4e6df181eb542cbf0198ee4337'
+    auth_token = 'a208dfc33393ee98effb965dbb3c7569'
+    client = Client(account_sid, auth_token)
+
+    message = client.messages.create(
+        body='Your OTP is-'+str(sent_otp),
+        from_='+13236949222',
+        to=user.phone
+
+    )
+    # django_login(request, django_user)
+    request.session['sent_otp'] = sent_otp
+    request.session['user'] = django_user
+    return redirect(otp_page)
+
+
+@api_function
+def otp_check(request, otp: str):
+    current_user(request, expect_not_logged_in=True)
+    django_user = request.session['user']
+    sent_otp = request.session['sent_otp']
+
+    if otp == sent_otp:
+        django_login(request, django_user)
+        return{}
+
+    return {'error': ' Wrong OTP'}
 
 
 @api_function
@@ -272,3 +307,6 @@ def schedule(request, time: str):
             newapp.save()
             return {}
     return {"error": "No employees available at this time"}
+
+
+

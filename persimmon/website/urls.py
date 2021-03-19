@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/session/login', apis.persimmon_login),
     path('api/session/status', apis.login_status),
     path('api/schedule', apis.schedule),
+    path('api/otpcheck', apis.otp_check),
 
     path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
     path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
@@ -41,5 +42,10 @@ urlpatterns = [
     path('edit-phone', html_views.edit_phone_page, name='editphone'),
     path('edit-phone-success', html_views.edit_phone_success),
     path('edit-name', html_views.edit_name_page, name='editname'),
-    path('edit-name-success', html_views.edit_name_success)
+    path('edit-name-success', html_views.edit_name_success),
+
+    path('login', html_views.login_page, name='login'),
+    path('otp', html_views.otp_page, name='otp'),
+    path('otp/success', html_views.otp_success)
+
     ]

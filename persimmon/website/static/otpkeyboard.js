@@ -32,7 +32,7 @@ const Keyboard = {
     document.body.appendChild(this.elements.main);
 
     //auto use
-    document.querySelectorAll(".use-keyboard-input").forEach(element =>{
+    document.querySelectorAll(".use-otpkeyboard-input").forEach(element =>{
         element.addEventListener("focus", () =>{
             this.open(element.value, Currentvalue =>{
                 element.value= Currentvalue;
@@ -61,7 +61,7 @@ const Keyboard = {
 
           //attributes
           keyElement.setAttribute("type","button");
-          keyElement.classList.add("keyboard_key");
+          keyElement.classList.add("keyboard_key","keyboard_key--wide",);
 
           switch (key){
               case "backspace":
