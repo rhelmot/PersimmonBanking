@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
     {% load static %}
+    {% load bootstrap4 %}
     <meta charset="UTF-8">
     <title>{% block title %}Persimmon Banking{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    {% bootstrap_javascript jquery='full' %}
     <script src="{% static "script.js" %}"></script>
+
+    {% bootstrap_css %}
     <link rel="stylesheet" type="text/css" href="{% static "style.css" %}">
+
 </head>
 <body>
 

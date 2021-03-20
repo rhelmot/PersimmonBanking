@@ -12,8 +12,7 @@ from django.core import signing, mail
 
 from . import current_user
 from ..middleware import api_function
-from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
-    Appointment, DjangoUser
+from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser
 from ..transaction_approval import check_approvals
 
 
@@ -349,20 +348,6 @@ def reset_password(request, email: str):
     # TODO send an email here... lol
     return {}
 
-
-@api_function
-def schedule(request, time: str):
-    user = current_user(request, expect_not_logged_in=False)
-    for empteller in User.objects.all().filter(employee_level=1):
-        if not Appointment.objects.filter(employee=empteller, time=time):
-            newapp = Appointment.objects.create(
-                employee=empteller,
-                customer=user,
-                time=time
-            )
-            newapp.save()
-            return {}
-    return {"error": "No employees available at this time"}
 
 @require_POST
 def mobile_atm_handel(request):

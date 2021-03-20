@@ -16,7 +16,6 @@ urlpatterns = [
     path('api/resetpassword', apis.reset_password),
     path('api/session/login', apis.persimmon_login),
     path('api/session/status', apis.login_status),
-    path('api/schedule', apis.schedule),
 
     path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
     path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
@@ -32,7 +31,6 @@ urlpatterns = [
     path('account-statement/<int:number>', html_views.statement_page, name='statement'),
     path('logout', html_views.logout, name="logout"),
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
-    path('appointment_success', html_views.schedule_success),
     path('employee-view', html_views.employee_page, name='employee'),
     path('user-info', html_views.show_info_page, name='userinfo'),
     path('edit-email', html_views.edit_email_page, name='editemail'),
