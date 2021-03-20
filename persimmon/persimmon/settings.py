@@ -140,3 +140,4 @@ if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'test':
     SMS_BACKEND = 'sms.backends.locmem.SmsBackend'
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+SMS_SENDER = '+15017122661'

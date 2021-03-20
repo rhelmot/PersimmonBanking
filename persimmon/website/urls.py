@@ -44,7 +44,7 @@ urlpatterns = [
     path('edit-name', html_views.edit_name_page, name='editname'),
     path('edit-name-success', html_views.edit_name_success),
 
-    path('login', html_views.login_page, name='login'),
+    path('login', apis.persimmon_login, name='login'),
     path('otp', html_views.otp_page, name='otp'),
     path('otp/success', html_views.otp_success)
 

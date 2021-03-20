@@ -1,5 +1,4 @@
 from decimal import Decimal
-import os
 import random
 
 from django import forms
@@ -8,6 +7,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
+from django.conf import settings
 from sms import send_sms
 
 from . import current_user
@@ -150,28 +150,64 @@ def get_pending_transactions(request, account_id: int):
     } for creditdebit in pendingtransactions]
 
 
-@api_function
-def persimmon_login(request, username: str, password: str):
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput())
+
+
+def persimmon_login(request):
     current_user(request, expect_not_logged_in=True)
-    django_user = authenticate(request, username=username, password=password)
-    if django_user is None:
-        return {"error": "wrong username or password"}
+    form = LoginForm(request.POST or None)
+    django_user = persimmon_user = None
 
-    try:
-        persimmon_user = User.objects.get(django_user=django_user)
-    except User.DoesNotExist:
-        return {"error": "wrong username or password"}
+    # pass 1: check authentication
+    if form.is_valid():
+        django_user = authenticate(
+            request,
+            username=form.cleaned_data['username'],
+            password=form.cleaned_data['password'])
+        if django_user is None:
+            form.add_error(None, "Username or password is incorrect")
 
-    otp = '%06d' % random.randint(0, 999999)
-    request.session['sent_otp'] = otp
-    request.session['username'] = django_user.username
+        try:
+            persimmon_user = User.objects.get(django_user=django_user)
+        except User.DoesNotExist:
+            form.add_error(None, "Username or password is incorrect")
 
-    send_sms(
-        f'Your Persimmon login code is {otp}',
-        originator='+15017122661',
-        recipients=[persimmon_user.phone])
+    # pass 2: check otp
+    if form.is_valid():
+        # if we get this far and we need to render the form again don't wipe the password and display the otp field
+        form.fields['password'].widget.render_value = True
+        form.fields['login_code'] = forms.CharField()
+        form.full_clean()
 
-    return {}
+        # if the form is no longer valid no otp was not entered, generate and send it
+        if not form.is_valid():
+            form.errors.clear()
+            form.add_error(None, "Please enter the code we just sent to your phone")
+
+            otp = '%06d' % random.randint(0, 999999)
+            request.session['sent_otp'] = otp
+            request.session['username'] = django_user.username
+
+            send_sms(
+                f'Your Persimmon login code is {otp}',
+                originator=settings.SMS_SENDER,
+                recipients=[persimmon_user.phone])
+
+        # if the otp or cached username mismatch then error
+        elif form.cleaned_data['login_code'] != request.session.get('sent_otp', None) or \
+                form.cleaned_data['username'] != request.session.get('username', None):
+            form.add_error('login_code', 'Invalid code')
+
+        # got em
+        else:
+            django_login(request, django_user)
+            return TemplateResponse(request, 'pages/login_success.html', {})
+
+    return TemplateResponse(request, 'pages/login.html', {
+        'form': form,
+    })
 
 
 @api_function
