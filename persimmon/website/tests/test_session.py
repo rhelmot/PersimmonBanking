@@ -34,10 +34,6 @@ class TestSessions(TestCase):
         self.assertFalse(self.is_logged_in(client))
 
         # successful login should work
-        session = client.session
-        session['sent_otp'] = '111111'
-        session['user'] = user.django_user.username
-        session.save()
         req = client.post(
             reverse(apis.persimmon_login),
             content_type='application/json',

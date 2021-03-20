@@ -1,6 +1,6 @@
-import random
 from decimal import Decimal
 import os
+import random
 
 from django import forms
 from django.contrib.auth import authenticate, login as django_login
@@ -8,8 +8,7 @@ from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
-from twilio.base.exceptions import TwilioRestException
-from twilio.rest import Client
+from sms import send_sms
 
 from . import current_user
 from ..middleware import api_function
@@ -158,42 +157,34 @@ def persimmon_login(request, username: str, password: str):
     if django_user is None:
         return {"error": "wrong username or password"}
 
-    user = User.objects.get(django_user=django_user)
-    account_sid = os.environ['TWILIO_ACCOUNT_SID']
-    auth_token = os.environ['TWILIO_AUTH_TOKEN']
-    client = Client(account_sid, auth_token)
-
-    # sending OTP
-    sent_otp = str(random.randint(100000, 999999))
     try:
+        persimmon_user = User.objects.get(django_user=django_user)
+    except User.DoesNotExist:
+        return {"error": "wrong username or password"}
 
-        message = client.messages.create(
-            body='Your required otp is '+sent_otp,
-            from_='+15017122661',
-            to=user.phone
-        )
-        print(message)
-    except TwilioRestException as ex:
-        print(ex)
-    # django_login(request, django_user)
+    otp = '%06d' % random.randint(0, 999999)
+    request.session['sent_otp'] = otp
+    request.session['username'] = django_user.username
 
-    request.session['sent_otp'] = sent_otp
-    request.session['user'] = user.django_user.username
+    send_sms(
+        f'Your Persimmon login code is {otp}',
+        originator='+15017122661',
+        recipients=[persimmon_user.phone])
+
     return {}
 
 
 @api_function
 def otp_check(request, otp: str):
     current_user(request, expect_not_logged_in=True)
-    django_user = request.session['user']
-    sent_otp = str(request.session['sent_otp'])
-    user = User.objects.get(django_user__username=django_user)
+    username = request.session.get('username', None)
+    sent_otp = request.session.get('sent_otp', None)
+    if otp != sent_otp:
+        return {'error': 'Wrong OTP'}
 
-    if otp == sent_otp:
-        django_login(request, user.django_user)
-        return{}
-
-    return {'error': 'Wrong OTP'}
+    user = User.objects.get(django_user__username=username)
+    django_login(request, user.django_user)
+    return {}
 
 
 @api_function
