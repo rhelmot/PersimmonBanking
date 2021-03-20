@@ -1,9 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..views import apis
+from ..views import apis, html_views
 from .test_bank_account import make_user
-from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus
+from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus, Transaction
 
 
 class TestCreditDebitWorkFlow(TestCase):
@@ -42,14 +42,14 @@ class TestCreditDebitWorkFlow(TestCase):
         assert 'error' not in req.json()
 
         # test that can get pending transaction
-        req = client_admin.post(reverse(apis.get_pending_transactions), content_type="application/json",
-                                data={"account_id": account.id})
+        req = client_admin.get(reverse(html_views.employee_page))
         self.assertEqual(req.status_code, 200)
-        req_pending_data = req.json()
+        a_transaction = Transaction.objects.filter(approval_status=ApprovalStatus.PENDING).first()
+        self.assertIn(a_transaction.description.encode(), req.content)
 
         # test that can approve pending transaction
         req = client_admin.post(reverse(apis.approve_transaction),
-                                data={"transaction_id": req_pending_data[0]["transactionid"],
+                                data={"transaction_id": a_transaction.id,
                                       "approved": True,
                                       "back": "foo"})
         self.assertEqual(req.status_code, 200)

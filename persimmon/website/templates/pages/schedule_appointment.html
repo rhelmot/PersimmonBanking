@@ -1,0 +1,12 @@
+{% extends "main.html" %}
+{% block body %}
+    <fieldset>
+        <legend>Appointment:</legend>
+        {{ form.media }}
+        <form action="{{ request.path }}" method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <p><input type="submit" value="Submit"></p>
+        </form>
+    </fieldset>
+{% endblock %}

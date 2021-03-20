@@ -8,21 +8,13 @@
             <li>
                 ${{ transaction.transaction }}
                 {% if transaction.account_subtract %}
-                    From <a href="{% url 'statement' transaction.account_subtract.account_number %}">
-                        {{ transaction.account_subtract.account_id }}
-                    </a>
-                    (<a href="{% url 'user' transaction.account_subtract.id %}">
-                        {{ transaction.account_subtract.owner.name }}
-                    </a>
+                    From <a href="{% url 'statement' transaction.account_subtract.account_number %}">{{ transaction.account_subtract.account_id }}</a>
+                    (<a href="{% url 'user' transaction.account_subtract.id %}">{{ transaction.account_subtract.owner.name }}</a>
                     volume {{ transaction.account_subtract.owner.transaction_volume }})
                 {% endif %}
                 {% if transaction.account_add %}
-                    To <a href="{% url 'statement' transaction.account_add.id %}">
-                        {{ transaction.account_add.account_id }}
-                    </a>
-                        (<a href="{% url 'user' transaction.account_add.account_number %}">
-                        {{ transaction.account_add.owner.name }}
-                    </a>
+                    To <a href="{% url 'statement' transaction.account_add.id %}">{{ transaction.account_add.account_id }}</a>
+                    (<a href="{% url 'user' transaction.account_add.account_number %}">{{ transaction.account_add.owner.name }}</a>
                     volume {{ transaction.account_add.owner.transaction_volume }})
                 {% endif %}
                 <form action="{% url 'approve-transaction' %}" method="POST">
@@ -55,4 +47,8 @@
     {% endfor %}
     </ul>
     {% endif %}
+
+    <h2>User Lookup</h2>
+
+    <p><a href="{% url 'user-lookup' %}">Click Here</a></p>
 {% endblock %}
