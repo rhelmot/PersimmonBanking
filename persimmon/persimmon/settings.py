@@ -9,7 +9,8 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -128,3 +129,10 @@ BOOTSTRAP4 = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_SENDER = 'noreply@persimmon.rhelmot.io'
+
+SMS_BACKEND = 'sms.backends.console.SmsBackend'
+if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'test':
+    SMS_BACKEND = 'sms.backends.locmem.SmsBackend'
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+SMS_SENDER = '+15017122661'

@@ -202,7 +202,7 @@ def statement_page(request, number):
     except BankAccount.DoesNotExist as exc:
         raise Http404("This account cannot be viewed") from exc
 
-    transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED)\
+    transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED) \
         .order_by('approval_status', '-date')
     statement = []
 
@@ -235,7 +235,7 @@ def show_info_page(request):
     myinfo = apis.get_my_info(request)
     print(myinfo)
     mydic = {'info': myinfo}
-    return TemplateResponse(request,'pages/show_info.html', mydic)
+    return TemplateResponse(request, 'pages/show_info.html', mydic)
 
 
 def edit_email_success(request):
@@ -278,9 +278,9 @@ def edit_phone_success(request):
 
 class EditPhone(forms.Form):
     new_phone = forms.CharField(label='Phone Number', max_length=12,
-                            error_messages={'incomplete': 'Enter a phone number.'},
-                            validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
-                            , required=True)
+                                error_messages={'incomplete': 'Enter a phone number.'},
+                                validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
+                                , required=True)
 
 
 def edit_phone_page(request):
@@ -291,17 +291,18 @@ def edit_phone_page(request):
         'success': urls.reverse(edit_phone_success)
     })
 
+
 def edit_name_success(request):
     return TemplateResponse(request, 'pages/edit_name_success.html', {})
 
 
 class EditName(forms.Form):
     new_first = forms.CharField(label='First name',
-                                 error_messages={'required': 'Please enter your First name'},
-                                 max_length=30, required=True)
-    new_last = forms.CharField(label='Last Name',
-                                error_messages={'required': 'Please enter your Last name'},
+                                error_messages={'required': 'Please enter your First name'},
                                 max_length=30, required=True)
+    new_last = forms.CharField(label='Last Name',
+                               error_messages={'required': 'Please enter your Last name'},
+                               max_length=30, required=True)
 
 
 def edit_name_page(request):
@@ -371,3 +372,38 @@ def transfer_page(request):
     return TemplateResponse(request, 'pages/transfer.html', {
         'form': form,
     })
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(max_length=200)
+    password = forms.CharField(widget= forms.PasswordInput)
+
+
+def login_page(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/login.html', {
+        'form': LoginForm(),
+        'api': urls.reverse(apis.persimmon_login),
+        'success': urls.reverse(otp_page)
+    })
+
+
+class OTPForm(forms.Form):
+    otp = forms.CharField(max_length=6, widget=forms.TextInput(attrs={'class': "use-otpkeyboard-input"}))
+
+
+def otp_page(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/otp.html', {
+        'form': OTPForm(),
+        'api': urls.reverse(apis.otp_check),
+        'success': urls.reverse(otp_success)
+    })
+
+
+def otp_success(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/reset_password_sent.html', {})

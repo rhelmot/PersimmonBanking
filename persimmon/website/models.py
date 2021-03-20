@@ -1,6 +1,8 @@
-from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+
+
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -182,15 +184,15 @@ class TransactionApproval(models.Model):
 
 
 class SignInHistory(models.Model):
-    log = models.DateTimeField(auto_now=True)
+    log = models.DateTimeField(auto_now = True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
-                                 limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
-    time = models.DateTimeField(default=timezone.now)
+            limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+    time = models.DateTimeField()
 
     class Meta:
         constraints = [

@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/resetpassword', apis.reset_password),
     path('api/session/login', apis.persimmon_login),
     path('api/session/status', apis.login_status),
+    path('api/otpcheck', apis.otp_check),
 
     path('api/bankaccount/approve', apis.approve_bank_account, name='approve-account'),
     path('api/creditdebitfunds/approve', apis.approve_transaction, name='approve-transaction'),
@@ -44,5 +45,9 @@ urlpatterns = [
     path('mobile-atm', html_views.mobile_atm_page, name='mobileatm'),
     path('mobile-atm-handel', apis.mobile_atm_handel, name='mobilehandle'),
     path('transfer', html_views.transfer_page, name='transfer'),
+
+    path('login', apis.persimmon_login, name='login'),
+    path('otp', html_views.otp_page, name='otp'),
+    path('otp/success', html_views.otp_success)
 
     ]
