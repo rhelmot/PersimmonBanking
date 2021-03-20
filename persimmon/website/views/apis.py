@@ -459,7 +459,7 @@ def check_image(request, tid):
     user = current_user(request)
     filter_owner = {'account_subtract__owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
     try:
-        trans = Transaction.objects.get(id=tid, **filter_owner)
+        trans = Transaction.objects.exclude(balance_subtract=None).get(id=tid, **filter_owner)
         if trans.check_recipient is None:
             raise Transaction.DoesNotExist
     except Transaction.DoesNotExist as exc:
