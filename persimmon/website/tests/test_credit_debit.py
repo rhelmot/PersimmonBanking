@@ -55,11 +55,17 @@ class TestCreditDebit(TestCase):
         self.assertEqual(req.status_code, 200)
 
     def test_checks(self):
+        # pylint shut upppppppppp
+        # pylint: disable=too-many-locals,invalid-name
         # set up user and account
         user = make_user('user')
         client_user = Client()
         self.assertTrue(client_user.login(username='user', password='password'))
-        acct = BankAccount.objects.create(owner=user, type=AccountType.CHECKING, approval_status=ApprovalStatus.APPROVED)
+        acct = BankAccount.objects.create(
+            owner=user,
+            type=AccountType.CHECKING,
+            approval_status=ApprovalStatus.APPROVED
+        )
 
         # make four transactions. only the first should show a check
         # withdrawal with check
