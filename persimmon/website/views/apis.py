@@ -406,15 +406,26 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
         return {'status': 'pending' if trans.approval_status == ApprovalStatus.PENDING else 'complete'}
 
 
-@api_function
-def reset_password(request, email: str):
-    current_user(request, expect_not_logged_in=True)
-    try:
-        User.objects.get(django_user__email=email)
-    except User.DoesNotExist as exc:
-        raise Http404("No such email in our databases...") from exc
-    # TODO send an email here... lol
-    return {}
+# class RecoveryForm(forms.Form):
+#     email = forms.CharField()
+
+
+# @api_function
+# def reset_password(request):
+#     current_user(request, expect_not_logged_in=True)
+#     form = RecoveryForm(request.POST or None)
+#     persimmon_user = None
+#
+#     # getting email input then checking with user
+#     if form.is_valid():
+#         email = form.cleaned_data['email']
+#
+#         try:
+#             persimmon_user = User.objects.get(django_user__email=email)
+#         except User.DoesNotExist:
+#             form.add_error("No such email in our databases...")
+#
+#     return {}
 
 
 @require_POST

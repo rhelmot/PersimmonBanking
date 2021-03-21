@@ -406,4 +406,4 @@ def otp_page(request):
 def otp_success(request):
     current_user(request, expect_not_logged_in=True)
 
-    return TemplateResponse(request, 'pages/reset_password_sent.html', {})
+    return TemplateResponse(request, 'pages/home.html', {})
