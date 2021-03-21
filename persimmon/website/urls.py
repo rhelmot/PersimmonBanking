@@ -1,4 +1,4 @@
-from django.urls import path, reverse_lazy
+from django.urls import path, include
 
 from django.contrib.auth import views as auth_views
 
@@ -15,7 +15,7 @@ urlpatterns = [
     path('api/user/changeaddress', apis.change_my_address),
     path('api/user/changephone', apis.change_my_phone),
     path('api/user/changeemail', apis.change_my_email),
-    # path('api/resetpassword', apis.reset_password),
+    path('api/resetpassword', apis.reset_password),
     path('api/session/login', apis.persimmon_login),
     path('api/session/status', apis.login_status),
     path('api/otpcheck', apis.otp_check),
@@ -25,26 +25,19 @@ urlpatterns = [
     path('api/bankaccount/new', apis.create_bank_account, name='create-bank-account'),
     path('user-lookup', apis.user_lookup, name='user-lookup'),
 
-    path('reset_password',
+    path('', include('django.contrib.auth.urls')),
+    path('password_reset',
          auth_views.PasswordResetView.as_view(template_name="pages/reset_password.html"),
-         {
-             'email_template_name': 'pages/reset_password_sent.html',
-             'success_url': reverse_lazy('reset_link_sent')
-         },
-         name="reset_password"),
-    path('reset_password_sent',
+         name="password_reset"),
+    path('password_reset/sent',
          auth_views.PasswordResetDoneView.as_view(template_name="pages/reset_password_sent.html"),
-
-         name="reset_link_sent"),
+         name="password_reset_done"),
     path('reset/<uidb64>/<token>',
          auth_views.PasswordResetConfirmView.as_view(template_name="pages/reset_password_confirm.html"),
-         {
-             'success_url': reverse_lazy('reset_password_complete')
-         },
-         name="reset_password_confirm"),
-    path('reset_password_success',
+         name="password_reset_confirm"),
+    path('reset_password/success',
          auth_views.PasswordResetCompleteView.as_view(template_name="pages/reset_password_success.html"),
-         name="reset_password_complete"),
+         name="password_reset_complete"),
 
     path('create-account', html_views.create_user_page, name='create-account'),
     path('verify-email', html_views.verify_email),

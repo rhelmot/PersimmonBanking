@@ -1,52 +1,41 @@
 import re
-
-from django.urls import reverse, NoReverseMatch
+from django.urls import reverse
 from django.test import TestCase, Client
 from django.core import mail
-from django.test.utils import override_settings
+from django.contrib.auth import views
 from django.contrib.auth import authenticate
 
 from ..common import make_user
 
-VALID_USER_NAME = "username"
-USER_OLD_PSW = "oldpassword"
-USER_NEW_PSW = "newpassword"
-PASSWORD_RESET_URL = reverse("reset_password")
+VALID_USER_NAME = "example@example.com"
 
 
-def password_reset_confirm_url(uidb64, token):
-    try:
-        return reverse("app:password_reset_confirm", args=(uidb64, token))
-    except NoReverseMatch:
-        return f"/accounts/reset/invaliduidb64/invalid-token/"
+class TestPasswordRecovery(TestCase):
 
+    def test_password_reset_ok(self):
+        # ask for password reset
+        make_user('user')
+        client = Client()
+        response = self.client.get(reverse('password_reset'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template_name, ['pages/reset_password.html'])
 
-def utils_extract_reset_tokens(full_url):
-    return re.findall(r"/([\w\-]+)",
-                      re.search(r"^http\://.+$", full_url, flags=re.MULTILINE)[0])[3:5]
+        response = self.client.post(reverse('password_reset'),
+                                    {"email": VALID_USER_NAME})
 
+        # extract reset token from email
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, 'Password reset on testserver')
+        token = response.context[0]['token']
+        uid = response.context[0]['uid']
+        response = self.client.get(reverse('password_reset_confirm', kwargs={'token': token, 'uidb64': uid}))
+        print(response)
+        self.assertEqual(response.status_code, 302)
+        #self.assertEqual(response.template_name, 'pages/reset_password_confirm.html')
 
-def test_password_reset_ok(self):
-    make_user('username', password='password', phone="+14809557649")
-    client = Client()
-    # ask for password reset
-    response = self.client.post(PASSWORD_RESET_URL,
-                                {"email": "example@example.com"},
-                                follow=True)
+        response = self.client.post(reverse('password_reset_confirm',
+                                            kwargs={'token': token, 'uidb64': uid}),
+                                    {'new_password1': 'pass', 'new_password2': 'pass'})
 
-    # extract reset token from email
-    self.assertEqual(len(mail.outbox), 1)
-    msg = mail.outbox[0]
-    uidb64, token = utils_extract_reset_tokens(msg.body)
-
-    # change the password
-    self.client.get(password_reset_confirm_url(uidb64, token), follow=True)
-    response = self.client.post(password_reset_confirm_url(uidb64, "set-password"),
-                                {
-                                    "new_password1": USER_NEW_PSW,
-                                    "new_password2": USER_NEW_PSW},
-                                follow=True)
-
-    self.assertIsNone(authenticate(username=VALID_USER_NAME,password=USER_NEW_PSW))
-
-
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNone(authenticate(username="username", password="pass"))

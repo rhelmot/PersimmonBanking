@@ -130,12 +130,12 @@ BOOTSTRAP4 = {
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_SENDER = 'noreply@persimmon.rhelmot.io'
 
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'persimmonbanking@gmail.com'
-EMAIL_HOST_PASSWORD = 'pjsxdddgqygducex'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'PersimmonBanking Team <noreply@perismmonbanking.com>'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_USER = 'persimmonbanking@gmail.com'
+# EMAIL_HOST_PASSWORD = 'pjsxdddgqygducex'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = 'PersimmonBanking Team <noreply@perismmonbanking.com>'
 
 SMS_BACKEND = 'sms.backends.console.SmsBackend'
 if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'test':
