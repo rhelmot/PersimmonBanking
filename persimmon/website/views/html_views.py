@@ -29,13 +29,13 @@ class ResetPasswordForm(forms.Form):
     email = forms.CharField(max_length=200)
 
 
-def reset_password_page(request):
-    current_user(request, expect_not_logged_in=True)
-    return TemplateResponse(request, 'pages/reset_password.html', {
-        'form': ResetPasswordForm(),
-        'api': urls.reverse(apis.reset_password),
-        'success': urls.reverse(reset_password_sent)
-    })
+# def reset_password_page(request):
+#     current_user(request, expect_not_logged_in=True)
+#     return TemplateResponse(request, 'pages/reset_password.html', {
+#         'form': ResetPasswordForm(),
+#         'api': urls.reverse(apis.reset_password),
+#         'success': urls.reverse(reset_password_sent)
+#     })
 
 
 def reset_password_sent(request):
