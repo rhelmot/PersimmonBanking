@@ -1,11 +1,16 @@
 from decimal import Decimal
 import hashlib
 import random
+import os
+import io
+
+from PIL import Image, ImageDraw, ImageFont
+from num2words import num2words
 
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
+from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
@@ -406,37 +411,6 @@ def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: in
         return {'status': 'pending' if trans.approval_status == ApprovalStatus.PENDING else 'complete'}
 
 
-@require_POST
-def mobile_atm_handel(request):
-    user = current_user(request, expect_not_logged_in=False)
-    accountnumber = request.POST.get('acc')
-    ammount = int(request.POST.get('number'))
-    debit = request.POST.get('act') == "True"
-    try:
-        myaccount = BankAccount.objects.get(id=accountnumber)
-    except BankAccount.DoesNotExist:
-        myaccount = None
-    if myaccount is None or ammount <= 0 or (myaccount.owner != user and user.employee_level < EmployeeLevel.TELLER):
-        return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})
-
-    if debit:
-        bankstatement = Transaction.objects.create(
-            description="Mobile ATM Debit",
-            account_add=None,
-            account_subtract=myaccount,
-            transaction=ammount,
-            approval_status=ApprovalStatus.PENDING)
-        bankstatement.add_approval(user)
-    else:
-        bankstatement = Transaction.objects.create(
-            description="Mobile ATM Credit",
-            account_add=myaccount,
-            account_subtract=None,
-            transaction=ammount,
-            approval_status=ApprovalStatus.PENDING)
-        bankstatement.add_approval(user)
-    return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
-
 
 class UserLookupForm(forms.Form):
     search_term = forms.CharField()
@@ -463,3 +437,42 @@ def user_lookup(request):
         'form': form,
         'query': query,
     })
+
+
+arial_path = os.path.join(os.path.dirname(__file__), '../static/arial.ttf')
+arial30 = ImageFont.truetype(arial_path, 30)
+arial15 = ImageFont.truetype(arial_path, 15)
+
+
+def check_image(request, tid):
+    user = current_user(request)
+    filter_owner = {'account_subtract__owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
+    try:
+        trans = Transaction.objects.exclude(balance_subtract=None).get(id=tid, **filter_owner)
+        if trans.check_recipient is None:
+            raise Transaction.DoesNotExist
+    except Transaction.DoesNotExist as exc:
+        raise Http404("Cannot view check") from exc
+
+    payer_lines = [x.strip() for x in trans.account_subtract.owner.address.replace('\r', '').split(',')]
+    payer_lines.insert(0, trans.account_subtract.owner.name)
+    amount_text = f'{num2words(int(trans.transaction))} dollars and '\
+                  f'{num2words(int(trans.transaction * 100) % 100)} cents'
+
+    img_path = os.path.join(os.path.dirname(__file__), '../static/checkbg.jpg')
+    img = Image.open(img_path)
+    imgm = ImageDraw.Draw(img)
+    stroke = {'fill': (0, 0, 0), 'stroke_fill': (200, 200, 200), 'stroke_width': 2}
+    imgm.text((100, 80), f"Persimmon Banking #{tid}", font=arial30, **stroke)
+    imgm.text((1000, 80), f'${trans.transaction}', font=arial30, **stroke)
+    imgm.text((100, 130), "Pay", font=arial15, **stroke)
+    imgm.text((100, 150), amount_text, font=arial30, **stroke)
+    imgm.text((100, 190), "to the order of", font=arial15, **stroke)
+    imgm.text((100, 210), trans.check_recipient.replace('\r', ''), font=arial30, **stroke)
+    imgm.text((800, 300), "Pay from " + trans.account_subtract.account_number, font=arial15, **stroke)
+    imgm.text((800, 320), '\n'.join(payer_lines), font=arial30, **stroke)
+
+    stream = io.BytesIO()
+    fmt = Image.registered_extensions()['.png']
+    img.save(stream, fmt)
+    return HttpResponse(stream.getvalue(), content_type='image/png')

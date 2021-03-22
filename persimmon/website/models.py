@@ -104,6 +104,7 @@ class Transaction(models.Model):
     transaction = models.DecimalField(decimal_places=2, max_digits=10, )
     description = models.CharField(max_length=20, default="credit")
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
+    check_recipient = models.CharField(max_length=200, null=True)
 
     account_add = models.ForeignKey(BankAccount, on_delete=models.CASCADE, null=True, related_name='+')
     account_subtract = models.ForeignKey(BankAccount, on_delete=models.CASCADE, null=True, related_name='+')
@@ -156,10 +157,22 @@ class Transaction(models.Model):
 
     def for_one_account(self, account):
         if self.account_add == account:
-            return BankStatementEntry(self.id, self.date, self.transaction, self.balance_add, self.description)
+            return BankStatementEntry(
+                self.id,
+                self.date,
+                self.transaction,
+                self.balance_add,
+                self.description,
+                self.check_recipient)
         if self.account_subtract == account:
             # pylint: disable=invalid-unary-operand-type
-            return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_subtract, self.description)
+            return BankStatementEntry(
+                self.id,
+                self.date,
+                -self.transaction,
+                self.balance_subtract,
+                self.description,
+                self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
 
 
@@ -168,12 +181,13 @@ class BankStatementEntry:
     Small data class to contain a slice of a Transaction related to a single account. use Transaction.for_one_account
     to get one of these.
     """
-    def __init__(self, ident, date, transaction, balance, description):
+    def __init__(self, ident, date, transaction, balance, description, check_recipient):
         self.id = ident  # pylint: disable=invalid-name
         self.date = date
         self.transaction = transaction
         self.balance = balance
         self.description = description
+        self.check_recipient = check_recipient
         self.can_approve = False
 
 
