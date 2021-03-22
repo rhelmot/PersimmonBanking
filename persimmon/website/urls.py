@@ -15,7 +15,6 @@ urlpatterns = [
     path('api/user/changeaddress', apis.change_my_address),
     path('api/user/changephone', apis.change_my_phone),
     path('api/user/changeemail', apis.change_my_email),
-    # path('api/resetpassword', apis.reset_password),
     path('api/session/login', apis.persimmon_login),
     path('api/session/status', apis.login_status),
     path('api/otpcheck', apis.otp_check),

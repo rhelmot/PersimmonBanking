@@ -8,4 +8,7 @@
         <p><input type="submit" value="Log In"></p>
     </form>
     <script src="{% static "otpkeyboard.js" %}"></script>
+    <div>
+    Forgot Password? <a href="{% url 'password_reset' %}">Reset Password</a>
+    </div>
 {% endblock %}
