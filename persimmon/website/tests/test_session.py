@@ -12,10 +12,7 @@ def outbox():
 class TestSessions(TestCase):
     @staticmethod
     def is_logged_in(client):
-        return client.post(
-            reverse(apis.login_status),
-            content_type='application/json',
-            data={}).json()['logged_in']
+        return client.session.get('_auth_user_id', None) is not None
 
     def test_login_logout(self):
         make_user('username', password='password', phone="+14809557649")

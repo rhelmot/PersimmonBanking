@@ -146,6 +146,8 @@ disable=print-statement,
         too-many-statements,
         too-many-arguments,
         too-many-return-statements,
+        too-many-locals,
+        too-many-branches,
         fixme
 
 # Enable the message, report, category or checker with the given id(s). You can

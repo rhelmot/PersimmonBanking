@@ -25,7 +25,6 @@ class TestPasswordRecovery(TestCase):
         token = response.context[0]['token']
         uid = response.context[0]['uid']
         response = self.client.get(reverse('password_reset_confirm', kwargs={'token': token, 'uidb64': uid}))
-        print(response)
         self.assertEqual(response.status_code, 302)
         #self.assertEqual(response.template_name, 'pages/reset_password_confirm.html')
 
