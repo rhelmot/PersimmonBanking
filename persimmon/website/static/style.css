@@ -1,3 +1,45 @@
+body {
+    background: #55802f;
+}
+
+.topbar {
+    margin: 20px;
+    border-radius: 6px;
+    border: solid #333;
+    background: #a04500;
+    color: white;
+    font-size: 20px;
+    text-align: center;
+}
+
+.topbar ul {
+    margin: 0;
+}
+
+.topbar li {
+    display: inline-block;
+}
+
+.topbar a {
+    display: inline-block;
+    padding: 20px;
+    color: white;
+}
+
+.topbar a:hover {
+    background: #c04500;
+    text-decoration: none;
+}
+
+.main {
+    margin: 0 20%;
+    border-radius: 6px;
+    border: 2px solid #333;
+    padding: 20px;
+    background: white;
+    max-width: 1000px;
+}
+
 table, th, td {
     border: 1px solid black;
     padding: 5px;
@@ -11,4 +53,35 @@ fieldset {
     border: 2px solid black;
     padding: 25px;
     display: inline-block;
+}
+
+.helptext {
+    display: block;
+    font-size: 15px;
+}
+
+form ul {
+    font-size: 15px;
+}
+
+form label {
+    display: inline-block;
+    width: 200px;
+    text-align: right;
+}
+
+.date {
+    padding-left: 200px;
+    width: 400px;
+}
+
+h2 {
+    font-family: 'Heebo', sans-serif;
+    margin-bottom: 40px;
+}
+
+.errorlist {
+    color: #800000;
+    margin-left: 200px;
+    padding-left: 0;
 }

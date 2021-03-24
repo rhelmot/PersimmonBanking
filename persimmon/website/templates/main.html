@@ -15,11 +15,14 @@
     <link rel="stylesheet" href="{% static "keyboard.css" %}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@500&display=swap" rel="stylesheet">
 
 </head>
 <body>
 
 <div class="topbar">
+    <img src="{% static 'persimmon.png' %}"
     <ul>
         {% if persimmon_user %}
             <li><a href="{% url 'user' persimmon_user.id %}">My Account</a></li>
@@ -41,7 +44,9 @@
     </ul>
 </div>
 
+<div class="main">
 {% block body %}{% endblock %}
+</div>
 
 </body>
 </html>
