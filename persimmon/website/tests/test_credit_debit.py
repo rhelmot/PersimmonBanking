@@ -56,7 +56,7 @@ class TestCreditDebit(TestCase):
 
     def test_checks(self):
         # pylint shut upppppppppp
-        # pylint: disable=too-many-locals,invalid-name
+        # pylint: disable=invalid-name
         # set up user and account
         user = make_user('user')
         client_user = Client()

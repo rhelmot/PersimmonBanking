@@ -60,6 +60,39 @@ class User(models.Model):
         return acc
 
 
+class UserEditRequest(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
+    id = models.AutoField(primary_key=True)
+    firstname = models.CharField(max_length=100, null=True)
+    lastname = models.CharField(max_length=100, null=True)
+    #email = models.CharField(max_length=100, null=True)
+    address = models.CharField(max_length=200, null=True)
+    #phone = models.CharField(max_length=10, null=True)
+
+    def apply(self):
+        if self.firstname is not None:
+            self.user.django_user.first_name = self.firstname
+        if self.lastname is not None:
+            self.user.django_user.last_name = self.lastname
+        #if self.email is not None:
+        #    user.django_user.email = self.email
+        if self.address is not None:
+            self.user.address = self.address
+        #if self.phone is not None:
+        #    user.phone = self.phone
+        self.user.django_user.save()
+        self.user.save()
+
+    def __str__(self):
+        changes = []
+        if self.firstname is not None or self.lastname is not None:
+            changes.append(f'change name to "{self.firstname} {self.lastname}"')
+        if self.address is not None:
+            changes.append(f'change address to {self.address}')
+
+        return f'{self.user.name}: {" ".join(changes)}'
+
+
 class AccountType(models.IntegerChoices):
     CHECKING = 0
     SAVINGS = 1

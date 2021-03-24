@@ -23,8 +23,7 @@
 {% endfor %}
 </table>
 
-<p>
-    <a href="{% url 'create-bank-account' %}">Apply for a new account</a>
-</p>
+<p><a href="{% url 'create-bank-account' %}">Apply for a new account</a></p>
+<p><a href="{% url 'edit-user' view_user.id %}">Edit my contact information</a></p>
 
 {% endblock %}

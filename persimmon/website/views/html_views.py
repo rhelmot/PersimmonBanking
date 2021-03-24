@@ -1,13 +1,13 @@
 from bootstrap_datepicker_plus import DateTimePickerInput
 
-from django.core import signing, mail
-from django.http import Http404, HttpResponseBadRequest
+from django.core import mail
+from django.http import Http404
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
 from django.conf import settings
-from django.views.decorators.http import require_GET
+from sms import send_sms
 
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
@@ -121,22 +121,44 @@ def create_user_page(request):
     form2.fields['password2'].widget.render_value = True
 
     if form1.is_valid() and form2.is_valid():
-        verification_code = apis.make_verification_code(form2.cleaned_data['username'], form2.cleaned_data['email'])
-        form2.fields['email_verification'] = forms.CharField()
-        form2.full_clean()
-        if not form2.is_valid():
+        verification_code_email = apis.make_verification_code(
+            'create_account_email',
+            form2.cleaned_data['username'],
+            form2.cleaned_data['email'])
+        verification_code_phone = apis.make_verification_code(
+            'create_account_phone',
+            form2.cleaned_data['username'],
+            form1.cleaned_data['phone'])
+        form1.fields['email_verification'] = forms.CharField()
+        form1.fields['phone_verification'] = forms.CharField()
+        form1.full_clean()
+
+        if form1.has_error("email_verification"):
             mail.send_mail(
                 "Persimmon verification code",
-                f"Here is the code to verify your email: {verification_code}",
+                f"Here is the code to verify your email: {verification_code_email}",
                 settings.EMAIL_SENDER,
                 [form2.cleaned_data['email']],
             )
-            form2.errors.clear()
-            form2.add_error(
+            form1.errors["email_verification"].clear()
+            form1.add_error(
                 'email_verification',
                 'Please check your email and enter the code we sent you here')
-        elif form2.cleaned_data['email_verification'] != verification_code:
-            form2.add_error('email_verification', 'Invalid code')
+        elif form1.cleaned_data['email_verification'] != verification_code_email:
+            form1.add_error('email_verification', 'Invalid code')
+
+        if form1.has_error("phone_verification"):
+            send_sms(
+                f"Here is the code to verify your phone number: {verification_code_phone}",
+                settings.SMS_SENDER,
+                [form1.cleaned_data['phone']],
+            )
+            form1.errors["phone_verification"].clear()
+            form1.add_error(
+                'phone_verification',
+                'Please check your phone and enter the code we sent you here')
+        elif form1.cleaned_data['phone_verification'] != verification_code_phone:
+            form1.add_error('phone_verification', 'Invalid code')
 
     if form1.is_valid() and form2.is_valid():
         try:
@@ -159,21 +181,6 @@ def create_user_page(request):
         'form1': form1,
         'form2': form2,
     })
-
-
-@require_GET
-def verify_email(request):
-    try:
-        email = signing.Signer().unsign(bytes.fromhex(request.GET["email"]).decode())
-        account = User.objects.get(django_user__email=email)
-    except (ValueError, KeyError, signing.BadSignature, User.DoesNotExist):
-        return HttpResponseBadRequest("No. Absolutely not.")
-
-    account.email_verified = True
-    account.save()
-    django_login(request, account.django_user)
-
-    return TemplateResponse(request, 'pages/email_verified.html', {})
 
 
 def account_overview_page(request, user_id):
@@ -227,90 +234,6 @@ def employee_page(request):
     return TemplateResponse(request, 'pages/employee_page.html', {
         "pending_transactions": transactions,
         "pending_accounts": accounts,
-    })
-
-
-def show_info_page(request):
-    current_user(request, expect_not_logged_in=False)
-    myinfo = apis.get_my_info(request)
-    print(myinfo)
-    mydic = {'info': myinfo}
-    return TemplateResponse(request, 'pages/show_info.html', mydic)
-
-
-def edit_email_success(request):
-    return TemplateResponse(request, 'pages/edit_email_success.html', {})
-
-
-class EditEmail(forms.Form):
-    new_email = forms.EmailField()
-
-
-def edit_email_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_email.html', {
-        'form': EditEmail(),
-        'api': urls.reverse(apis.change_my_email),
-        'success': urls.reverse(edit_email_success)
-    })
-
-
-def edit_address_success(request):
-    return TemplateResponse(request, 'pages/edit_email_success.html', {})
-
-
-class EditAddress(forms.Form):
-    new_address = forms.CharField(label="New Address")
-
-
-def edit_address_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_address.html', {
-        'form': EditAddress(),
-        'api': urls.reverse(apis.change_my_address),
-        'success': urls.reverse(edit_address_success)
-    })
-
-
-def edit_phone_success(request):
-    return TemplateResponse(request, 'pages/edit_phone_success.html', {})
-
-
-class EditPhone(forms.Form):
-    new_phone = forms.CharField(label='Phone Number', max_length=12,
-                                error_messages={'incomplete': 'Enter a phone number.'},
-                                validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
-                                , required=True)
-
-
-def edit_phone_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_phone.html', {
-        'form': EditPhone(),
-        'api': urls.reverse(apis.change_my_phone),
-        'success': urls.reverse(edit_phone_success)
-    })
-
-
-def edit_name_success(request):
-    return TemplateResponse(request, 'pages/edit_name_success.html', {})
-
-
-class EditName(forms.Form):
-    new_first = forms.CharField(label='First name',
-                                error_messages={'required': 'Please enter your First name'},
-                                max_length=30, required=True)
-    new_last = forms.CharField(label='Last Name',
-                               error_messages={'required': 'Please enter your Last name'},
-                               max_length=30, required=True)
-
-
-def edit_name_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_name.html', {
-        'form': EditName(),
-        'api': urls.reverse(apis.change_my_name),
-        'success': urls.reverse(edit_name_success)
     })
 
 
