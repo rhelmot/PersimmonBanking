@@ -342,15 +342,18 @@ class OTPForm(forms.Form):
 
 def otp_page(request):
     current_user(request, expect_not_logged_in=True)
+    form = OTPForm(request.POST or None)
+
+    if form.is_valid():
+        username = request.session.get('username', None)
+        sent_otp = request.session.get('sent_otp', None)
+        if form.cleaned_data['otp'] != sent_otp:
+            form.add_error("otp", "Incorrect code")
+        else:
+            user = User.objects.get(django_user__username=username)
+            django_login(request, user.django_user)
+            return TemplateResponse(request, 'pages/login_success.html', {})
 
     return TemplateResponse(request, 'pages/otp.html', {
-        'form': OTPForm(),
-        'api': urls.reverse(apis.otp_check),
-        'success': urls.reverse(otp_success)
+        'form': form,
     })
-
-
-def otp_success(request):
-    current_user(request, expect_not_logged_in=True)
-
-    return TemplateResponse(request, 'pages/home.html', {})

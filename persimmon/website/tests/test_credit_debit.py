@@ -25,27 +25,34 @@ class TestCreditDebit(TestCase):
             approval_status=ApprovalStatus.APPROVED)
 
         # test that can't make credit request due to missing parameters
-        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
-                               data={"account_id": account.id})
-        self.assertEqual(req.status_code, 400)
+        req = client_user.post(reverse(html_views.mobile_atm_page),
+                               data={"account": account.id})
+        self.assertEqual(req.status_code, 200)
+        self.assertEqual(len(Transaction.objects.all()), 0)
 
         # test that successfully making credit request
-        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
-                               data={"account_id": account.id, "transactionvalue": -100.0})
+        req = client_user.post(reverse(html_views.mobile_atm_page),
+                               data={"account": account.id,
+                                     "amount": "100",
+                                     "transfer_type": "CREDIT"})
         self.assertEqual(req.status_code, 200)
-        assert 'error' not in req.json()
+        self.assertEqual(Transaction.objects.last().transaction, 100)
+        self.assertEqual(Transaction.objects.last().account_add, account)
 
         # test that successfully making debit request
-        req = client_user.post(reverse(apis.credit_debit_funds), content_type="application/json",
-                               data={"account_id": account.id, "transactionvalue": 100.0})
+        req = client_user.post(reverse(html_views.mobile_atm_page),
+                               data={"account": account.id,
+                                     "amount": "100",
+                                     "transfer_type": "DEBIT"})
         self.assertEqual(req.status_code, 200)
-        assert 'error' not in req.json()
+        self.assertEqual(Transaction.objects.last().transaction, 100)
+        self.assertEqual(Transaction.objects.last().account_subtract, account)
 
         # test that can get pending transaction
         req = client_admin.get(reverse(html_views.employee_page))
         self.assertEqual(req.status_code, 200)
         a_transaction = Transaction.objects.filter(approval_status=ApprovalStatus.PENDING).first()
-        self.assertIn(a_transaction.description.encode(), req.content)
+        self.assertIn('$' + str(a_transaction.transaction), req.content.decode())
 
         # test that can approve pending transaction
         req = client_admin.post(reverse(apis.approve_transaction),

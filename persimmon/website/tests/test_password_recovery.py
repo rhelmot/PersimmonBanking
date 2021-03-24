@@ -7,8 +7,8 @@ from ..common import make_user
 
 VALID_USER_NAME = "example@example.com"
 
-class TestPasswordRecovery(TestCase):
 
+class TestPasswordRecovery(TestCase):
     def test_password_reset_ok(self):
         # ask for password reset
         make_user('user')
