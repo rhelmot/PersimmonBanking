@@ -1,4 +1,3 @@
-from decimal import Decimal
 import hashlib
 import random
 import os
@@ -20,7 +19,6 @@ from django.core import signing, mail
 from sms import send_sms
 
 from . import current_user
-from ..middleware import api_function
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest
 from ..transaction_approval import check_approvals
 
@@ -127,30 +125,6 @@ def approve_transaction(request):
     })
 
 
-@api_function
-def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
-    user = current_user(request)
-
-    if transactionvalue == 0:
-        return {"error": "Zero-dollar transaction"}
-    try:
-        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.APPROVED)
-    except BankAccount.DoesNotExist:
-        return {"error": "No such account"}
-
-    bankstatement = Transaction.objects.create(
-        description="credit" if transactionvalue < 0 else "debit",
-        account_add=account if transactionvalue > 0 else None,
-        account_subtract=account if transactionvalue < 0 else None,
-        transaction=abs(transactionvalue),
-        approval_status=ApprovalStatus.PENDING)
-    bankstatement.save()
-
-    bankstatement.add_approval(user)
-    check_approvals(bankstatement, user)
-    return {}
-
-
 class LoginForm(forms.Form):
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput())
@@ -209,19 +183,6 @@ def persimmon_login(request):
     return TemplateResponse(request, 'pages/login.html', {
         'form': form,
     })
-
-
-@api_function
-def otp_check(request, otp: str):
-    current_user(request, expect_not_logged_in=True)
-    username = request.session.get('username', None)
-    sent_otp = request.session.get('sent_otp', None)
-    if otp != sent_otp:
-        return {'error': 'Wrong OTP'}
-
-    user = User.objects.get(django_user__username=username)
-    django_login(request, user.django_user)
-    return {}
 
 
 class UserAddressForm(forms.ModelForm):
@@ -405,39 +366,6 @@ def edit_user(request, user_id):
         'form_phone': form_phone,
         'form_address': form_address,
     })
-
-
-@api_function
-def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
-    user = current_user(request)
-
-    if amount <= 0:
-        return {'error': 'Bad amount: must be positive'}
-
-    with transaction.atomic():
-        try:
-            account1 = BankAccount.objects.get(id=accountnumb1, owner=user, approval_status=ApprovalStatus.APPROVED)
-        except BankAccount.DoesNotExist:
-            return {'error': 'account to debit does not exist or is not owned by user'}
-
-        try:
-            account2 = BankAccount.objects.get(id=accountnumb2, approval_status=ApprovalStatus.APPROVED)
-        except BankAccount.DoesNotExist:
-            return {'error': 'Account to credit does not exist'}
-
-        trans = Transaction.objects.create(
-            transaction=amount,
-            account_add=account2,
-            account_subtract=account1,
-            description=f'transfer from {account1.account_number} to {account2.account_number}',
-            approval_status=ApprovalStatus.PENDING,
-        )
-
-        trans.add_approval(user)
-        check_approvals(trans, user)
-
-        return {'status': 'pending' if trans.approval_status == ApprovalStatus.PENDING else 'complete'}
-
 
 
 class UserLookupForm(forms.Form):

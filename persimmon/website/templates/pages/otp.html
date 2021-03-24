@@ -2,13 +2,11 @@
 {% load static %}
 {% block title %}New Account{% endblock %}
 {% block body %}
-    <p>Please enter the OTP sent to your registered phone number:</p>
+    <p>Please enter the code sent to your registered phone number:</p>
     <form action="{{ request.path }}" method="POST">
         {% csrf_token %}
         {{ form.as_p }}
         <p><input type="submit"></p>
-
     </form>
     <script src="{% static "otpkeyboard.js" %}"></script>
-
 {% endblock %}
