@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.core import mail
+import sms
 
 from ..views import html_views
 from ..models import User
@@ -52,7 +53,8 @@ class TestAccountWorkflow(TestCase):
         self.assertEqual(len(mail.outbox), 1)  # assert that a verification email was NOT sent
 
         # test account verification
-        code = mail.outbox[0].body.split()[-1]
+        email_code = mail.outbox[0].body.split()[-1]
+        phone_code = sms.outbox[-1].body.split()[-1]  # pylint: disable=no-member
         req = client.post(reverse(html_views.create_user_page), data={
             "username": "gdeshpande",
             "first_name": "Gaurav",
@@ -62,6 +64,7 @@ class TestAccountWorkflow(TestCase):
             "email": "test@example.com",
             "phone": "4803333141",
             "address": "address",
-            "email_verification": code})
+            "email_verification": email_code,
+            "phone_verification": phone_code})
         self.assertEqual(req.status_code, 200)
         self.assertEqual(len(User.objects.all()), 1)  # assert that account has been created

@@ -1,7 +1,7 @@
 {% extends 'main.html' %}
 {% block title %}Account {{ account.account_number }}{% endblock %}
 {% block body %}
-    <h1>Statement for account {{ account.account_number }}</h1>
+    <h2>Statement for account {{ account.account_number }}</h2>
     <table>
     <tr>
         <th>Date/Time</th>
@@ -12,7 +12,11 @@
     {% for entry in statement %}
     <tr>
         <td>{{ entry.date }}</td>
+        {% if entry.balance is not None and entry.check_recipient is not None and entry.transaction < 0 %}
+            <td><a href="{% url 'check' entry.id %}">{{ entry.description }}</a></td>
+        {% else %}
         <td>{{ entry.description }}</td>
+        {% endif %}
         <td>${{ entry.transaction }}</td>
         {% if entry.balance is None %}
             {% if entry.can_approve %}

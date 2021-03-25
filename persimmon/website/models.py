@@ -1,6 +1,8 @@
-from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+
+
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -58,6 +60,39 @@ class User(models.Model):
         return acc
 
 
+class UserEditRequest(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
+    id = models.AutoField(primary_key=True)
+    firstname = models.CharField(max_length=100, null=True)
+    lastname = models.CharField(max_length=100, null=True)
+    #email = models.CharField(max_length=100, null=True)
+    address = models.CharField(max_length=200, null=True)
+    #phone = models.CharField(max_length=10, null=True)
+
+    def apply(self):
+        if self.firstname is not None:
+            self.user.django_user.first_name = self.firstname
+        if self.lastname is not None:
+            self.user.django_user.last_name = self.lastname
+        #if self.email is not None:
+        #    user.django_user.email = self.email
+        if self.address is not None:
+            self.user.address = self.address
+        #if self.phone is not None:
+        #    user.phone = self.phone
+        self.user.django_user.save()
+        self.user.save()
+
+    def __str__(self):
+        changes = []
+        if self.firstname is not None or self.lastname is not None:
+            changes.append(f'change name to "{self.firstname} {self.lastname}"')
+        if self.address is not None:
+            changes.append(f'change address to {self.address}')
+
+        return f'{self.user.name}: {" ".join(changes)}'
+
+
 class AccountType(models.IntegerChoices):
     CHECKING = 0
     SAVINGS = 1
@@ -102,6 +137,7 @@ class Transaction(models.Model):
     transaction = models.DecimalField(decimal_places=2, max_digits=10, )
     description = models.CharField(max_length=20, default="credit")
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
+    check_recipient = models.CharField(max_length=200, null=True)
 
     account_add = models.ForeignKey(BankAccount, on_delete=models.CASCADE, null=True, related_name='+')
     account_subtract = models.ForeignKey(BankAccount, on_delete=models.CASCADE, null=True, related_name='+')
@@ -154,10 +190,22 @@ class Transaction(models.Model):
 
     def for_one_account(self, account):
         if self.account_add == account:
-            return BankStatementEntry(self.id, self.date, self.transaction, self.balance_add, self.description)
+            return BankStatementEntry(
+                self.id,
+                self.date,
+                self.transaction,
+                self.balance_add,
+                self.description,
+                self.check_recipient)
         if self.account_subtract == account:
             # pylint: disable=invalid-unary-operand-type
-            return BankStatementEntry(self.id, self.date, -self.transaction, self.balance_subtract, self.description)
+            return BankStatementEntry(
+                self.id,
+                self.date,
+                -self.transaction,
+                self.balance_subtract,
+                self.description,
+                self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
 
 
@@ -166,12 +214,13 @@ class BankStatementEntry:
     Small data class to contain a slice of a Transaction related to a single account. use Transaction.for_one_account
     to get one of these.
     """
-    def __init__(self, ident, date, transaction, balance, description):
+    def __init__(self, ident, date, transaction, balance, description, check_recipient):
         self.id = ident  # pylint: disable=invalid-name
         self.date = date
         self.transaction = transaction
         self.balance = balance
         self.description = description
+        self.check_recipient = check_recipient
         self.can_approve = False
 
 
@@ -182,15 +231,15 @@ class TransactionApproval(models.Model):
 
 
 class SignInHistory(models.Model):
-    log = models.DateTimeField(auto_now=True)
+    log = models.DateTimeField(auto_now = True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
-                                 limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
-    time = models.DateTimeField(default=timezone.now)
+            limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+    time = models.DateTimeField()
 
     class Meta:
         constraints = [

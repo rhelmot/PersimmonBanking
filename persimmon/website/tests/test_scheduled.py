@@ -1,9 +1,10 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..views import apis
+from ..views import html_views
 from ..models import EmployeeLevel, Appointment
 from ..common import make_user
+
 
 class TestSchedule(TestCase):
     def test_schedule(self):
@@ -26,19 +27,16 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
-        all_accounts = list(Appointment.objects.all())
-        self.assertEqual(len(all_accounts), 2)
+        self.assertEqual(Appointment.objects.count(), 2)
 
     def test_schedule1(self):
         # setup database
@@ -57,19 +55,16 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-16 14:30"})
         self.assertEqual(req.status_code, 200)
 
-        all_accounts = list(Appointment.objects.all())
-        self.assertEqual(len(all_accounts), 2)
+        self.assertEqual(Appointment.objects.count(), 2)
 
     def test_schedule2(self):
         # setup database
@@ -88,16 +83,13 @@ class TestSchedule(TestCase):
 
         # creating appointments
         req = client_user1.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
         req = client_user2.post(
-            reverse(apis.schedule),
-            content_type='application/json',
+            reverse(html_views.schedule_appointment_page),
             data={"time": "2021-03-15 14:30"})
         self.assertEqual(req.status_code, 200)
 
-        all_accounts = list(Appointment.objects.all())
-        self.assertEqual(len(all_accounts), 1)
+        self.assertEqual(Appointment.objects.count(), 1)

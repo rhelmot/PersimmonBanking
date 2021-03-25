@@ -1,7 +1,7 @@
 {% extends 'main.html' %}
 {% block title %}User Lookup{% endblock %}
 {% block body %}
-    <h1>User Lookup</h1>
+    <h2>User Lookup</h2>
     <form action="{{ request.path }}" method="POST">
     {% csrf_token %}
     {{ form.as_p }}

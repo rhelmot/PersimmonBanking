@@ -9,23 +9,32 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
+import sys
 from pathlib import Path
+
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
+SECRET_KEY_PATH = BASE_DIR.parent / '.secret.txt'
+if not os.path.exists(SECRET_KEY_PATH):
+    with open(SECRET_KEY_PATH, 'w') as fp:
+        fp.write(get_random_secret_key())
+with open(SECRET_KEY_PATH) as fp:
+    SECRET_KEY = fp.read()
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ')dimn^b^qcbpf8stkoinv#5b$&_@@y4!+2v_zys5pt&8ky1ade'
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "").lower() in ('1', 'true')
+if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'runserver':
+    DEBUG = True
 
-ALLOWED_HOSTS = ['testserver',
-                 '127.0.0.1',
-                 'localhost']
+if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'runserver':
+    ALLOWED_HOSTS = ['testserver',
+                     '127.0.0.1',
+                     'localhost']
+else:
+    ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "persimmon.rhelmot.io").split(',')
 
 
 # Application definition
@@ -47,7 +56,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'website.middleware.HalfCsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -126,5 +134,19 @@ BOOTSTRAP4 = {
 
 # service integration
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_SENDER = 'noreply@persimmon.rhelmot.io'
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", 'django.core.mail.backends.console.EmailBackend')
+EMAIL_SENDER = os.getenv("EMAIL_SENDER", 'Persimmon Banking Team <noreply@persimmon.rhelmot.io>')
+DEFAULT_FROM_EMAIL = EMAIL_SENDER
+
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "0"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "").lower() in ("true", "1")
+
+SMS_BACKEND = os.getenv("SMS_BACKEND", 'sms.backends.console.SmsBackend')
+if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'test':
+    SMS_BACKEND = 'sms.backends.locmem.SmsBackend'
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+SMS_SENDER = os.getenv("SMS_SENDER", '+15017122661')

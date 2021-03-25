@@ -1,15 +1,15 @@
 from bootstrap_datepicker_plus import DateTimePickerInput
 
-from django.core import signing, mail
-from django.http import Http404, HttpResponseBadRequest
+from django.core import mail
+from django.http import Http404
 from django.core.validators import RegexValidator
 from django import forms, urls
 from django.template.response import TemplateResponse
 from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
 from django.conf import settings
-from django.views.decorators.http import require_GET
+from sms import send_sms
 
-from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction
+from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
 from chatterbot import ChatBot
@@ -33,13 +33,13 @@ class ResetPasswordForm(forms.Form):
     email = forms.CharField(max_length=200)
 
 
-def reset_password_page(request):
-    current_user(request, expect_not_logged_in=True)
-    return TemplateResponse(request, 'pages/reset_password.html', {
-        'form': ResetPasswordForm(),
-        'api': urls.reverse(apis.reset_password),
-        'success': urls.reverse(reset_password_sent)
-    })
+# def reset_password_page(request):
+#     current_user(request, expect_not_logged_in=True)
+#     return TemplateResponse(request, 'pages/reset_password.html', {
+#         'form': ResetPasswordForm(),
+#         'api': urls.reverse(apis.reset_password),
+#         'success': urls.reverse(reset_password_sent)
+#     })
 
 
 def reset_password_sent(request):
@@ -60,16 +60,27 @@ class ScheduleAppointment(forms.Form):
 
 
 def schedule_appointment_page(request):
+    user = current_user(request)
+    form = ScheduleAppointment(request.POST or None)
+
+    if form.is_valid():
+        for teller in User.objects.filter(employee_level=1):
+            if not Appointment.objects.filter(employee=teller, time=form.cleaned_data['time']):
+                newapp = Appointment.objects.create(
+                    employee=teller,
+                    customer=user,
+                    time=form.cleaned_data['time'],
+                )
+                newapp.save()
+                return TemplateResponse(request, 'pages/appointmentbooked.html', {
+                    'teller': teller.name,
+                    'time': form.cleaned_data['time'],
+                })
+        form.add_error(None, "No employees available at given time")
+
     return TemplateResponse(request, 'pages/schedule_appointment.html', {
-        'form': ScheduleAppointment(),
-        'api': urls.reverse(apis.schedule),
-        'success': urls.reverse(schedule_success)
+        'form': form,
     })
-
-
-def schedule_success(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/appointmentbooked.html', {})
 
 
 class CreatePersimmonUserForm(forms.ModelForm):
@@ -77,7 +88,7 @@ class CreatePersimmonUserForm(forms.ModelForm):
         model = User
         fields = ('address', 'phone')
 
-    address = forms.CharField(max_length=200)
+    address = forms.CharField(max_length=200, widget=forms.Textarea)
     phone = forms.CharField(
         label='Phone Number',
         max_length=12,
@@ -114,22 +125,44 @@ def create_user_page(request):
     form2.fields['password2'].widget.render_value = True
 
     if form1.is_valid() and form2.is_valid():
-        verification_code = apis.make_verification_code(form2.cleaned_data['username'], form2.cleaned_data['email'])
-        form2.fields['email_verification'] = forms.CharField()
-        form2.full_clean()
-        if not form2.is_valid():
+        verification_code_email = apis.make_verification_code(
+            'create_account_email',
+            form2.cleaned_data['username'],
+            form2.cleaned_data['email'])
+        verification_code_phone = apis.make_verification_code(
+            'create_account_phone',
+            form2.cleaned_data['username'],
+            form1.cleaned_data['phone'])
+        form1.fields['email_verification'] = forms.CharField()
+        form1.fields['phone_verification'] = forms.CharField()
+        form1.full_clean()
+
+        if form1.has_error("email_verification"):
             mail.send_mail(
                 "Persimmon verification code",
-                f"Here is the code to verify your email: {verification_code}",
+                f"Here is the code to verify your email: {verification_code_email}",
                 settings.EMAIL_SENDER,
                 [form2.cleaned_data['email']],
             )
-            form2.errors.clear()
-            form2.add_error(
+            form1.errors["email_verification"].clear()
+            form1.add_error(
                 'email_verification',
                 'Please check your email and enter the code we sent you here')
-        elif form2.cleaned_data['email_verification'] != verification_code:
-            form2.add_error('email_verification', 'Invalid code')
+        elif form1.cleaned_data['email_verification'] != verification_code_email:
+            form1.add_error('email_verification', 'Invalid code')
+
+        if form1.has_error("phone_verification"):
+            send_sms(
+                f"Here is the code to verify your phone number: {verification_code_phone}",
+                settings.SMS_SENDER,
+                [form1.cleaned_data['phone']],
+            )
+            form1.errors["phone_verification"].clear()
+            form1.add_error(
+                'phone_verification',
+                'Please check your phone and enter the code we sent you here')
+        elif form1.cleaned_data['phone_verification'] != verification_code_phone:
+            form1.add_error('phone_verification', 'Invalid code')
 
     if form1.is_valid() and form2.is_valid():
         try:
@@ -152,21 +185,6 @@ def create_user_page(request):
         'form1': form1,
         'form2': form2,
     })
-
-
-@require_GET
-def verify_email(request):
-    try:
-        email = signing.Signer().unsign(bytes.fromhex(request.GET["email"]).decode())
-        account = User.objects.get(django_user__email=email)
-    except (ValueError, KeyError, signing.BadSignature, User.DoesNotExist):
-        return HttpResponseBadRequest("No. Absolutely not.")
-
-    account.email_verified = True
-    account.save()
-    django_login(request, account.django_user)
-
-    return TemplateResponse(request, 'pages/email_verified.html', {})
 
 
 def account_overview_page(request, user_id):
@@ -195,7 +213,7 @@ def statement_page(request, number):
     except BankAccount.DoesNotExist as exc:
         raise Http404("This account cannot be viewed") from exc
 
-    transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED)\
+    transactions = account.transactions.exclude(approval_status=ApprovalStatus.DECLINED) \
         .order_by('approval_status', '-date')
     statement = []
 
@@ -236,105 +254,46 @@ def chatbot_page(request):
 
     return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})
 
-def show_info_page(request):
-    current_user(request, expect_not_logged_in=False)
-    myinfo = apis.get_my_info(request)
-    print(myinfo)
-    mydic = {'info': myinfo}
-    return TemplateResponse(request,'pages/show_info.html', mydic)
+class OwnAccountField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.str_with_balance()
 
 
-def edit_email_success(request):
-    return TemplateResponse(request, 'pages/edit_email_success.html', {})
+class MobileATMForm(forms.Form):
+    amount = forms.DecimalField(decimal_places=2, min_value=0.01)
+    account = OwnAccountField(None)
+    transfer_type = forms.ChoiceField(choices=[('CREDIT', "Deposit"), ('DEBIT', "Withdrawal")])
+    check_recipient = forms.CharField(widget=forms.Textarea(), required=False)
 
-
-class EditEmail(forms.Form):
-    new_email = forms.EmailField()
-
-
-def edit_email_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_email.html', {
-        'form': EditEmail(),
-        'api': urls.reverse(apis.change_my_email),
-        'success': urls.reverse(edit_email_success)
-    })
-
-
-def edit_address_success(request):
-    return TemplateResponse(request, 'pages/edit_email_success.html', {})
-
-
-class EditAddress(forms.Form):
-    new_address = forms.CharField(label="New Address")
-
-
-def edit_address_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_address.html', {
-        'form': EditAddress(),
-        'api': urls.reverse(apis.change_my_address),
-        'success': urls.reverse(edit_address_success)
-    })
-
-
-def edit_phone_success(request):
-    return TemplateResponse(request, 'pages/edit_phone_success.html', {})
-
-
-class EditPhone(forms.Form):
-    new_phone = forms.CharField(label='Phone Number', max_length=12,
-                            error_messages={'incomplete': 'Enter a phone number.'},
-                            validators=[RegexValidator(r'^[0-9]+$', 'Enter a valid phone number.')]
-                            , required=True)
-
-
-def edit_phone_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_phone.html', {
-        'form': EditPhone(),
-        'api': urls.reverse(apis.change_my_phone),
-        'success': urls.reverse(edit_phone_success)
-    })
-
-def edit_name_success(request):
-    return TemplateResponse(request, 'pages/edit_name_success.html', {})
-
-
-class EditName(forms.Form):
-    new_first = forms.CharField(label='First name',
-                                 error_messages={'required': 'Please enter your First name'},
-                                 max_length=30, required=True)
-    new_last = forms.CharField(label='Last Name',
-                                error_messages={'required': 'Please enter your Last name'},
-                                max_length=30, required=True)
-
-
-def edit_name_page(request):
-    current_user(request, expect_not_logged_in=False)
-    return TemplateResponse(request, 'pages/edit_name.html', {
-        'form': EditName(),
-        'api': urls.reverse(apis.change_my_name),
-        'success': urls.reverse(edit_name_success)
-    })
+    def __init__(self, qs_1, is_employee, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if is_employee:
+            self.fields['account'] = forms.ModelChoiceField(None)
+        self.fields['account'].queryset = qs_1
 
 
 def mobile_atm_page(request):
     user = current_user(request, expect_not_logged_in=False)
-    myaccounts = BankAccount.objects.filter(owner=user, approval_status=ApprovalStatus.APPROVED)
-    otheraccounts = []
-    if user.employee_level >= EmployeeLevel.TELLER:
-        otheraccounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED)
+    filter_owner = {'owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
+    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
+    form = MobileATMForm(accounts, user.employee_level != EmployeeLevel.CUSTOMER, request.POST or None)
+
+    if form.is_valid():
+        debit = form.cleaned_data['transfer_type'] == 'DEBIT'
+        trans = Transaction.objects.create(
+            description="Mobile ATM Debit" if debit else "Mobile ATM Credit",
+            account_add=None if debit else form.cleaned_data['account'],
+            account_subtract=form.cleaned_data['account'] if debit else None,
+            transaction=form.cleaned_data['amount'],
+            approval_status=ApprovalStatus.PENDING,
+            check_recipient=form.cleaned_data['check_recipient'] or None)
+
+        trans.add_approval(user)
+        return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
 
     return TemplateResponse(request, 'pages/mobile_atm.html', {
-        'accounts': myaccounts,
-        'other': otheraccounts
+        'form': form,
     })
-
-
-class OwnAccountField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.str_with_balance()
 
 
 class TransferForm(forms.Form):
@@ -375,5 +334,43 @@ def transfer_page(request):
         return TemplateResponse(request, 'pages/transfer_success.html', {})
 
     return TemplateResponse(request, 'pages/transfer.html', {
+        'form': form,
+    })
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField(max_length=200)
+    password = forms.CharField(widget= forms.PasswordInput)
+
+
+def login_page(request):
+    current_user(request, expect_not_logged_in=True)
+
+    return TemplateResponse(request, 'pages/login.html', {
+        'form': LoginForm(),
+        'api': urls.reverse(apis.persimmon_login),
+        'success': urls.reverse(otp_page)
+    })
+
+
+class OTPForm(forms.Form):
+    otp = forms.CharField(max_length=6, widget=forms.TextInput(attrs={'class': "use-otpkeyboard-input"}))
+
+
+def otp_page(request):
+    current_user(request, expect_not_logged_in=True)
+    form = OTPForm(request.POST or None)
+
+    if form.is_valid():
+        username = request.session.get('username', None)
+        sent_otp = request.session.get('sent_otp', None)
+        if form.cleaned_data['otp'] != sent_otp:
+            form.add_error("otp", "Incorrect code")
+        else:
+            user = User.objects.get(django_user__username=username)
+            django_login(request, user.django_user)
+            return TemplateResponse(request, 'pages/login_success.html', {})
+
+    return TemplateResponse(request, 'pages/otp.html', {
         'form': form,
     })

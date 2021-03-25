@@ -1,20 +1,28 @@
-from decimal import Decimal
 import hashlib
+import random
+import os
+import io
 
+from PIL import Image, ImageDraw, ImageFont
+from num2words import num2words
+
+from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden
+from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
+from django.conf import settings
 from django.core import signing, mail
+from sms import send_sms
 
 from . import current_user
-from ..middleware import api_function
-from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, \
-    Appointment, DjangoUser
+from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest
 from ..transaction_approval import check_approvals
+
+# phone number is +13236949222
 
 
 def hashit(string):
@@ -117,56 +125,100 @@ def approve_transaction(request):
     })
 
 
-@api_function
-def credit_debit_funds(request, account_id: int, transactionvalue: Decimal):
-    user = current_user(request)
-
-    if transactionvalue == 0:
-        return {"error": "Zero-dollar transaction"}
-    try:
-        account = BankAccount.objects.get(id=account_id, owner=user, approval_status=ApprovalStatus.APPROVED)
-    except BankAccount.DoesNotExist:
-        return {"error": "No such account"}
-
-    bankstatement = Transaction.objects.create(
-        description="credit" if transactionvalue < 0 else "debit",
-        account_add=account if transactionvalue > 0 else None,
-        account_subtract=account if transactionvalue < 0 else None,
-        transaction=abs(transactionvalue),
-        approval_status=ApprovalStatus.PENDING)
-    bankstatement.save()
-
-    bankstatement.add_approval(user)
-    check_approvals(bankstatement, user)
-    return {}
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput())
 
 
-@api_function
-def persimmon_login(request, username: str, password: str):
+def persimmon_login(request):
     current_user(request, expect_not_logged_in=True)
-    django_user = authenticate(request, username=username, password=password)
-    if django_user is None:
-        return {"error": "could not authenticate"}
+    form = LoginForm(request.POST or None)
+    django_user = persimmon_user = None
 
-    django_login(request, django_user)
-    return {}
+    # pass 1: check authentication
+    if form.is_valid():
+        django_user = authenticate(
+            request,
+            username=form.cleaned_data['username'],
+            password=form.cleaned_data['password'])
+        if django_user is None:
+            form.add_error(None, "Username or password is incorrect")
+
+        try:
+            persimmon_user = User.objects.get(django_user=django_user)
+        except User.DoesNotExist:
+            form.add_error(None, "Username or password is incorrect")
+
+    # pass 2: check otp
+    if form.is_valid():
+        # if we get this far and we need to render the form again don't wipe the password and display the otp field
+        form.fields['password'].widget.render_value = True
+        form.fields['login_code'] = forms.CharField()
+        form.full_clean()
+
+        # if the form is no longer valid no otp was not entered, generate and send it
+        if not form.is_valid():
+            form.errors.clear()
+            form.add_error(None, "Please enter the code we just sent to your phone")
+
+            otp = '%06d' % random.randint(0, 999999)
+            request.session['sent_otp'] = otp
+            request.session['username'] = django_user.username
+
+            send_sms(
+                f'Your Persimmon login code is {otp}',
+                originator=settings.SMS_SENDER,
+                recipients=[persimmon_user.phone])
+
+        # if the otp or cached username mismatch then error
+        elif form.cleaned_data['login_code'] != request.session.get('sent_otp', None) or \
+                form.cleaned_data['username'] != request.session.get('username', None):
+            form.add_error('login_code', 'Invalid code')
+
+        # got em
+        else:
+            django_login(request, django_user)
+            return TemplateResponse(request, 'pages/login_success.html', {})
+
+    return TemplateResponse(request, 'pages/login.html', {
+        'form': form,
+    })
 
 
-@api_function
-def login_status(request):
-    return {"logged_in": request.user.is_authenticated}
-
-
-class UserForm(forms.ModelForm):
+class UserAddressForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ('address', 'phone')
+        fields = ('address',)
+
+    address = forms.CharField(max_length=200, widget=forms.Textarea)
 
 
-class DjangoUserForm(forms.ModelForm):
+class UserPhoneForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('phone',)
+
+    phone = forms.CharField(
+        label='Phone Number',
+        max_length=12,
+        validators=[RegexValidator(r'^[0-9]{10}$', 'Enter a 10-digit phone number, e.g. 0123456789.')])
+
+
+class UserNameForm(forms.ModelForm):
     class Meta:
         model = DjangoUser
-        fields = ('first_name', 'last_name', 'email')
+        fields = ('first_name', 'last_name')
+
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+
+
+class UserEmailForm(forms.ModelForm):
+    class Meta:
+        model = DjangoUser
+        fields = ('email',)
+
+    email = forms.EmailField()
 
 
 def edit_user(request, user_id):
@@ -177,6 +229,10 @@ def edit_user(request, user_id):
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
     original_email = user_edited.email
+    original_address = user_edited.address
+    original_phone = user_edited.phone
+    original_firstname = user_edited.django_user.first_name
+    original_lastname = user_edited.django_user.last_name
 
     # check if editing this user is allowed, and furthermore,
     # whether we are allowed to bypass the verification steps.
@@ -189,211 +245,127 @@ def edit_user(request, user_id):
         raise Http404("Cannot edit this user")
 
     # collect the post data into form objects
-    form1 = UserForm(request.POST or None, instance=user_edited, prefix='persimmon')
-    form2 = DjangoUserForm(request.POST or None, instance=user_edited.django_user, prefix='django')
+    form_address = UserAddressForm(request.POST or None, instance=user_edited)
+    form_phone = UserPhoneForm(request.POST or None, instance=user_edited)
+    form_name = UserNameForm(request.POST or None, instance=user_edited.django_user)
+    form_email = UserEmailForm(request.POST or None, instance=user_edited.django_user)
 
-    # handle the complex case: email verification required
-    # we make two verification codes to certify the transition from one email to another
-    # we ad-hoc add new fields to our form and re-collect the post data
-    # if this is first submission, this just shows the user more fields to fill in
-    # if this is the second submission, this retroactively accounts for the fact that we added these fields
-    #
-    # this logic could mayyyyybe live inside the clean() method
-    # maybe it's even supposed to
-    # but the logic with the verification fields being required sometimes but not others,
-    # which can only be figured out after clean has happened? COMPLICATED
-    if form1.is_valid() and form2.is_valid() and editing_self and form2.cleaned_data['email'] != original_email:
-        # code 1 says username wants to change to new email, certified by old email
-        verification_code_1 = make_verification_code(
-            user_edited.username,
-            form2.cleaned_data['email'],
-            original_email)
-        # code 2 says username wants to change to new email, certified by new email
-        verification_code_2 = make_verification_code(
-            user_edited.username,
-            form2.cleaned_data['email'],
-            form2.cleaned_data['email'])
-        form2.fields['email_verification_1'] = forms.CharField()
-        form2.fields['email_verification_2'] = forms.CharField()
-        form2.full_clean()
-        if not form2.is_valid():
-            mail.send_mail(
-                "Persimmon verification code",
-                f"Here is the code 1 to update your email: {verification_code_1}",
-                'noreply@persimmon.rhelmot.io',
-                [original_email]
-            )
-            mail.send_mail(
-                "Persimmon verification code",
-                f"Here is the code 2 to update your email: {verification_code_2}",
-                'noreply@persimmon.rhelmot.io',
-                [form2.cleaned_data['email']]
-            )
-            form2.errors.clear()
-            form2.add_error(
-                'email_verification_1',
-                'Please check both your emails and enter the codes we sent you here')
-        elif form2.cleaned_data['email_verification_1'] != verification_code_1 or \
-                form2.cleaned_data['email_verification_2'] != verification_code_2:
-            form2.add_error('email_verification_1', 'Invalid codes')
+    if form_address.is_valid() and form_address.cleaned_data['address'] != original_address:
+        UserEditRequest.objects.create(user=user_edited, address=form_address.cleaned_data['address'])
+        form_address.add_error(None, "Address update submitted for approval")
+    else:
+        form_address = UserAddressForm(instance=user_edited)
 
-    # if after all that checking the forms are valid, take any actions we need to
-    if form1.is_valid() and form2.is_valid():
-        form1.save()
-        form2.save()
-        form2.fields.pop('email_verification_1', None)
-        form2.fields.pop('email_verification_2', None)
-        form2.add_error(None, "Update success!")
+    if form_name.is_valid() and (
+            form_name.cleaned_data['first_name'] != original_firstname or
+            form_name.cleaned_data['last_name'] != original_lastname):
+        UserEditRequest.objects.create(user=user_edited,
+                                       firstname=form_name.cleaned_data['first_name'],
+                                       lastname=form_name.cleaned_data['last_name'])
+        form_name.add_error(None, "Name change submitted for approval")
+    else:
+        form_name = UserNameForm(instance=user_edited.django_user)
+
+    if form_email.is_valid() and form_email.cleaned_data['email'] != original_email:
+        if not editing_self:
+            form_email.save()
+            form_email.add_error(None, "Email address updated")
+        else:
+            # code 1 says username wants to change to new email, certified by old email
+            verification_code_1 = make_verification_code(
+                'change_email_1',
+                user_edited.username,
+                form_email.cleaned_data['email'],
+                original_email)
+            # code 2 says username wants to change to new email, certified by new email
+            verification_code_2 = make_verification_code(
+                'change_email_2',
+                user_edited.username,
+                form_email.cleaned_data['email'],
+                form_email.cleaned_data['email'])
+            form_email.fields['email_verification_1'] = forms.CharField()
+            form_email.fields['email_verification_2'] = forms.CharField()
+            form_email.full_clean()
+            if not form_email.is_valid():
+                mail.send_mail(
+                    "Persimmon verification code",
+                    f"Here is code 1 to update your email: {verification_code_1}",
+                    settings.EMAIL_SENDER,
+                    [original_email]
+                )
+                mail.send_mail(
+                    "Persimmon verification code",
+                    f"Here is code 2 to update your email: {verification_code_2}",
+                    settings.EMAIL_SENDER,
+                    [form_email.cleaned_data['email']]
+                )
+                form_email.errors.clear()
+                form_email.add_error(
+                    'email_verification_1',
+                    'Please check both your emails and enter the codes we sent you here')
+            elif form_email.cleaned_data['email_verification_1'] != verification_code_1 or \
+                    form_email.cleaned_data['email_verification_2'] != verification_code_2:
+                form_email.add_error('email_verification_1', 'Invalid codes')
+            else:
+                form_email.save()
+                form_email.fields.pop('email_verification_1', None)
+                form_email.fields.pop('email_verification_2', None)
+                form_email.add_error(None, "Email address updated")
+    else:
+        form_email = UserEmailForm(instance=user_edited.django_user)
+
+    if form_phone.is_valid() and form_phone.cleaned_data['phone'] != original_phone:
+        if not editing_self:
+            form_phone.save()
+            form_phone.add_error(None, "Phone address updated")
+        else:
+            # code 1 says username wants to change to new phone, certified by old phone
+            verification_code_1 = make_verification_code(
+                'change_phone_1',
+                user_edited.username,
+                form_phone.cleaned_data['phone'],
+                original_phone)
+            # code 2 says username wants to change to new phone, certified by new phone
+            verification_code_2 = make_verification_code(
+                'change_phone_2',
+                user_edited.username,
+                form_phone.cleaned_data['phone'],
+                form_phone.cleaned_data['phone'])
+            form_phone.fields['phone_verification_1'] = forms.CharField()
+            form_phone.fields['phone_verification_2'] = forms.CharField()
+            form_phone.full_clean()
+            if not form_phone.is_valid():
+                send_sms(
+                    f"Here is code 1 to update your phone number: {verification_code_1}",
+                    settings.SMS_SENDER,
+                    [original_phone]
+                )
+                send_sms(
+                    f"Here is code 2 to update your phone number: {verification_code_2}",
+                    settings.SMS_SENDER,
+                    [form_phone.cleaned_data['phone']]
+                )
+                form_phone.errors.clear()
+                form_phone.add_error(
+                    'phone_verification_1',
+                    'Please check both your phones and enter the codes we sent you here')
+            elif form_phone.cleaned_data['phone_verification_1'] != verification_code_1 or \
+                    form_phone.cleaned_data['phone_verification_2'] != verification_code_2:
+                form_phone.add_error('phone_verification_1', 'Invalid codes')
+            else:
+                form_phone.save()
+                form_phone.fields.pop('phone_verification_1', None)
+                form_phone.fields.pop('phone_verification_2', None)
+                form_phone.add_error(None, "Phone number updated")
+    else:
+        form_phone = UserPhoneForm(instance=user_edited)
 
     return TemplateResponse(request, 'pages/edit_user.html', {
-        'form1': form1,
-        'form2': form2,
+        'form_name': form_name,
+        'form_email': form_email,
+        'form_phone': form_phone,
+        'form_address': form_address,
     })
-
-
-def get_my_info(request):
-    user = current_user(request)
-    return {
-        'name': user.name,
-        'username': user.username,
-        'email': user.email,
-        'phone': user.phone,
-        'address': user.address,
-    }
-
-
-@api_function
-def get_all_info(request):
-    return get_my_info(request)
-
-
-@api_function
-def change_my_email(request, new_email: str):
-    user = current_user(request)
-    user.change_email(new_email)
-    return {
-        'my new email': user.email
-    }
-
-
-@api_function
-def change_my_phone(request, new_phone: str):
-    user = current_user(request)
-    user.phone = new_phone
-    user.save()
-    return {
-        'my new phone': user.phone
-    }
-
-
-@api_function
-def change_my_address(request, new_address: str):
-    user = current_user(request)
-    user.address = new_address
-    user.save()
-    return {
-        'my new address': user.address
-    }
-
-
-@api_function
-def change_my_name(request, new_first: str, new_last: str):
-    user = current_user(request)
-    user.django_user.first_name = new_first
-    user.django_user.last_name = new_last
-    user.django_user.save()
-    return {
-        'my new address': user.address
-    }
-
-
-@api_function
-def transfer_funds(request, accountnumb1: int, amount: Decimal, accountnumb2: int):
-    user = current_user(request)
-
-    if amount <= 0:
-        return {'error': 'Bad amount: must be positive'}
-
-    with transaction.atomic():
-        try:
-            account1 = BankAccount.objects.get(id=accountnumb1, owner=user, approval_status=ApprovalStatus.APPROVED)
-        except BankAccount.DoesNotExist:
-            return {'error': 'account to debit does not exist or is not owned by user'}
-
-        try:
-            account2 = BankAccount.objects.get(id=accountnumb2, approval_status=ApprovalStatus.APPROVED)
-        except BankAccount.DoesNotExist:
-            return {'error': 'Account to credit does not exist'}
-
-        trans = Transaction.objects.create(
-            transaction=amount,
-            account_add=account2,
-            account_subtract=account1,
-            description=f'transfer from {account1.account_number} to {account2.account_number}',
-            approval_status=ApprovalStatus.PENDING,
-        )
-
-        trans.add_approval(user)
-        check_approvals(trans, user)
-
-        return {'status': 'pending' if trans.approval_status == ApprovalStatus.PENDING else 'complete'}
-
-
-@api_function
-def reset_password(request, email: str):
-    current_user(request, expect_not_logged_in=True)
-    try:
-        User.objects.get(django_user__email=email)
-    except User.DoesNotExist as exc:
-        raise Http404("No such email in our databases...") from exc
-    # TODO send an email here... lol
-    return {}
-
-
-@api_function
-def schedule(request, time: str):
-    user = current_user(request, expect_not_logged_in=False)
-    for empteller in User.objects.all().filter(employee_level=1):
-        if not Appointment.objects.filter(employee=empteller, time=time):
-            newapp = Appointment.objects.create(
-                employee=empteller,
-                customer=user,
-                time=time
-            )
-            newapp.save()
-            return {}
-    return {"error": "No employees available at this time"}
-
-@require_POST
-def mobile_atm_handel(request):
-    user = current_user(request, expect_not_logged_in=False)
-    accountnumber = request.POST.get('acc')
-    ammount = int(request.POST.get('number'))
-    debit = request.POST.get('act') == "True"
-    try:
-        myaccount = BankAccount.objects.get(id=accountnumber)
-    except BankAccount.DoesNotExist:
-        myaccount = None
-    if myaccount is None or ammount <= 0 or (myaccount.owner != user and user.employee_level < EmployeeLevel.TELLER):
-        return TemplateResponse(request, 'pages/mobile_atm_fail.html', {})
-
-    if debit:
-        bankstatement = Transaction.objects.create(
-            description="Mobile ATM Debit",
-            account_add=None,
-            account_subtract=myaccount,
-            transaction=ammount,
-            approval_status=ApprovalStatus.PENDING)
-        bankstatement.add_approval(user)
-    else:
-        bankstatement = Transaction.objects.create(
-            description="Mobile ATM Credit",
-            account_add=myaccount,
-            account_subtract=None,
-            transaction=ammount,
-            approval_status=ApprovalStatus.PENDING)
-        bankstatement.add_approval(user)
-    return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
 
 
 class UserLookupForm(forms.Form):
@@ -421,3 +393,42 @@ def user_lookup(request):
         'form': form,
         'query': query,
     })
+
+
+arial_path = os.path.join(os.path.dirname(__file__), '../static/arial.ttf')
+arial30 = ImageFont.truetype(arial_path, 30)
+arial15 = ImageFont.truetype(arial_path, 15)
+
+
+def check_image(request, tid):
+    user = current_user(request)
+    filter_owner = {'account_subtract__owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
+    try:
+        trans = Transaction.objects.exclude(balance_subtract=None).get(id=tid, **filter_owner)
+        if trans.check_recipient is None:
+            raise Transaction.DoesNotExist
+    except Transaction.DoesNotExist as exc:
+        raise Http404("Cannot view check") from exc
+
+    payer_lines = [x.strip() for x in trans.account_subtract.owner.address.replace('\r', '').split(',')]
+    payer_lines.insert(0, trans.account_subtract.owner.name)
+    amount_text = f'{num2words(int(trans.transaction))} dollars and '\
+                  f'{num2words(int(trans.transaction * 100) % 100)} cents'
+
+    img_path = os.path.join(os.path.dirname(__file__), '../static/checkbg.jpg')
+    img = Image.open(img_path)
+    imgm = ImageDraw.Draw(img)
+    stroke = {'fill': (0, 0, 0), 'stroke_fill': (200, 200, 200), 'stroke_width': 2}
+    imgm.text((100, 80), f"Persimmon Banking #{tid}", font=arial30, **stroke)
+    imgm.text((1000, 80), f'${trans.transaction}', font=arial30, **stroke)
+    imgm.text((100, 130), "Pay", font=arial15, **stroke)
+    imgm.text((100, 150), amount_text, font=arial30, **stroke)
+    imgm.text((100, 190), "to the order of", font=arial15, **stroke)
+    imgm.text((100, 210), trans.check_recipient.replace('\r', ''), font=arial30, **stroke)
+    imgm.text((800, 300), "Pay from " + trans.account_subtract.account_number, font=arial15, **stroke)
+    imgm.text((800, 320), '\n'.join(payer_lines), font=arial30, **stroke)
+
+    stream = io.BytesIO()
+    fmt = Image.registered_extensions()['.png']
+    img.save(stream, fmt)
+    return HttpResponse(stream.getvalue(), content_type='image/png')

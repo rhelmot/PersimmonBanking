@@ -1,7 +1,7 @@
 {% extends "main.html" %}
 {% block title %}Account Overview{% endblock %}
 {% block body %}
-<H1>Hello {{view_user.name}}, Here are your accounts</H1>
+<h2>Hello {{view_user.name}}, Here are your accounts:</h2>
 <table style="width:50%" class="center">
   <tr>
       <th>Account Number</th>
@@ -23,8 +23,7 @@
 {% endfor %}
 </table>
 
-<p>
-    <a href="{% url 'create-bank-account' %}">Apply for a new account</a>
-</p>
+<p><a href="{% url 'create-bank-account' %}">Apply for a new account</a></p>
+<p><a href="{% url 'edit-user' view_user.id %}">Edit my contact information</a></p>
 
 {% endblock %}

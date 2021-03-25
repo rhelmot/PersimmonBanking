@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from ..views import apis
+from ..views import html_views
 from ..models import EmployeeLevel, BankAccount, AccountType, Transaction, ApprovalStatus
 from ..common import make_user
 
@@ -32,11 +32,10 @@ class TestUserBankTransfer(TestCase):
 
         # check for error if transfer to much funds
         req = client_user1.post(
-            reverse(apis.transfer_funds),
-            content_type='application/json',
-            data={'accountnumb1': 1, 'amount': 1001, 'accountnumb2': 2})
+            reverse(html_views.transfer_page),
+            data={'account_1': 1, 'amount': 1001, 'account_2': 2, 'transfer_type': 'SEND'})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {"status": "pending"})
+        self.assertEqual(Transaction.objects.last().approval_status, ApprovalStatus.PENDING)
 
         # check that balance has not changed
         allofthem = BankAccount.objects.all()
@@ -48,71 +47,48 @@ class TestUserBankTransfer(TestCase):
         self.assertEqual(current_balance, 500)
 
         # check error for accounts do not belong to client 1
+        count = len(Transaction.objects.all())
         req = client_user1.post(
-            reverse(apis.transfer_funds),
-            content_type='application/json',
-            data={'accountnumb1': 2, 'amount': 10, 'accountnumb2': 1})
+            reverse(html_views.transfer_page),
+            data={'account_1': 2, 'amount': 10, 'account_2': 1, 'transfer_type': 'SEND'})
         self.assertEqual(req.status_code, 200)
-        self.assertIn('error', req.json())
-
-        # check that balance has not changed
-        allofthem = BankAccount.objects.all()
-        account1 = allofthem[0]
-        current_balance = account1.balance
-        self.assertEqual(current_balance, 1000)
-        account2 = allofthem[1]
-        current_balance = account2.balance
-        self.assertEqual(current_balance, 500)
+        self.assertEqual(len(Transaction.objects.all()), count)
+        account1, account2 = BankAccount.objects.all()
+        self.assertEqual(account1.balance, 1000)
+        self.assertEqual(account2.balance, 500)
 
         # check error for account1 does not exist
+        count = len(Transaction.objects.all())
         req = client_user1.post(
-            reverse(apis.transfer_funds),
-            content_type='application/json',
-            data={'accountnumb1': 3, 'amount': 10, 'accountnumb2': 1})
+            reverse(html_views.transfer_page),
+            data={'account_1': 3, 'amount': 10, 'account_2': 1, 'transfer_type': 'SEND'})
         self.assertEqual(req.status_code, 200)
-        self.assertIn("error", req.json())
-
-        # check that balance has not changed
-        allofthem = BankAccount.objects.all()
-        account1 = allofthem[0]
-        current_balance = account1.balance
-        self.assertEqual(current_balance, 1000)
-        account2 = allofthem[1]
-        current_balance = account2.balance
-        self.assertEqual(current_balance, 500)
+        self.assertEqual(len(Transaction.objects.all()), count)
+        account1, account2 = BankAccount.objects.all()
+        self.assertEqual(account1.balance, 1000)
+        self.assertEqual(account2.balance, 500)
 
         # check error for account 2 does not exist
+        count = len(Transaction.objects.all())
         req = client_user1.post(
-            reverse(apis.transfer_funds),
-            content_type='application/json',
-            data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 4})
+            reverse(html_views.transfer_page),
+            data={'account_1': 1, 'amount': 10, 'account_2': 4, 'transfer_type': 'SEND'})
         self.assertEqual(req.status_code, 200)
-        self.assertIn("error", req.json())
-
-        # check that balance has not changed
-        allofthem = BankAccount.objects.all()
-        account1 = allofthem[0]
-        current_balance = account1.balance
-        self.assertEqual(current_balance, 1000)
-        account2 = allofthem[1]
-        current_balance = account2.balance
-        self.assertEqual(current_balance, 500)
+        self.assertEqual(len(Transaction.objects.all()), count)
+        account1, account2 = BankAccount.objects.all()
+        self.assertEqual(account1.balance, 1000)
+        self.assertEqual(account2.balance, 500)
 
         # check for if no error
+        count = len(Transaction.objects.all())
         req = client_user1.post(
-            reverse(apis.transfer_funds),
-            content_type='application/json',
-            data={'accountnumb1': 1, 'amount': 10, 'accountnumb2': 2})
+            reverse(html_views.transfer_page),
+            data={'account_1': 1, 'amount': 10, 'account_2': 2, 'transfer_type': 'SEND'})
         self.assertEqual(req.status_code, 200)
-        self.assertEqual(req.json(), {'status': 'complete'})
-        # check that balance has not changed
-        allofthem = BankAccount.objects.all()
-        account1 = allofthem[0]
-        current_balance = account1.balance
-        self.assertEqual(current_balance, 990)
-        account2 = allofthem[1]
-        current_balance = account2.balance
-        self.assertEqual(current_balance, 510)
+        self.assertEqual(len(Transaction.objects.all()), count + 1)
+        account1, account2 = BankAccount.objects.all()
+        self.assertEqual(account1.balance, 990)
+        self.assertEqual(account2.balance, 510)
 
         # check if transactions were created
         all_statements = Transaction.objects.filter(approval_status=ApprovalStatus.APPROVED).all()
