@@ -1,9 +1,9 @@
 { "conversations":
 [
-  [ "I wanted to know how to get to the home page", "This should help you: http://127.0.0.1:8000/website/" ],
-  ["How do I get to the main page?", "This should help you: http://127.0.0.1:8000/website/"],
-  ["Home page", "This should help you: http://127.0.0.1:8000/website/"],
-  ["Home", "This should help you: http://127.0.0.1:8000/website/"]
+  [ "I wanted to know how to get to the home page", "This should help you: http://127.0.0.1:8000" ],
+  ["How do I get to the main page?", "This should help you: http://127.0.0.1:8000"],
+  ["Home page", "This should help you: http://127.0.0.1:8000"],
+  ["Home", "This should help you: http://127.0.0.1:8000"]
 ]
 }
 

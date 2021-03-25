@@ -1,0 +1,10 @@
+{ "conversations":
+[
+  [ "How do I schedule an appointment?", "This should help you: http://127.0.0.1:8000/appointment" ],
+  ["I want an appointment", "This should help you: http://127.0.0.1:8000/appointment"],
+  ["Appointment", "This should help you: http://127.0.0.1:8000/appointment"],
+  ["I want to schedule a talk with somebody", "This should help you: http://127.0.0.1:8000/appointment"],
+  ["How can I schedule a meeting with management?", "This should help you: http://127.0.0.1:8000/appointment"],
+  ["Where do I go for an appointment?", "This should help you: http://127.0.0.1:8000/appointment"]
+]
+}
