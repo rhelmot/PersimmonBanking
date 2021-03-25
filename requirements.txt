@@ -10,3 +10,4 @@ twilio
 django-sms
 pillow
 num2words
+dj-database-url
