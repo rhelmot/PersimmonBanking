@@ -33,6 +33,7 @@ urlpatterns = [
     path('transaction/approve', apis.approve_transaction, name='approve-transaction'),
 
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
+    path('appointment/check_appointments', html_views.check_appointments_page, name='check-appointments'),
     path('employee-view', html_views.employee_page, name='employee'),
     path('mobile-atm', html_views.mobile_atm_page, name='mobileatm'),
     path('transfer', html_views.transfer_page, name='transfer'),
