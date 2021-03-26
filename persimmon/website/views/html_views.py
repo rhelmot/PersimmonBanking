@@ -244,12 +244,12 @@ def chatbot_page(request):
     if request.POST:
         conv = request.POST.get('conv', '')
         user_input = request.POST.get('user_input', '')
-
+        # if(user_input )
         resp = runbot(user_input)
 
         conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
     else:
-        resp = runbot("")
+        resp = runbot("Hello")
         conv = "BOT:" + str(resp) + "\n";
 
     return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})

@@ -27,14 +27,12 @@ def runbot(inp):
                   "chatterbot.corpus.english.conversations"
                   )
     trainer.train(os.path.join(os.path.dirname(__file__), './trainer/appointment.json'),
-                  os.path.join(os.path.dirname(__file__), './trainer/home_page.json')
+                  os.path.join(os.path.dirname(__file__), './trainer/home_page.json'),
+                  os.path.join(os.path.dirname(__file__), './trainer/transfer_funds.json')
                   )
 
-    # "Hi",
-    # "http://127.0.0.1:8000/website/chatbot",
-    # "Hi how's it going?",
-    # "http://127.0.0.1:8000/website/chatbot",
-    # "Yo",
-    # "http://127.0.0.1:8000/website/chatbot"
+
+
+
     response = chatbot.get_response(inp)
     return response
