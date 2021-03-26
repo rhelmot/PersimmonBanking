@@ -143,11 +143,11 @@ def persimmon_login(request):
             password=form.cleaned_data['password'])
         if django_user is None:
             form.add_error(None, "Username or password is incorrect")
-
-        try:
-            persimmon_user = User.objects.get(django_user=django_user)
-        except User.DoesNotExist:
-            form.add_error(None, "Username or password is incorrect")
+        else:
+            try:
+                persimmon_user = User.objects.get(django_user=django_user)
+            except User.DoesNotExist:
+                form.add_error(None, "Username or password is incorrect")
 
     # pass 2: check otp
     if form.is_valid():

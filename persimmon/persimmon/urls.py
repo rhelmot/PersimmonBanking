@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # give persimmon priority over the admin site
     path('', include('website.urls')),
+    path('admin/', admin.site.urls),
 ]

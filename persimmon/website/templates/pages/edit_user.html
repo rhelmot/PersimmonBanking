@@ -1,6 +1,7 @@
 {% extends 'main.html' %}
 {% block title %}User Information{% endblock %}
 {% block body %}
+    <h2>Edit Contact Information</h2>
     <form action="{{ request.path }}" method="POST">
         {% csrf_token %}
         {{ form_name.as_p }}
