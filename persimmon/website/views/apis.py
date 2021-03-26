@@ -19,7 +19,8 @@ from django.core import signing, mail
 from sms import send_sms
 
 from . import current_user
-from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest
+from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest, \
+    SignInHistory
 from ..transaction_approval import check_approvals
 
 # phone number is +13236949222
@@ -177,6 +178,7 @@ def persimmon_login(request):
 
         # got em
         else:
+            SignInHistory.objects.create(user=persimmon_user)
             django_login(request, django_user)
             return TemplateResponse(request, 'pages/login_success.html', {})
 

@@ -231,8 +231,14 @@ class TransactionApproval(models.Model):
 
 
 class SignInHistory(models.Model):
-    log = models.DateTimeField(auto_now = True)
+    log = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.user} - {self.log}'
+
+    class Meta:
+        verbose_name_plural = 'Sign In Histories'
 
 
 class Appointment(models.Model):
