@@ -1,6 +1,8 @@
 from django.urls import path
 
 from django.contrib.auth import views as auth_views
+from django.views.defaults import page_not_found
+from django.http import Http404
 
 from .views import html_views, apis
 
@@ -19,6 +21,12 @@ urlpatterns = [
     path('reset_password/success',
          auth_views.PasswordResetCompleteView.as_view(template_name="pages/reset_password_success.html"),
          name="password_reset_complete"),
+    path('password_change/',
+         auth_views.PasswordChangeView.as_view(template_name="pages/password_change.html"),
+         name='password_change'),
+    path('password_change/done/',
+         auth_views.PasswordChangeDoneView.as_view(template_name="pages/password_change_done.html"),
+         name='password_change_done'),
 
     path('user/new', html_views.create_user_page, name='create-account'),
     path('user/<int:user_id>', html_views.account_overview_page, name='user'),
@@ -41,4 +49,6 @@ urlpatterns = [
     path('otp', html_views.otp_page, name='otp'),
     path('logout', html_views.logout, name="logout"),
 
+    # disable the django admin login
+    path('admin/login/', page_not_found, kwargs={'exception': Http404()})
 ]
