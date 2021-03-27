@@ -30,7 +30,6 @@
             <li><a href="{% url 'transfer' %}">Transfer Money</a></li>
             <li>Ask a Bot</li>
             <li><a href="{% url 'appointment' %}">Schedule an Appointment</a></li>
-            <li><a href="{% url 'check-appointments' %}">Check Appointments</a></li>
             {% if persimmon_user.employee_level >= 1 %}
                 <li><a href="{% url 'employee' %}">Employee Portal</a></li>
             {% endif %}
