@@ -65,8 +65,12 @@ def schedule_appointment_page(request):
                 })
         form.add_error(None, "No employees available at given time")
 
+    appointments = Appointment.objects.filter(customer=user).all()
+
     return TemplateResponse(request, 'pages/schedule_appointment.html', {
         'form': form,
+        "appointments": appointments,
+        "login_user": user
     })
 
 
@@ -347,14 +351,4 @@ def otp_page(request):
 
     return TemplateResponse(request, 'pages/otp.html', {
         'form': form,
-    })
-
-
-def check_appointments_page(request):
-    login_user = current_user(request)
-
-    appointments = Appointment.objects.filter(customer=login_user).all()
-    return TemplateResponse(request, 'pages/appointments_check.html', {
-        "appointments": appointments,
-        "login_user": login_user
     })
