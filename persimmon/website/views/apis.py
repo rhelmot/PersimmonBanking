@@ -10,7 +10,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, HttpResponse
+from django.http import Http404, HttpResponseBadRequest, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
@@ -95,6 +95,7 @@ class ApproveTransactionForm(forms.Form):
     approved = forms.BooleanField(required=False)
 
 
+@transaction.atomic
 def approve_transaction_page(request, tid):
     user = current_user(request)
     form = ApproveTransactionForm(request.POST or None)

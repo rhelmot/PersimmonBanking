@@ -37,5 +37,3 @@ def do_approval(client, tid):
         'approved': True,
         'email_verification': code,
     })
-
-
