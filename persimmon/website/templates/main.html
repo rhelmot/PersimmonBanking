@@ -28,7 +28,7 @@
             <li><a href="{% url 'user' persimmon_user.id %}">My Account</a></li>
             <li><a href="{% url 'mobileatm'%}">Mobile ATM</a></li>
             <li><a href="{% url 'transfer' %}">Transfer Money</a></li>
-            <li><a href="{% url 'chatbot' %}">Ask a Bot </a></li>
+            <li><a href="{% url 'chatbot' persimmon_user.id %}">Ask a Bot </a></li>
             <li><a href="{% url 'appointment' %}">Schedule an Appointment</a></li>
             {% if persimmon_user.employee_level >= 1 %}
                 <li><a href="{% url 'employee' %}">Employee Portal</a></li>

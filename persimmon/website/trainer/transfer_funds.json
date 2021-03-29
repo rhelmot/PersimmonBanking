@@ -1,13 +1,13 @@
 { "conversations":
 [
-  [ "I want to transfer some money", "This should help you: http://127.0.0.1:8000/transfer" ],
-  ["Where do I go to transfer funds?", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["I want to request money from ", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["Where do I go to transfer money?", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["I want to request some funds from", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["I want to send some money", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["I want to request some money", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["Where do I go to transfer a certain amount of money?", "This should help you: http://127.0.0.1:8000/transfer"],
-  ["I want a certain amount of money transferred", "This should help you: http://127.0.0.1:8000/transfer"]
+  [ "I want to transfer some money", "Clicking this link should help you: http://127.0.0.1:8000/transfer" ],
+  ["Where do I go to transfer funds?", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["I want to request money from ", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["Where do I go to transfer money?", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["I want to request some funds from", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["I want to send some money", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["I want to request some money", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["Where do I go to transfer a certain amount of money?", "Clicking this link should help you: http://127.0.0.1:8000/transfer"],
+  ["I want a certain amount of money transferred", "Clicking this link should help you: http://127.0.0.1:8000/transfer"]
 ]
 }

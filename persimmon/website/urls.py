@@ -34,7 +34,7 @@ urlpatterns = [
 
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
     path('employee-view', html_views.employee_page, name='employee'),
-    path('chatbot', html_views.chatbot_page, name='chatbot'),
+    path('chatbot/<int:user_id>', html_views.chatbot_page, name='chatbot'),
     path('mobile-atm', html_views.mobile_atm_page, name='mobileatm'),
     path('transfer', html_views.transfer_page, name='transfer'),
 

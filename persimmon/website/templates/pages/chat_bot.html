@@ -11,14 +11,17 @@
 <form method="post">
     {% csrf_token %}
 
-    <textarea rows=20 cols=60>{{conv}}</textarea>
+   <a href="{{link}}"> <textarea rows=20 cols=60>{{conv}}</textarea></a>
 
     <br><br>
     <input type="textbox" name="user_input" value=""/>
 
     <button type="submit">Submit</button>
 
-    <input type="hidden" name =conv  value="{{conv}}" />
-    {{resp}}
+    <input type="hidden" name =conv  value= "{{conv}}" />
+</form>
+
+<form action="http://127.0.0.1:8000/">
+    <input type="submit" value="back" />
 </form>
 </html>

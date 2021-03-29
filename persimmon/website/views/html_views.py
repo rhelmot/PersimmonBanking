@@ -16,10 +16,9 @@ from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 from ..chatbot import runbot
 
+
 # index for website/ to check if url views are working
 def index(request):
-
-
     return TemplateResponse(request, 'pages/home.html', {})
 
 
@@ -189,6 +188,7 @@ def create_user_page(request):
 
 def account_overview_page(request, user_id):
     login_user = current_user(request)
+
     try:
         view_user = User.objects.get(id=user_id)
         if view_user != login_user and login_user.employee_level < EmployeeLevel.TELLER:
@@ -240,20 +240,42 @@ def employee_page(request):
         "pending_accounts": accounts,
     })
 
-def chatbot_page(request):
+
+def chatbot_page(request, user_id):
+    current_user(request)
+    link = ""
     if request.POST:
         conv = request.POST.get('conv', '')
         user_input = request.POST.get('user_input', '')
-        # if(user_input )
         resp = runbot(user_input)
 
-        conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
+        if "/home" in str(resp):
+            link = "http://127.0.0.1:8000/"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/appointment" in str(resp):
+            link = "http://127.0.0.1:8000/appointment"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/transfer" in str(resp):
+            link = "http://127.0.0.1:8000/transfer"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/update-contact" in str(resp):
+            link = "http://127.0.0.1:8000/user/"+str(user_id)+"/edit"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        else:
+            conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
+
     else:
         resp = runbot("Hello")
         conv = "BOT:" + str(resp) + "\n";
 
-    return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})
+    return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv, 'link': link})
 
+
+# http://127.0.0.1:8000/appointment
 class OwnAccountField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.str_with_balance()
@@ -340,7 +362,7 @@ def transfer_page(request):
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=200)
-    password = forms.CharField(widget= forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput)
 
 
 def login_page(request):
