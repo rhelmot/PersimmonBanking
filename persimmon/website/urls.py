@@ -38,7 +38,7 @@ urlpatterns = [
     path('account/approve', apis.approve_bank_account, name='approve-account'),
 
     path('transaction/<int:tid>/check.png', apis.check_image, name='check'),
-    path('transaction/approve', apis.approve_transaction, name='approve-transaction'),
+    path('transaction/<int:tid>/approve', apis.approve_transaction_page, name='approve-transaction-page'),
 
     path('appointment', html_views.schedule_appointment_page, name='appointment'),
     path('employee-view', html_views.employee_page, name='employee'),

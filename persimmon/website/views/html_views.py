@@ -7,6 +7,7 @@ from django import forms, urls
 from django.template.response import TemplateResponse
 from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
 from django.conf import settings
+from django.shortcuts import redirect
 from sms import send_sms
 
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
@@ -266,8 +267,7 @@ def mobile_atm_page(request):
             approval_status=ApprovalStatus.PENDING,
             check_recipient=form.cleaned_data['check_recipient'] or None)
 
-        trans.add_approval(user)
-        return TemplateResponse(request, 'pages/mobile_atm_success.html', {})
+        return redirect(urls.reverse('approve-transaction-page', args=(trans.id,)) + "?back=" + request.path)
 
     return TemplateResponse(request, 'pages/mobile_atm.html', {
         'form': form,
@@ -306,10 +306,7 @@ def transfer_page(request):
             approval_status=ApprovalStatus.PENDING,
         )
 
-        trans.add_approval(user)
-        check_approvals(trans, user)
-
-        return TemplateResponse(request, 'pages/transfer_success.html', {})
+        return redirect(urls.reverse('approve-transaction-page', args=(trans.id,)) + "?back=" + request.path)
 
     return TemplateResponse(request, 'pages/transfer.html', {
         'form': form,

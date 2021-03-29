@@ -17,13 +17,7 @@
                     (<a href="{% url 'user' transaction.account_add.account_number %}">{{ transaction.account_add.owner.name }}</a>
                     volume {{ transaction.account_add.owner.transaction_volume }})
                 {% endif %}
-                <form action="{% url 'approve-transaction' %}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="transaction_id" value="{{ transaction.id }}">
-                    <input type="hidden" name="back" value="{{ request.path }}">
-                    <button name="approved" value="true" type="submit">Approve</button>
-                    <button name="approved" value="false" type="submit">Decline</button>
-                </form>
+                <a href="{% url 'approve-transaction-page' transaction.id %}?back={{ request.path }}">Approve or Decline</a>
             </li>
         {% endfor %}
     </ul>

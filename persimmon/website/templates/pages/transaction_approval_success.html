@@ -1,6 +1,6 @@
 {% extends 'main.html' %}
 {% block title %}Success{% endblock %}
 {% block body %}
-    <p>Transaction approved successfully.</p>
+    <p>Transaction {% if approved %}approved{% else %}declined{% endif %} successfully.</p>
     <p><a href="{{ link }}">Go back</a></p>
 {% endblock %}
