@@ -32,7 +32,7 @@ def do_approval(client, tid):
     client.post(reverse('approve-transaction-page', args=(tid,)), {
         'approved': True,
     })
-    code = mail.outbox[-1].body.split()[-1]
+    code = mail.outbox[-1].body.split()[-1]  # pylint: disable=no-member
     client.post(reverse('approve-transaction-page', args=(tid,)), {
         'approved': True,
         'email_verification': code,
