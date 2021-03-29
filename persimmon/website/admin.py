@@ -13,10 +13,23 @@ class UserEditRequestAdmin(admin.ModelAdmin):
     actions = [approve_edit_request]
 
 
+class SignInHistoryAdmin(admin.ModelAdmin):
+    actions = None
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 # Register your models here.
 admin.site.register(User)
 admin.site.register(BankAccount)
-admin.site.register(Appointment)
-admin.site.register(SignInHistory)
 admin.site.register(Transaction)
+admin.site.register(Appointment)
+admin.site.register(SignInHistory, SignInHistoryAdmin)
 admin.site.register(UserEditRequest, UserEditRequestAdmin)
