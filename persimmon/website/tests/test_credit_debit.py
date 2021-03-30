@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
+from .. import views
 from ..views import apis, html_views
 from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus, Transaction
 from ..common import do_approval, make_user
@@ -56,6 +57,11 @@ class TestCreditDebit(TestCase):
         # test that can approve pending transaction
         do_approval(client_admin, a_transaction.id)
         self.assertEqual(BankAccount.objects.first().balance, a_transaction.transaction)
+
+        # test that can get result from blockchain
+        req = client_user.post(reverse(apis.get_bank_statement_from_blockchain,args=[account.id]))
+        self.assertEqual(req.status_code, 200)
+
 
     def test_checks(self):
         # pylint shut upppppppppp

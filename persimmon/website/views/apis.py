@@ -2,6 +2,8 @@ import hashlib
 import random
 import os
 import io
+import asyncio
+from decimal import Decimal
 
 from PIL import Image, ImageDraw, ImageFont
 from num2words import num2words
@@ -13,7 +15,7 @@ from django.db.models import Q
 from django.http import Http404, HttpResponseBadRequest, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.conf import settings
 from django.core import signing, mail
 from sms import send_sms
@@ -22,6 +24,9 @@ from . import current_user
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest, \
     SignInHistory
 from ..transaction_approval import check_approvals
+from hfc.fabric import Client
+from hfc.fabric_network.gateway import Gateway
+
 
 # phone number is +13236949222
 
@@ -142,6 +147,29 @@ def approve_transaction_page(request, tid):
     return TemplateResponse(request, 'pages/transaction_approval.html', {
         'transaction': trans,
         'form': form,
+    })
+
+
+# @require_POST
+def get_bank_statement_from_blockchain(request,account_id):
+    loop = asyncio.get_event_loop()
+    cli = Client(net_profile=
+                 "/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json")
+    org1_admin = cli.get_user(org_name='Org1', name='Admin')
+    account_id = str(account_id)
+    args = [account_id]
+    new_gateway = Gateway()  # Creates a new gateway instance
+    options = {'wallet': ''}
+    loop.run_until_complete(
+        new_gateway.connect('/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json',
+                            options))
+    new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
+    new_contract = new_network.get_contract('bankcode')
+    result = loop.run_until_complete(new_contract.evaluate_transaction('mychannel', args, org1_admin))
+    print(result)
+
+    return TemplateResponse(request, 'pages/get_bank_statement_blockchain.html', {
+        'result': result,
     })
 
 
@@ -433,7 +461,7 @@ def check_image(request, tid):
 
     payer_lines = [x.strip() for x in trans.account_subtract.owner.address.replace('\r', '').split(',')]
     payer_lines.insert(0, trans.account_subtract.owner.name)
-    amount_text = f'{num2words(int(trans.transaction))} dollars and '\
+    amount_text = f'{num2words(int(trans.transaction))} dollars and ' \
                   f'{num2words(int(trans.transaction * 100) % 100)} cents'
 
     img_path = os.path.join(os.path.dirname(__file__), '../static/checkbg.jpg')

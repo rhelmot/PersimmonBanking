@@ -1,8 +1,11 @@
-
+import asyncio
+from decimal import Decimal
 
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+from hfc.fabric import Client
+from hfc.fabric_network.gateway import Gateway
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -54,7 +57,7 @@ class User(models.Model):
     def transaction_volume(self, period=timezone.timedelta(days=1)):
         acc = 0
         for transaction in (Transaction.objects.filter(account_subtract__owner=self) |
-                            Transaction.objects.filter(account_add__owner=self))\
+                            Transaction.objects.filter(account_add__owner=self)) \
                 .filter(approval_status=ApprovalStatus.APPROVED, date__gt=timezone.now() - period):
             acc += abs(transaction.transaction)
         return acc
@@ -65,20 +68,21 @@ class UserEditRequest(models.Model):
     id = models.AutoField(primary_key=True)
     firstname = models.CharField(max_length=100, null=True)
     lastname = models.CharField(max_length=100, null=True)
-    #email = models.CharField(max_length=100, null=True)
+    # email = models.CharField(max_length=100, null=True)
     address = models.CharField(max_length=200, null=True)
-    #phone = models.CharField(max_length=10, null=True)
+
+    # phone = models.CharField(max_length=10, null=True)
 
     def apply(self):
         if self.firstname is not None:
             self.user.django_user.first_name = self.firstname
         if self.lastname is not None:
             self.user.django_user.last_name = self.lastname
-        #if self.email is not None:
+        # if self.email is not None:
         #    user.django_user.email = self.email
         if self.address is not None:
             self.user.address = self.address
-        #if self.phone is not None:
+        # if self.phone is not None:
         #    user.phone = self.phone
         self.user.django_user.save()
         self.user.save()
@@ -183,8 +187,11 @@ class Transaction(models.Model):
             self.account_subtract.balance -= self.transaction
             self.balance_subtract = self.account_subtract.balance
             self.account_subtract.save()
-
         self.save()
+        print("test")
+        date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
+        self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_add.balance,
+                                                 self.account_add.id, self.description)
 
     def decline(self):
         if self.approval_status != ApprovalStatus.PENDING:
@@ -213,12 +220,36 @@ class Transaction(models.Model):
                 self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
 
+    def create_bank_statement_to_blockchain(self, transaction_id: int, date: str, new_transaction: Decimal
+                                            , balance: Decimal, account_id: int, description: str):
+        loop = asyncio.get_event_loop()
+        cli = \
+            Client(
+                net_profile="/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json")
+        org1_admin = cli.get_user(org_name='Org1', name='Admin')
+        new_gateway = Gateway()  # Creates a new gateway instance
+        options = {'wallet': ''}
+        loop.run_until_complete(
+            new_gateway
+                .connect('/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json',
+                         options))
+        new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
+        new_contract = new_network.get_contract('bankcode')
+        transaction_id = str(transaction_id)
+        new_transaction = str(new_transaction)
+        balance = str(balance)
+        account_id = str(account_id)
+        args = [transaction_id, date, new_transaction, balance, account_id, description, "approved"]
+        loop.run_until_complete(new_contract.submit_transaction('mychannel', args, org1_admin))
+
+
 
 class BankStatementEntry:
     """
     Small data class to contain a slice of a Transaction related to a single account. use Transaction.for_one_account
     to get one of these.
     """
+
     def __init__(self, ident, date, transaction, balance, description, check_recipient):
         self.id = ident  # pylint: disable=invalid-name
         self.date = date
@@ -249,7 +280,7 @@ class SignInHistory(models.Model):
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
-            limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+                                 limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
     time = models.DateTimeField()
 
     class Meta:
