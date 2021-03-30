@@ -12,9 +12,9 @@
             }
         },
         "credentialStore": {
-              "path": "/home/xiao/persimmon/fabric-samples-release-1.4test2/APP/tmp/hfc-kvs",
+              "path": "~/PersimmonBanking/persimmon/tmp/hfc-kvs",
               "cryptoStore": {
-                 "path": "/home/xiao/persimmon/fabric-samples-release-1.4test2/APP/tmp/hfc-kvs"
+                 "path": "~/PersimmonBanking/persimmon/tmp/hfc-kvs"
               },
               "wallet": "wallet-name"
         }
@@ -40,12 +40,12 @@
             ],
             "users": {
         "Admin": {
-          "cert": "/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem",
-          "private_key": "/home/xiao/persimmon/fabric-samples-release-1.4test2/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk"
+          "cert": "~/PersimmonBanking/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem",
+          "private_key": "~/PersimmonBanking/basic-network/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/cd96d5260ad4757551ed4a5a991e62130f8008a0bf996e4e4b84cd097a747fec_sk"
         },
         "User1": {
-          "cert": "/home/xiao/persimmon/fabric-samples-release-1.4test2/APP/tmp/hfc-kvs/user7/enrollmentCert.pem",
-          "private_key": "/home/xiao/persimmon/fabric-samples-release-1.4test2/APP/tmp/hfc-kvs/user7/private_sk"
+          "cert": "~/PersimmonBanking/persimmon/tmp/hfc-kvs/user1/enrollmentCert.pem",
+          "private_key": "~/PersimmonBanking/persimmon/tmp/hfc-kvs/user1/private_sk"
         }
       }
         }
