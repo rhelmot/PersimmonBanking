@@ -1,0 +1,11 @@
+{% extends 'main.html' %}
+{% block title %}Approve Transaction{% endblock %}
+{% block body %}
+    <h2>Approve this transaction?</h2>
+    <p>{{ transaction }}</p>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p><input type="submit" value="Submit"></p>
+    </form>
+{% endblock %}

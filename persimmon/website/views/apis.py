@@ -10,7 +10,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth import authenticate, login as django_login
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseForbidden, HttpResponse
+from django.http import Http404, HttpResponseBadRequest, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
@@ -92,37 +92,56 @@ def approve_bank_account(request):
 
 
 class ApproveTransactionForm(forms.Form):
-    transaction_id = forms.IntegerField()
     approved = forms.BooleanField(required=False)
-    back = forms.CharField()
 
 
 @transaction.atomic
-@require_POST
-def approve_transaction(request):
+def approve_transaction_page(request, tid):
     user = current_user(request)
-    form = ApproveTransactionForm(request.POST)
-    if not form.is_valid():
-        return HttpResponseBadRequest("Bad parameters")
-
+    form = ApproveTransactionForm(request.POST or None)
     try:
-        pendingtransaction = Transaction.objects.get(
-            id=form.cleaned_data['transaction_id'],
-            approval_status=ApprovalStatus.PENDING)
-    except Transaction.DoesNotExist:
-        return HttpResponseNotFound("No such transaction pending approval")
+        trans = Transaction.objects.get(id=tid, approval_status=ApprovalStatus.PENDING)
+        if not check_approvals(trans, user):
+            raise Transaction.DoesNotExist
+    except Transaction.DoesNotExist as exc:
+        raise Http404("No such transaction") from exc
 
-    if not check_approvals(pendingtransaction, user):
-        return HttpResponseForbidden("You cannot approve this transaction")
+    if form.is_valid():
+        verification_code = make_verification_code(
+            'approve_transaction',
+            str(form.cleaned_data['approved']),
+            user.username,
+            str(tid))
+        form.fields['email_verification'] = forms.CharField()
+        form.full_clean()
+        if not form.is_valid():
+            mail.send_mail(
+                "Persimmon verification code",
+                f"Here is the code to verify your transaction approval: {verification_code}",
+                settings.EMAIL_SENDER,
+                [user.email]
+            )
+            form.errors.clear()
+            form.add_error(
+                'email_verification',
+                'Please check your email and enter the code we sent you here')
+        elif form.cleaned_data['email_verification'] != verification_code:
+            form.add_error('email_verification', 'Invalid code')
+        else:
+            if form.cleaned_data['approved']:
+                trans.add_approval(user)
+                check_approvals(trans, user)
+            else:
+                trans.decline()
 
-    if form.cleaned_data['approved']:
-        pendingtransaction.add_approval(user)
-        check_approvals(pendingtransaction, user)
-    else:
-        pendingtransaction.decline()
+            return TemplateResponse(request, 'pages/transaction_approval_success.html', {
+                'approved': form.cleaned_data['approved'],
+                'link': request.GET.get("back", None)
+            })
 
-    return TemplateResponse(request, 'pages/transaction_approval_success.html', {
-        'link': form.cleaned_data['back'],
+    return TemplateResponse(request, 'pages/transaction_approval.html', {
+        'transaction': trans,
+        'form': form,
     })
 
 

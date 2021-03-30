@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from ..views import html_views
 from ..models import EmployeeLevel, BankAccount, AccountType, Transaction, ApprovalStatus
-from ..common import make_user
+from ..common import make_user, do_approval
 
 
 class TestUserBankTransfer(TestCase):
@@ -34,7 +34,8 @@ class TestUserBankTransfer(TestCase):
         req = client_user1.post(
             reverse(html_views.transfer_page),
             data={'account_1': 1, 'amount': 1001, 'account_2': 2, 'transfer_type': 'SEND'})
-        self.assertEqual(req.status_code, 200)
+        do_approval(client_user1, Transaction.objects.last().id)
+        self.assertEqual(Transaction.objects.last().transaction, 1001)
         self.assertEqual(Transaction.objects.last().approval_status, ApprovalStatus.PENDING)
 
         # check that balance has not changed
@@ -51,14 +52,12 @@ class TestUserBankTransfer(TestCase):
         req = client_user1.post(
             reverse(html_views.transfer_page),
             data={'account_1': 2, 'amount': 10, 'account_2': 1, 'transfer_type': 'SEND'})
-        self.assertEqual(req.status_code, 200)
         self.assertEqual(len(Transaction.objects.all()), count)
         account1, account2 = BankAccount.objects.all()
         self.assertEqual(account1.balance, 1000)
         self.assertEqual(account2.balance, 500)
 
         # check error for account1 does not exist
-        count = len(Transaction.objects.all())
         req = client_user1.post(
             reverse(html_views.transfer_page),
             data={'account_1': 3, 'amount': 10, 'account_2': 1, 'transfer_type': 'SEND'})
@@ -69,7 +68,6 @@ class TestUserBankTransfer(TestCase):
         self.assertEqual(account2.balance, 500)
 
         # check error for account 2 does not exist
-        count = len(Transaction.objects.all())
         req = client_user1.post(
             reverse(html_views.transfer_page),
             data={'account_1': 1, 'amount': 10, 'account_2': 4, 'transfer_type': 'SEND'})
@@ -80,12 +78,11 @@ class TestUserBankTransfer(TestCase):
         self.assertEqual(account2.balance, 500)
 
         # check for if no error
-        count = len(Transaction.objects.all())
         req = client_user1.post(
             reverse(html_views.transfer_page),
             data={'account_1': 1, 'amount': 10, 'account_2': 2, 'transfer_type': 'SEND'})
-        self.assertEqual(req.status_code, 200)
         self.assertEqual(len(Transaction.objects.all()), count + 1)
+        do_approval(client_user1, Transaction.objects.last().id)
         account1, account2 = BankAccount.objects.all()
         self.assertEqual(account1.balance, 990)
         self.assertEqual(account2.balance, 510)

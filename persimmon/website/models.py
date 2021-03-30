@@ -148,7 +148,12 @@ class Transaction(models.Model):
         constraints = [models.constraints.CheckConstraint(check=models.Q(transaction__gt=0), name='positive_value')]
 
     def __str__(self):
-        return f'<Transaction "{self.description}" ${self.transaction}>'
+        pieces = [f'Transaction of ${self.transaction}']
+        if self.account_subtract:
+            pieces.append(f'from {self.account_subtract.owner.name}')
+        if self.account_add:
+            pieces.append(f'to {self.account_add.owner.name}')
+        return ' '.join(pieces)
 
     @property
     def is_transfer(self):

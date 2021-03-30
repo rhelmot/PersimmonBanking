@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from .models import Transaction, ApprovalStatus, EmployeeLevel, User
 
 CRITICAL_THRESHOLD = 1000
@@ -41,6 +43,7 @@ def required_approvals(stmt: Transaction):
     return employee_approval, user_approval
 
 
+@transaction.atomic
 def check_approvals(stmt: Transaction, user: User):
     """
     Check if a user can approve a transaction. As a side effect, if the transaction can be automatically approved,

@@ -1,3 +1,6 @@
+from django.urls import reverse
+from django.core import mail
+
 from .models import User, DjangoUser, EmployeeLevel
 
 
@@ -23,3 +26,14 @@ def make_user(username,
         address=address,
         employee_level=employee_level,
         django_user=django_user)
+
+
+def do_approval(client, tid):
+    client.post(reverse('approve-transaction-page', args=(tid,)), {
+        'approved': True,
+    })
+    code = mail.outbox[-1].body.split()[-1]  # pylint: disable=no-member
+    client.post(reverse('approve-transaction-page', args=(tid,)), {
+        'approved': True,
+        'email_verification': code,
+    })

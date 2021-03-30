@@ -20,13 +20,9 @@
         <td>${{ entry.transaction }}</td>
         {% if entry.balance is None %}
             {% if entry.can_approve %}
-                <td><form action="{% url 'approve-transaction' %}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="transaction_id" value="{{ entry.id }}">
-                    <input type="hidden" name="back" value="{{ request.path }}">
-                    <button name="approved" value="true" type="submit">Approve</button><br>
-                    <button name="approved" value="false" type="submit">Decline</button>
-                </form></td>
+                <td><em><a href="{% url 'approve-transaction-page' entry.id %}?back={{ request.path }}">
+                    Approve or Decline
+                </a></em></td>
             {% else %}
                 <td><em>Pending approval</em></td>
             {% endif %}
