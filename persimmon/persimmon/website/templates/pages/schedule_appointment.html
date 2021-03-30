@@ -1,0 +1,10 @@
+{% extends "main.html" %}
+{% block body %}
+    <h2>Schedule an Appointment</h2>
+    {{ form.media }}
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p><input type="submit" value="Submit"></p>
+    </form>
+{% endblock %}

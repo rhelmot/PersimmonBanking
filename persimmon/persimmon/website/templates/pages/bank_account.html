@@ -1,0 +1,39 @@
+{% extends 'main.html' %}
+{% block title %}Account {{ account.account_number }}{% endblock %}
+{% block body %}
+    <h2>Statement for account {{ account.account_number }}</h2>
+    <table>
+    <tr>
+        <th>Date/Time</th>
+        <th>Description</th>
+        <th>Amount</th>
+        <th>Balance</th>
+    </tr>
+    {% for entry in statement %}
+    <tr>
+        <td>{{ entry.date }}</td>
+        {% if entry.balance is not None and entry.check_recipient is not None and entry.transaction < 0 %}
+            <td><a href="{% url 'check' entry.id %}">{{ entry.description }}</a></td>
+        {% else %}
+        <td>{{ entry.description }}</td>
+        {% endif %}
+        <td>${{ entry.transaction }}</td>
+        {% if entry.balance is None %}
+            {% if entry.can_approve %}
+                <td><form action="{% url 'approve-transaction' %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="transaction_id" value="{{ entry.id }}">
+                    <input type="hidden" name="back" value="{{ request.path }}">
+                    <button name="approved" value="true" type="submit">Approve</button><br>
+                    <button name="approved" value="false" type="submit">Decline</button>
+                </form></td>
+            {% else %}
+                <td><em>Pending approval</em></td>
+            {% endif %}
+        {% else %}
+            <td>${{ entry.balance }}</td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+    </table>
+{% endblock %}

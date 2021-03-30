@@ -1,0 +1,27 @@
+{% extends 'main.html' %}
+{% block title %}User Information{% endblock %}
+{% block body %}
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form_name.as_p }}
+        <p><input type="submit" value="Update"></p>
+    </form>
+    <hr>
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form_email.as_p }}
+        <p><input type="submit" value="Update"></p>
+    </form>
+    <hr>
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form_phone.as_p }}
+        <p><input type="submit" value="Update"></p>
+    </form>
+    <hr>
+    <form action="{{ request.path }}" method="POST">
+        {% csrf_token %}
+        {{ form_address.as_p }}
+        <p><input type="submit" value="Update"></p>
+    </form>
+{% endblock %}
