@@ -22,7 +22,7 @@ if ENVFILE.exists():
         for line in fp:
             if line.startswith('export '):
                 key, val = line[7:].split('=', 1)
-                val = val.strip("'")
+                val = val.strip("' \n\t")
                 os.environ[key] = val
 
 SECRET_KEY = os.getenv("SECRET_KEY", 'DO NOT USE DO NOT USE DO NOT USE')
