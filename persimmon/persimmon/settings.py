@@ -16,6 +16,14 @@ import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENVFILE = BASE_DIR.parent / 'prod_creds.txt'
+if ENVFILE.exists():
+    with open(ENVFILE) as fp:
+        for line in fp:
+            if line.startswith('export '):
+                key, val = line[7:].split('=', 1)
+                val = val.strip("'")
+                os.environ[key] = val
 
 SECRET_KEY = os.getenv("SECRET_KEY", 'DO NOT USE DO NOT USE DO NOT USE')
 
