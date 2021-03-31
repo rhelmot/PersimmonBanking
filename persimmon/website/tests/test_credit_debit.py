@@ -2,8 +2,8 @@ from django.test import TestCase, Client
 from django.urls import reverse
 
 from ..views import apis, html_views
-from .test_bank_account import make_user
 from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus, Transaction
+from ..common import do_approval, make_user
 
 
 class TestCreditDebit(TestCase):
@@ -27,7 +27,6 @@ class TestCreditDebit(TestCase):
         # test that can't make credit request due to missing parameters
         req = client_user.post(reverse(html_views.mobile_atm_page),
                                data={"account": account.id})
-        self.assertEqual(req.status_code, 200)
         self.assertEqual(len(Transaction.objects.all()), 0)
 
         # test that successfully making credit request
@@ -35,7 +34,7 @@ class TestCreditDebit(TestCase):
                                data={"account": account.id,
                                      "amount": "100",
                                      "transfer_type": "CREDIT"})
-        self.assertEqual(req.status_code, 200)
+        do_approval(client_user, Transaction.objects.last().id)
         self.assertEqual(Transaction.objects.last().transaction, 100)
         self.assertEqual(Transaction.objects.last().account_add, account)
 
@@ -44,7 +43,7 @@ class TestCreditDebit(TestCase):
                                data={"account": account.id,
                                      "amount": "100",
                                      "transfer_type": "DEBIT"})
-        self.assertEqual(req.status_code, 200)
+        do_approval(client_user, Transaction.objects.last().id)
         self.assertEqual(Transaction.objects.last().transaction, 100)
         self.assertEqual(Transaction.objects.last().account_subtract, account)
 
@@ -55,11 +54,8 @@ class TestCreditDebit(TestCase):
         self.assertIn('$' + str(a_transaction.transaction), req.content.decode())
 
         # test that can approve pending transaction
-        req = client_admin.post(reverse(apis.approve_transaction),
-                                data={"transaction_id": a_transaction.id,
-                                      "approved": True,
-                                      "back": "foo"})
-        self.assertEqual(req.status_code, 200)
+        do_approval(client_admin, a_transaction.id)
+        self.assertEqual(BankAccount.objects.first().balance, a_transaction.transaction)
 
     def test_checks(self):
         # pylint shut upppppppppp

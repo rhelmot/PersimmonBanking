@@ -12,18 +12,20 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import sys
 from pathlib import Path
-
-from django.core.management.utils import get_random_secret_key
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENVFILE = BASE_DIR.parent / 'prod_creds.txt'
+if ENVFILE.exists():
+    with open(ENVFILE) as fp:
+        for line in fp:
+            if line.startswith('export '):
+                key, val = line[7:].split('=', 1)
+                val = val.strip("' \n\t")
+                os.environ[key] = val
 
-SECRET_KEY_PATH = BASE_DIR.parent / '.secret.txt'
-if not os.path.exists(SECRET_KEY_PATH):
-    with open(SECRET_KEY_PATH, 'w') as fp:
-        fp.write(get_random_secret_key())
-with open(SECRET_KEY_PATH) as fp:
-    SECRET_KEY = fp.read()
+SECRET_KEY = os.getenv("SECRET_KEY", 'DO NOT USE DO NOT USE DO NOT USE')
 
 DEBUG = os.getenv("DJANGO_DEBUG", "").lower() in ('1', 'true')
 if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'runserver':
@@ -86,10 +88,7 @@ WSGI_APPLICATION = 'persimmon.wsgi.application'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.parse(os.getenv("DATABASE_URL", f'sqlite:///{BASE_DIR / "db.sqlite3"}'))
 }
 
 # Password validation
@@ -127,6 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR.parent / 'staticfiles'
 
 BOOTSTRAP4 = {
     'include_jquery': True,
