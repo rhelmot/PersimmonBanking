@@ -265,6 +265,18 @@ def chatbot_page(request, user_id):
             link = "http://127.0.0.1:8000/user/"+str(user_id)+"/edit"
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/my-account" in str(resp):
+            link = "http://127.0.0.1:8000/user/"+str(user_id)
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/account/new" in str(resp):
+            link = "http://127.0.0.1:8000/account/new"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
+        elif "/mobile-atm" in str(resp):
+            link = "http://127.0.0.1:8000/mobile-atm"
+            conv = conv + "YOU: " + str(
+                user_input) + "\n" + "BOT:" + str(resp) + "\n "
         else:
             conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
 

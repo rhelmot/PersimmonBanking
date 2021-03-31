@@ -1,0 +1,19 @@
+{ "conversations":
+[
+  [ "I want to apply for a new account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to create a new account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to create a new checkings account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to create a new savings account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to create a new credit account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to apply for a new checkings account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to apply for a new savings account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "I want to apply for a new credit account", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I apply for a new account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I apply for a new checkings account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I apply for a new savings account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I apply for a new credit account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I create a new account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I create a new savings account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+  [ "Where can I create a new credit account?", "Clicking this link should help you: http://127.0.0.1:8000/account/new" ],
+]
+}

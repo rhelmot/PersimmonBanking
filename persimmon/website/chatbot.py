@@ -25,9 +25,12 @@ def runbot(inp):
 
     trainer.train(os.path.join(os.path.dirname(__file__), './trainer/appointment.json'),
                   os.path.join(os.path.dirname(__file__), './trainer/home_page.json'),
+                  os.path.join(os.path.dirname(__file__), './trainer/mobile_atm.json'),
                   os.path.join(os.path.dirname(__file__), './trainer/transfer_funds.json'),
                   os.path.join(os.path.dirname(__file__), './trainer/update_contact_info.json'),
-                  os.path.join(os.path.dirname(__file__), './trainer/greetings.json')
+                  os.path.join(os.path.dirname(__file__), './trainer/greetings.json'),
+                  os.path.join(os.path.dirname(__file__), './trainer/new_account.json'),
+                  os.path.join(os.path.dirname(__file__), './trainer/my_accounts.json'),
                   )
 
     response = chatbot.get_response(inp)

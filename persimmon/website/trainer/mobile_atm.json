@@ -1,0 +1,16 @@
+{ "conversations":
+[
+  [ "I want to access an atm", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm" ],
+  ["Where can I go to access an atm?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["I want to access a mobile atm ", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["Where can I go to access a mobile atm?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["I want to deposit some money", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["Where can I go to deposit some money?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["I want to withdraw some money", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["Where can I go to withdraw some money?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["I want to deposit some money in my account", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["Where can I go to deposit some money in my account?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["Where can I go to withdraw some money in my account?", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"],
+  ["I want to withdraw some money from my account", "Clicking this link should help you: http://127.0.0.1:8000/mobile-atm"]
+]
+}
