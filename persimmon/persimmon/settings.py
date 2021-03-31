@@ -150,3 +150,5 @@ if sys.argv[0].endswith('manage.py') and sys.argv[1] == 'test':
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 SMS_SENDER = os.getenv("SMS_SENDER", '+15017122661')
+
+BLOCKCHAIN_CONNECTION = os.getenv("BLOCKCHAIN_CONNECTION", "")

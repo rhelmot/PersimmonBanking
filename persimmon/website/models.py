@@ -1,9 +1,11 @@
+import os
 import asyncio
 from decimal import Decimal
 
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+from django.conf import settings
 from hfc.fabric import Client
 from hfc.fabric_network.gateway import Gateway
 
@@ -185,14 +187,14 @@ class Transaction(models.Model):
             self.account_add.save()
             date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
             self.create_bank_statement_to_blockchain(self.id, date, self.transaction,self.account_add.balance,
-                                                     self.account_add.id,self.description)
+                                                     self.account_add.id, self.description)
         if self.account_subtract is not None:
             self.account_subtract.balance -= self.transaction
             self.balance_subtract = self.account_subtract.balance
             self.account_subtract.save()
             date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
-            self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_subtract.balance
-                                                     , self.account_subtract.id, self.description)
+            self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_subtract.balance,
+                                                     self.account_subtract.id, self.description)
         self.save()
 
     def decline(self):
@@ -222,15 +224,18 @@ class Transaction(models.Model):
                 self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
 
-    def create_bank_statement_to_blockchain(self, transaction_id: int, date: str, new_transaction: Decimal
-                                            , balance: Decimal, account_id: int, description: str):
+    @staticmethod
+    def create_bank_statement_to_blockchain(transaction_id: int, date: str, new_transaction: Decimal,
+                                            balance: Decimal, account_id: int, description: str):
+        if not settings.BLOCKCHAIN_CONNECTION:
+            return
+
         loop = asyncio.get_event_loop()
-        net_path = os.path.join(os.path.dirname(__file__),'../../basic-network/connection.json')
-        cli = Client(net_profile=net_path)
+        cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
         new_gateway = Gateway()  # Creates a new gateway instance
         options = {'wallet': ''}
-        loop.run_until_complete(new_gateway.connect(net_path,options))
+        loop.run_until_complete(new_gateway.connect(settings.BLOCKCHAIN_CONNECTION, options))
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
         transaction_id = str(transaction_id)

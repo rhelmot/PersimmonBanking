@@ -151,22 +151,21 @@ def approve_transaction_page(request, tid):
 
 
 # @require_POST
-def get_bank_statement_from_blockchain(request,account_id):
+def get_bank_statement_from_blockchain(request, account_id):
+    if not settings.BLOCKCHAIN_CONNECTION:
+        raise Http404("Blockchain is disconnected")
+
     loop = asyncio.get_event_loop()
-    cli = Client(net_profile=
-                 "/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json")
+    cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
     org1_admin = cli.get_user(org_name='Org1', name='Admin')
     account_id = str(account_id)
     args = [account_id]
     new_gateway = Gateway()  # Creates a new gateway instance
     options = {'wallet': ''}
-    loop.run_until_complete(
-        new_gateway.connect('/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json',
-                            options))
+    loop.run_until_complete(new_gateway.connect(settings.BLOCKCHAIN_CONNECTION, options))
     new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
     new_contract = new_network.get_contract('bankcode')
     result = loop.run_until_complete(new_contract.evaluate_transaction('mychannel', args, org1_admin))
-    print(result)
 
     return TemplateResponse(request, 'pages/get_bank_statement_blockchain.html', {
         'result': result,

@@ -17,3 +17,4 @@ on your system, run ``teardown.sh``.
 ## Persimmon notes:
 
 - using fabric version 1.4.6 (`./install.sh 1.4.6 -s`)
+- `git clone https://github.com/hyperledger/fabric-sdk-py.git; cd fabric-sdk-py; pip install -e .`
