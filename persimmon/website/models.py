@@ -183,15 +183,17 @@ class Transaction(models.Model):
             self.account_add.balance += self.transaction
             self.balance_add = self.account_add.balance
             self.account_add.save()
+            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self.id, date, self.transaction,self.account_add.balance,
+                                                     self.account_add.id,self.description)
         if self.account_subtract is not None:
             self.account_subtract.balance -= self.transaction
             self.balance_subtract = self.account_subtract.balance
             self.account_subtract.save()
+            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_subtract.balance
+                                                     , self.account_subtract.id, self.description)
         self.save()
-        print("test")
-        date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
-        self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_add.balance,
-                                                 self.account_add.id, self.description)
 
     def decline(self):
         if self.approval_status != ApprovalStatus.PENDING:
@@ -223,16 +225,12 @@ class Transaction(models.Model):
     def create_bank_statement_to_blockchain(self, transaction_id: int, date: str, new_transaction: Decimal
                                             , balance: Decimal, account_id: int, description: str):
         loop = asyncio.get_event_loop()
-        cli = \
-            Client(
-                net_profile="/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json")
+        net_path = os.path.join(os.path.dirname(__file__),'../../basic-network/connection.json')
+        cli = Client(net_profile=net_path)
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
         new_gateway = Gateway()  # Creates a new gateway instance
         options = {'wallet': ''}
-        loop.run_until_complete(
-            new_gateway
-                .connect('/home/xiao/persimmon/PersimmonBanking/basic-network/connection.json',
-                         options))
+        loop.run_until_complete(new_gateway.connect(net_path,options))
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
         transaction_id = str(transaction_id)
@@ -241,7 +239,6 @@ class Transaction(models.Model):
         account_id = str(account_id)
         args = [transaction_id, date, new_transaction, balance, account_id, description, "approved"]
         loop.run_until_complete(new_contract.submit_transaction('mychannel', args, org1_admin))
-
 
 
 class BankStatementEntry:
