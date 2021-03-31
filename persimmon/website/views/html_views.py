@@ -8,7 +8,6 @@ from django.template.response import TemplateResponse
 from django.contrib.auth import logout as django_logout, login as django_login, forms as auth_forms
 from django.conf import settings
 from sms import send_sms
-
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
@@ -241,7 +240,9 @@ def employee_page(request):
     })
 
 
+# https://persimmon.rhelmot.io/
 def chatbot_page(request, user_id):
+    URL = "http://127.0.0.1:8000"
     current_user(request)
     link = ""
     if request.POST:
@@ -250,31 +251,31 @@ def chatbot_page(request, user_id):
         resp = runbot(user_input)
 
         if "/home" in str(resp):
-            link = "http://127.0.0.1:8000/"
+            link = URL
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/appointment" in str(resp):
-            link = "http://127.0.0.1:8000/appointment"
+            link = URL + urls.reverse('appointment')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/transfer" in str(resp):
-            link = "http://127.0.0.1:8000/transfer"
+            link = URL + urls.reverse('transfer')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/update-contact" in str(resp):
-            link = "http://127.0.0.1:8000/user/"+str(user_id)+"/edit"
+            link = URL + urls.reverse('edit-user', kwargs={'user_id': user_id})
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/my-account" in str(resp):
-            link = "http://127.0.0.1:8000/user/"+str(user_id)
+            link = URL + urls.reverse('user', kwargs={'user_id': user_id})
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/account/new" in str(resp):
-            link = "http://127.0.0.1:8000/account/new"
+            link = URL + urls.reverse('create-bank-account')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/mobile-atm" in str(resp):
-            link = "http://127.0.0.1:8000/mobile-atm"
+            link = URL + urls.reverse('mobileatm')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         else:
