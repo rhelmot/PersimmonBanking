@@ -150,10 +150,14 @@ def approve_transaction_page(request, tid):
     })
 
 
-# @require_POST
 def get_bank_statement_from_blockchain(request, account_id):
     if not settings.BLOCKCHAIN_CONNECTION:
         raise Http404("Blockchain is disconnected")
+
+    user = current_user(request)
+    if user.employee_level == EmployeeLevel.CUSTOMER and \
+            not BankAccount.objects.filter(id=account_id, owner=user).exists():
+        raise Http404("Cannot view this account")
 
     try:
         loop = asyncio.get_event_loop()
