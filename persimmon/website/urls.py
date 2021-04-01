@@ -37,7 +37,7 @@ urlpatterns = [
     path('account/new', apis.create_bank_account, name='create-bank-account'),
     path('account/<int:number>', html_views.statement_page, name='statement'),
     path('account/approve', apis.approve_bank_account, name='approve-account'),
-    path('account/<int:account_id>/blockchain', apis.get_bank_statement_from_blockchain,name='get-blockchain'),
+    path('account/<int:account_id>/blockchain', apis.get_bank_statement_from_blockchain, name='get-blockchain'),
 
     path('transaction/<int:tid>/check.png', apis.check_image, name='check'),
     path('transaction/<int:tid>/approve', apis.approve_transaction_page, name='approve-transaction-page'),

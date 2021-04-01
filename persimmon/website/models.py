@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 from django.conf import settings
 from hfc.fabric import Client
+from hfc.fabric.chaincode import Chaincode
 from hfc.fabric_network.gateway import Gateway
 
 
@@ -230,7 +231,12 @@ class Transaction(models.Model):
         if not settings.BLOCKCHAIN_CONNECTION:
             return
 
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
         new_gateway = Gateway()  # Creates a new gateway instance
@@ -238,12 +244,21 @@ class Transaction(models.Model):
         loop.run_until_complete(new_gateway.connect(settings.BLOCKCHAIN_CONNECTION, options))
         new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
         new_contract = new_network.get_contract('bankcode')
+        cli = new_gateway.client
         transaction_id = str(transaction_id)
         new_transaction = str(new_transaction)
         balance = str(balance)
         account_id = str(account_id)
         args = [transaction_id, date, new_transaction, balance, account_id, description, "approved"]
-        loop.run_until_complete(new_contract.submit_transaction('mychannel', args, org1_admin))
+
+        response = cli.chaincode_invoke(requestor=org1_admin,
+                                        channel_name=new_contract.network.channel.name,
+                                        peers=cli._peers,
+                                        args=args,
+                                        cc_name=new_contract.cc_name,
+                                        wait_for_event=True,
+                                        fcn="createBankStatement")
+        loop.run_until_complete(response)
 
 
 class BankStatementEntry:
