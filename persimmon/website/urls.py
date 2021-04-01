@@ -4,7 +4,6 @@ from django.contrib.auth import views as auth_views
 from django.views.defaults import page_not_found
 from django.http import Http404
 
-from . import views
 from .views import html_views, apis
 
 urlpatterns = [

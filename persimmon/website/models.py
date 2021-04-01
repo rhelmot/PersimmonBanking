@@ -1,5 +1,3 @@
-import os
-import asyncio
 from decimal import Decimal
 
 from django.db import models
@@ -7,8 +5,9 @@ from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 from django.conf import settings
 from hfc.fabric import Client
-from hfc.fabric.chaincode import Chaincode
 from hfc.fabric_network.gateway import Gateway
+
+from .common import event_loop  # pylint: disable=cyclic-import
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -231,12 +230,7 @@ class Transaction(models.Model):
         if not settings.BLOCKCHAIN_CONNECTION:
             return
 
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
+        loop = event_loop()
         cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
         org1_admin = cli.get_user(org_name='Org1', name='Admin')
         new_gateway = Gateway()  # Creates a new gateway instance
@@ -253,7 +247,7 @@ class Transaction(models.Model):
 
         response = cli.chaincode_invoke(requestor=org1_admin,
                                         channel_name=new_contract.network.channel.name,
-                                        peers=cli._peers,
+                                        peers=cli._peers,  # pylint: disable=protected-access
                                         args=args,
                                         cc_name=new_contract.cc_name,
                                         wait_for_event=True,

@@ -2,8 +2,6 @@ import hashlib
 import random
 import os
 import io
-import asyncio
-from decimal import Decimal
 
 from PIL import Image, ImageDraw, ImageFont
 from num2words import num2words
@@ -15,17 +13,18 @@ from django.db.models import Q
 from django.http import Http404, HttpResponseBadRequest, HttpResponse
 from django import forms
 from django.template.response import TemplateResponse
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.core import signing, mail
 from sms import send_sms
+from hfc.fabric import Client
+from hfc.fabric_network.gateway import Gateway
 
 from . import current_user
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest, \
     SignInHistory
 from ..transaction_approval import check_approvals
-from hfc.fabric import Client
-from hfc.fabric_network.gateway import Gateway
+from ..common import event_loop
 
 
 # phone number is +13236949222
@@ -159,12 +158,7 @@ def get_bank_statement_from_blockchain(request, account_id):
             not BankAccount.objects.filter(id=account_id, owner=user).exists():
         raise Http404("Cannot view this account")
 
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
+    loop = event_loop()
     cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
     org1_admin = cli.get_user(org_name='Org1', name='Admin')
     account_id = str(account_id)
@@ -177,7 +171,7 @@ def get_bank_statement_from_blockchain(request, account_id):
     new_contract = new_network.get_contract('bankcode')
     response = cli.chaincode_query(requestor=org1_admin,
                                    channel_name=new_contract.network.channel.name,
-                                   peers=cli._peers,
+                                   peers=cli._peers,  # pylint: disable=protected-access
                                    args=args,
                                    cc_name=new_contract.cc_name,
                                    fcn='getBankStatement')

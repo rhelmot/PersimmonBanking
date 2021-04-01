@@ -1,7 +1,9 @@
+import asyncio
+
 from django.urls import reverse
 from django.core import mail
 
-from .models import User, DjangoUser, EmployeeLevel
+from . import models
 
 
 def make_user(username,
@@ -11,17 +13,17 @@ def make_user(username,
               email='example@example.com',
               phone='0000000000',
               address='nowhere',
-              employee_level=EmployeeLevel.CUSTOMER) -> User:
+              employee_level=0) -> 'models.User':
     """
     A function for quickly creating a user with a bunch of testing defaults set.
     """
-    django_user = DjangoUser.objects.create_user(
+    django_user = models.DjangoUser.objects.create_user(
         username=username,
         first_name=first_name,
         last_name=last_name,
         email=email,
         password=password)
-    return User.objects.create(
+    return models.User.objects.create(
         phone=phone,
         address=address,
         employee_level=employee_level,
@@ -37,3 +39,13 @@ def do_approval(client, tid):
         'approved': True,
         'email_verification': code,
     })
+
+
+def event_loop():
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    return loop

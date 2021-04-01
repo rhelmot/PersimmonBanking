@@ -1,7 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from .. import views
 from ..views import apis, html_views
 from ..models import EmployeeLevel, AccountType, BankAccount, ApprovalStatus, Transaction
 from ..common import do_approval, make_user
