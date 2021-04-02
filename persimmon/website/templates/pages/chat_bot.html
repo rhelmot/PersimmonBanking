@@ -1,27 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chat Bot</title>
-</head>
-<body>
-    <h1>Persimmon ChatBot</h1>
-</body>
+{% extends 'main.html' %}
+{% block title %}Chat Bot{% endblock %}
+{% block body %}
+    <h2>Persimmon ChatBot</h2>
 
-<form method="post">
-    {% csrf_token %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name =conv  value= "{{conv}}">
 
-   <a href="{{link}}"> <textarea rows=20 cols=60>{{conv}}</textarea></a>
+        <pre>{{conv | urlize}}</pre>
 
-    <br><br>
-    <input type="textbox" name="user_input" value=""/>
+        <p>
+            <input type="textbox" name="user_input" value="" autocomplete="off">
+        </p>
 
-    <button type="submit">Submit</button>
+        <p>
+            <button type="submit">Submit</button>
+        </p>
 
-    <input type="hidden" name =conv  value= "{{conv}}" />
-</form>
-
-<form action="http://127.0.0.1:8000/">
-    <input type="submit" value="back" />
-</form>
-</html>
+    </form>
+{% endblock %}

@@ -1,4 +1,5 @@
 from bootstrap_datepicker_plus import DateTimePickerInput
+import re
 
 from django.core import mail
 from django.http import Http404
@@ -236,50 +237,35 @@ def employee_page(request):
 
 # https://persimmon.rhelmot.io/
 def chatbot_page(request, user_id):
-    url = "http://127.0.0.1:8000"
-    current_user(request)
-    link = ""
+    user = current_user(request)
+    url_base = f'{request.scheme}://{request.get_host()}'
+
     if request.POST:
         conv = request.POST.get('conv', '')
         user_input = request.POST.get('user_input', '')
-        resp = run_bot(user_input)
+        resp = str(run_bot(user_input))
 
-        if "/home" in str(resp):
-            link = url
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/appointment" in str(resp):
-            link = url + urls.reverse('appointment')
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/transfer" in str(resp):
-            link = url + urls.reverse('transfer')
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/update-contact" in str(resp):
-            link = url + urls.reverse('edit-user', kwargs={'user_id': user_id})
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/my-account" in str(resp):
-            link = url + urls.reverse('user', kwargs={'user_id': user_id})
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/account/new" in str(resp):
-            link = url + urls.reverse('create-bank-account')
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        elif "/mobile-atm" in str(resp):
-            link = url + urls.reverse('mobileatm')
-            conv = conv + "YOU: " + str(
-                user_input) + "\n" + "BOT:" + str(resp) + "\n "
-        else:
-            conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
+        while True:
+            match = re.search('url_\\w*', resp, re.IGNORECASE)
+            if match is None:
+                break
+            ind1, ind2 = match.span()
+            target = resp[ind1+4:ind2].replace('_', '-')
+            if target in ('index', 'appointment', 'transfer', 'create-bank-account', 'mobileatm'):
+                replacement = url_base + urls.reverse(target)
+            elif target in ('edit-user', 'user'):
+                replacement = url_base + urls.reverse(target, args=(user.id,))
+            else:
+                replacement = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            resp = resp[:ind1] + replacement + resp[ind2:]
+
+        conv += f"YOU: {user_input}\nBOT: {resp}\n"
 
     else:
         resp = run_bot("Hello")
-        conv = "BOT:" + str(resp) + "\n"
+        conv = f"BOT: {resp}\n"
 
-    return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv, 'link': link})
+    return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})
 
 
 # http://127.0.0.1:8000/appointment

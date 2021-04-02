@@ -1,16 +1,16 @@
 { "conversations":
 [
-  ["I want to access an atm", "Sounds good! You can access this at http://127.0.0.1:8000/mobile-atm" ],
-  ["Where can I go to access an atm?", "You can access an atm at http://127.0.0.1:8000/mobile-atm"],
-  ["I want to access a mobile atm ", "No problem! Heading to this link should help you out: http://127.0.0.1:8000/mobile-atm"],
-  ["Where can I go to access a mobile atm?", "You can access an atm at http://127.0.0.1:8000/mobile-atm"],
-  ["I want to deposit some money", "You can deposit some money at http://127.0.0.1:8000/mobile-atm"],
-  ["Where can I go to deposit some money?", "You can deposit some money at http://127.0.0.1:8000/mobile-atm"],
-  ["I want to withdraw some money", "You can withdraw some money at http://127.0.0.1:8000/mobile-atm"],
-  ["Where can I go to withdraw some money?", "You can withdraw some money at http://127.0.0.1:8000/mobile-atm"],
-  ["I want to deposit some money in my account", "Great! You can deposit some money at http://127.0.0.1:8000/mobile-atm"],
-  ["Where can I go to deposit some money in my account?", "You can deposit some money at http://127.0.0.1:8000/mobile-atm"],
-  ["Where can I go to withdraw some money from my account?", "You can withdraw some money from your account here: http://127.0.0.1:8000/mobile-atm"],
-  ["I want to withdraw some money from my account", "You can withdraw some money from your account at http://127.0.0.1:8000/mobile-atm"]
+  ["I want to access an atm", "Sounds good! You can access this at url_mobileatm" ],
+  ["Where can I go to access an atm?", "You can access an atm at url_mobileatm"],
+  ["I want to access a mobile atm ", "No problem! Heading to this link should help you out: url_mobileatm"],
+  ["Where can I go to access a mobile atm?", "You can access an atm at url_mobileatm"],
+  ["I want to deposit some money", "You can deposit some money at url_mobileatm"],
+  ["Where can I go to deposit some money?", "You can deposit some money at url_mobileatm"],
+  ["I want to withdraw some money", "You can withdraw some money at url_mobileatm"],
+  ["Where can I go to withdraw some money?", "You can withdraw some money at url_mobileatm"],
+  ["I want to deposit some money in my account", "Great! You can deposit some money at url_mobileatm"],
+  ["Where can I go to deposit some money in my account?", "You can deposit some money at url_mobileatm"],
+  ["Where can I go to withdraw some money from my account?", "You can withdraw some money from your account here: url_mobileatm"],
+  ["I want to withdraw some money from my account", "You can withdraw some money from your account at url_mobileatm"]
 ]
 }

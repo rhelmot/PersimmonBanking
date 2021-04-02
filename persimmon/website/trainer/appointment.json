@@ -1,10 +1,10 @@
 { "conversations":
 [
-  ["How do I schedule an appointment?", "You can schedule an appointment by going to http://127.0.0.1:8000/appointment" ],
-  ["I want an appointment", "No problem! You can schedule an appointment at http://127.0.0.1:8000/appointment"],
-  ["Appointment", "Clicking this link should help you: http://127.0.0.1:8000/appointment"],
-  ["I want to schedule a talk with somebody", "I understand! You can schedule that right at this link http://127.0.0.1:8000/appointment"],
-  ["How can I schedule a meeting with management?", "You can schedule a meeting with management here: http://127.0.0.1:8000/appointment"],
-  ["Where do I go for an appointment?", "You can go to this link to schedule yourself an appointment http://127.0.0.1:8000/appointment"]
+  ["How do I schedule an appointment?", "You can schedule an appointment by going to url_appointment" ],
+  ["I want an appointment", "No problem! You can schedule an appointment at url_appointment"],
+  ["Appointment", "Clicking this link should help you: url_appointment"],
+  ["I want to schedule a talk with somebody", "I understand! You can schedule that right at this link url_appointment"],
+  ["How can I schedule a meeting with management?", "You can schedule a meeting with management here: url_appointment"],
+  ["Where do I go for an appointment?", "You can go to this link to schedule yourself an appointment url_appointment"]
 ]
 }
