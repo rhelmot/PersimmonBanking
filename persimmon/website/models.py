@@ -141,7 +141,7 @@ class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
     date = models.DateTimeField(default=timezone.now)
     transaction = models.DecimalField(decimal_places=2, max_digits=10, )
-    description = models.CharField(max_length=20, default="credit")
+    description = models.CharField(max_length=100, default="credit")
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
     check_recipient = models.CharField(max_length=200, null=True)
 
