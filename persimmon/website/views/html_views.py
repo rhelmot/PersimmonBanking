@@ -1,4 +1,3 @@
-from bootstrap_datepicker_plus import DateTimePickerInput
 import re
 
 from django.core import mail
@@ -10,6 +9,8 @@ from django.contrib.auth import logout as django_logout, login as django_login, 
 from django.conf import settings
 from django.shortcuts import redirect
 from sms import send_sms
+from bootstrap_datepicker_plus import DateTimePickerInput
+
 from ..chatbot import run_bot
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
@@ -236,7 +237,7 @@ def employee_page(request):
 
 
 # https://persimmon.rhelmot.io/
-def chatbot_page(request, user_id):
+def chatbot_page(request):
     user = current_user(request)
     url_base = f'{request.scheme}://{request.get_host()}'
 
