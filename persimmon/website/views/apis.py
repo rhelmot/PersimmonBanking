@@ -17,8 +17,11 @@ from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.core import signing, mail
 from sms import send_sms
-from hfc.fabric import Client
-from hfc.fabric_network.gateway import Gateway
+try:
+    from hfc.fabric import Client
+    from hfc.fabric_network.gateway import Gateway
+except ImportError:
+    Client = Gateway = None
 
 from . import current_user
 from ..models import BankAccount, EmployeeLevel, ApprovalStatus, Transaction, User, DjangoUser, UserEditRequest, \

@@ -4,8 +4,12 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 from django.conf import settings
-from hfc.fabric import Client
-from hfc.fabric_network.gateway import Gateway
+try:
+    from hfc.fabric import Client
+    from hfc.fabric_network.gateway import Gateway
+except ImportError:
+    Client = None
+    Gateway = None
 
 from .common import event_loop  # pylint: disable=cyclic-import
 
