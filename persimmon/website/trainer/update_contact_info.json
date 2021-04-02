@@ -1,13 +1,13 @@
 { "conversations":
 [
-  [ "I want to update my contact info", "Clicking this link should help you: http://127.0.0.1:8000/update-contact" ],
-  [ "I want to change my contact info", "Clicking this link should help you: http://127.0.0.1:8000/update-contact" ],
-  ["Where can I change some information in my contact profile?", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I wanted to update my email. Where should I go?", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I have a new email where can I go to change it?", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I just got a new phone where can I go update that?", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I just moved locations and wanted to update my address.", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I wanted to update my address where can I do this?", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"],
-  ["I just got married and wanted to update my name.", "Clicking this link should help you: http://127.0.0.1:8000/update-contact"]
+  ["I want to update my contact info", "Sounds good! You can update it here: http://127.0.0.1:8000/update-contact" ],
+  ["I want to change my contact info", "No problem! You can change it here: http://127.0.0.1:8000/update-contact" ],
+  ["Where can I change some information in my contact profile?", "You can change that information at this link http://127.0.0.1:8000/update-contact"],
+  ["I wanted to update my email. Where should I go?", "You can go to this link http://127.0.0.1:8000/update-contact"],
+  ["I have a new email where can I go to change it?", "You can go to this link http://127.0.0.1:8000/update-contact"],
+  ["I just got a new phone where can I go update that?", "Congrats on the new phone! You can update it here: http://127.0.0.1:8000/update-contact"],
+  ["I just moved locations and wanted to update my address.", "Hope your move was a smooth transition! You can update that at this link http://127.0.0.1:8000/update-contact"],
+  ["I wanted to update my address where can I do this?", "You can update your address here: http://127.0.0.1:8000/update-contact"],
+  ["I just got married and wanted to update my name.", "Congrats on getting married! You can update your name at the link here: http://127.0.0.1:8000/update-contact"]
 ]
 }

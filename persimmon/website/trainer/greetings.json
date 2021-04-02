@@ -4,6 +4,8 @@
   ["Hey", "Hey how's it going?" ],
   ["Hello", "Hello how's it going?" ],
   ["Whats up", "Hello how's it going?" ],
-  ["I'm well", "That's great how can I help you?"]
+  ["I'm well", "That's great how can I help you?"],
+  ["Good", "That's good to hear how can I assist you?"],
+  ["I'm good", "Great to hear! How can I help you"]
 ]
 }

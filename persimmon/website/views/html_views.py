@@ -9,12 +9,10 @@ from django.contrib.auth import logout as django_logout, login as django_login, 
 from django.conf import settings
 from django.shortcuts import redirect
 from sms import send_sms
+from ..chatbot import run_bot
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
-from chatterbot import ChatBot
-from chatterbot.trainers import ListTrainer
-from ..chatbot import runbot
 
 
 # index for website/ to check if url views are working
@@ -238,48 +236,48 @@ def employee_page(request):
 
 # https://persimmon.rhelmot.io/
 def chatbot_page(request, user_id):
-    URL = "http://127.0.0.1:8000"
+    url = "http://127.0.0.1:8000"
     current_user(request)
     link = ""
     if request.POST:
         conv = request.POST.get('conv', '')
         user_input = request.POST.get('user_input', '')
-        resp = runbot(user_input)
+        resp = run_bot(user_input)
 
         if "/home" in str(resp):
-            link = URL
+            link = url
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/appointment" in str(resp):
-            link = URL + urls.reverse('appointment')
+            link = url + urls.reverse('appointment')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/transfer" in str(resp):
-            link = URL + urls.reverse('transfer')
+            link = url + urls.reverse('transfer')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/update-contact" in str(resp):
-            link = URL + urls.reverse('edit-user', kwargs={'user_id': user_id})
+            link = url + urls.reverse('edit-user', kwargs={'user_id': user_id})
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/my-account" in str(resp):
-            link = URL + urls.reverse('user', kwargs={'user_id': user_id})
+            link = url + urls.reverse('user', kwargs={'user_id': user_id})
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/account/new" in str(resp):
-            link = URL + urls.reverse('create-bank-account')
+            link = url + urls.reverse('create-bank-account')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         elif "/mobile-atm" in str(resp):
-            link = URL + urls.reverse('mobileatm')
+            link = url + urls.reverse('mobileatm')
             conv = conv + "YOU: " + str(
                 user_input) + "\n" + "BOT:" + str(resp) + "\n "
         else:
             conv = conv + "YOU: " + str(user_input) + "\n" + "BOT:" + str(resp) + "\n"
 
     else:
-        resp = runbot("Hello")
-        conv = "BOT:" + str(resp) + "\n";
+        resp = run_bot("Hello")
+        conv = "BOT:" + str(resp) + "\n"
 
     return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv, 'link': link})
 

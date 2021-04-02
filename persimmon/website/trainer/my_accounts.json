@@ -1,8 +1,8 @@
 { "conversations":
 [
-  [ "Where can I access my accounts?", "Clicking this link should help you: http://127.0.0.1:8000/my-account" ],
-  [ "Where can I see my accounts?", "Clicking this link should help you: http://127.0.0.1:8000/my-account" ],
-  [ "I want to see my accounts", "Clicking this link should help you: http://127.0.0.1:8000/my-account" ],
-  [ "I want to access my accounts", "Clicking this link should help you: http://127.0.0.1:8000/my-account" ]
+  ["Where can I access my accounts?", "You can access your accounts by going to: http://127.0.0.1:8000/my-account" ],
+  ["Where can I see my accounts?", "You can see your accounts here: http://127.0.0.1:8000/my-account" ],
+  ["I want to see my accounts", "No problem! head to this link to see them: http://127.0.0.1:8000/my-account" ],
+  ["I want to access my accounts", "You can access your accounts here! http://127.0.0.1:8000/my-account" ]
 ]
 }
