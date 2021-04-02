@@ -297,7 +297,7 @@ def mobile_atm_page(request):
     if form.is_valid():
         debit = form.cleaned_data['transfer_type'] == 'DEBIT'
         trans = Transaction.objects.create(
-            description="Mobile ATM Debit" if debit else "Mobile ATM Credit",
+            description="Mobile ATM Withdrawal" if debit else "Mobile ATM Deposit",
             account_add=None if debit else form.cleaned_data['account'],
             account_subtract=form.cleaned_data['account'] if debit else None,
             transaction=form.cleaned_data['amount'],

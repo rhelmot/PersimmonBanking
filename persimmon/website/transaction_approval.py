@@ -65,12 +65,16 @@ def check_approvals(stmt: Transaction, user: User):
     # - if it is already satisfied, set the _approval local variable to None
     # - if it is not satisfied and the current user is applicable, return True
     if employee_approval is not None:
-        if stmt.transactionapproval_set.filter(approver__employee_level__gte=employee_approval).exists():
+        if stmt.transactionapproval_set.filter(
+                transaction=stmt,
+                approver__employee_level__gte=employee_approval).exists():
             employee_approval = None
         elif user.employee_level >= employee_approval:
             return True
     if user_approval is not None:
-        if stmt.transactionapproval_set.filter(approver=user_approval).exists():
+        if stmt.transactionapproval_set.filter(
+                transaction=stmt,
+                approver=user_approval).exists():
             user_approval = None
         elif user_approval == user:
             return True

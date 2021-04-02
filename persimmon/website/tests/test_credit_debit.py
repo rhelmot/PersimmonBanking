@@ -57,6 +57,12 @@ class TestCreditDebit(TestCase):
         do_approval(client_admin, a_transaction.id)
         self.assertEqual(BankAccount.objects.first().balance, a_transaction.transaction)
 
+        # test that can get result from blockchain
+        # cannot be tested in a testing environment :(
+        #req = client_user.post(reverse(apis.get_bank_statement_from_blockchain, args=[account.id]))
+        #self.assertEqual(req.status_code, 200)
+
+
     def test_checks(self):
         # pylint shut upppppppppp
         # pylint: disable=invalid-name

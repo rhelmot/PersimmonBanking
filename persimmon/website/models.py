@@ -1,8 +1,17 @@
-
+from decimal import Decimal
 
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
+from django.conf import settings
+try:
+    from hfc.fabric import Client
+    from hfc.fabric_network.gateway import Gateway
+except ImportError:
+    Client = None
+    Gateway = None
+
+from .common import event_loop  # pylint: disable=cyclic-import
 
 
 class ApprovalStatus(models.IntegerChoices):
@@ -54,7 +63,7 @@ class User(models.Model):
     def transaction_volume(self, period=timezone.timedelta(days=1)):
         acc = 0
         for transaction in (Transaction.objects.filter(account_subtract__owner=self) |
-                            Transaction.objects.filter(account_add__owner=self))\
+                            Transaction.objects.filter(account_add__owner=self)) \
                 .filter(approval_status=ApprovalStatus.APPROVED, date__gt=timezone.now() - period):
             acc += abs(transaction.transaction)
         return acc
@@ -65,20 +74,21 @@ class UserEditRequest(models.Model):
     id = models.AutoField(primary_key=True)
     firstname = models.CharField(max_length=100, null=True)
     lastname = models.CharField(max_length=100, null=True)
-    #email = models.CharField(max_length=100, null=True)
+    # email = models.CharField(max_length=100, null=True)
     address = models.CharField(max_length=200, null=True)
-    #phone = models.CharField(max_length=10, null=True)
+
+    # phone = models.CharField(max_length=10, null=True)
 
     def apply(self):
         if self.firstname is not None:
             self.user.django_user.first_name = self.firstname
         if self.lastname is not None:
             self.user.django_user.last_name = self.lastname
-        #if self.email is not None:
+        # if self.email is not None:
         #    user.django_user.email = self.email
         if self.address is not None:
             self.user.address = self.address
-        #if self.phone is not None:
+        # if self.phone is not None:
         #    user.phone = self.phone
         self.user.django_user.save()
         self.user.save()
@@ -135,7 +145,7 @@ class Transaction(models.Model):
     id = models.AutoField(primary_key=True)
     date = models.DateTimeField(default=timezone.now)
     transaction = models.DecimalField(decimal_places=2, max_digits=10, )
-    description = models.CharField(max_length=20, default="credit")
+    description = models.CharField(max_length=100, default="credit")
     approval_status = models.IntegerField(choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
     check_recipient = models.CharField(max_length=200, null=True)
 
@@ -179,11 +189,16 @@ class Transaction(models.Model):
             self.account_add.balance += self.transaction
             self.balance_add = self.account_add.balance
             self.account_add.save()
+            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self.id, date, self.transaction,self.account_add.balance,
+                                                     self.account_add.id, self.description)
         if self.account_subtract is not None:
             self.account_subtract.balance -= self.transaction
             self.balance_subtract = self.account_subtract.balance
             self.account_subtract.save()
-
+            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_subtract.balance,
+                                                     self.account_subtract.id, self.description)
         self.save()
 
     def decline(self):
@@ -213,12 +228,43 @@ class Transaction(models.Model):
                 self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
 
+    @staticmethod
+    def create_bank_statement_to_blockchain(transaction_id: int, date: str, new_transaction: Decimal,
+                                            balance: Decimal, account_id: int, description: str):
+        if not settings.BLOCKCHAIN_CONNECTION:
+            return
+
+        loop = event_loop()
+        cli = Client(net_profile=settings.BLOCKCHAIN_CONNECTION)
+        org1_admin = cli.get_user(org_name='Org1', name='Admin')
+        new_gateway = Gateway()  # Creates a new gateway instance
+        options = {'wallet': ''}
+        loop.run_until_complete(new_gateway.connect(settings.BLOCKCHAIN_CONNECTION, options))
+        new_network = loop.run_until_complete(new_gateway.get_network('mychannel', org1_admin))
+        new_contract = new_network.get_contract('bankcode')
+        cli = new_gateway.client
+        transaction_id = str(transaction_id)
+        new_transaction = str(new_transaction)
+        balance = str(balance)
+        account_id = str(account_id)
+        args = [transaction_id, date, new_transaction, balance, account_id, description, "approved"]
+
+        response = cli.chaincode_invoke(requestor=org1_admin,
+                                        channel_name=new_contract.network.channel.name,
+                                        peers=cli._peers,  # pylint: disable=protected-access
+                                        args=args,
+                                        cc_name=new_contract.cc_name,
+                                        wait_for_event=True,
+                                        fcn="createBankStatement")
+        loop.run_until_complete(response)
+
 
 class BankStatementEntry:
     """
     Small data class to contain a slice of a Transaction related to a single account. use Transaction.for_one_account
     to get one of these.
     """
+
     def __init__(self, ident, date, transaction, balance, description, check_recipient):
         self.id = ident  # pylint: disable=invalid-name
         self.date = date
@@ -249,7 +295,7 @@ class SignInHistory(models.Model):
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
-            limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
+                                 limit_choices_to={'employee_level__gte': EmployeeLevel.TELLER})
     time = models.DateTimeField()
 
     class Meta:
