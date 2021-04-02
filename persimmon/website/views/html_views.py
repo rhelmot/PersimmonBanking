@@ -56,16 +56,21 @@ def schedule_appointment_page(request):
     if form.is_valid():
         for teller in User.objects.filter(employee_level=1):
             if not Appointment.objects.filter(employee=teller, time=form.cleaned_data['time']):
-                newapp = Appointment.objects.create(
-                    employee=teller,
-                    customer=user,
-                    time=form.cleaned_data['time'],
-                )
-                newapp.save()
-                return TemplateResponse(request, 'pages/appointmentbooked.html', {
-                    'teller': teller.name,
-                    'time': form.cleaned_data['time'],
-                })
+                if teller != user:
+                    newapp = Appointment.objects.create(
+                        employee=teller,
+                        customer=user,
+                        time=form.cleaned_data['time'],
+                    )
+                    newapp.save()
+                    return TemplateResponse(request, 'pages/appointmentbooked.html', {
+                        'teller': teller.name,
+                        'time': form.cleaned_data['time'],
+                    })
+
+                else:
+                    form.add_error(None, "Cannot make an appointment with yourself")
+
         form.add_error(None, "No employees available at given time")
 
     appointments = Appointment.objects.filter(customer=user).all()
