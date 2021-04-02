@@ -1,0 +1,8 @@
+{ "conversations":
+[
+  ["Where can I access my accounts?", "You can access your accounts by going to: url_user" ],
+  ["Where can I see my accounts?", "You can see your accounts here: url_user" ],
+  ["I want to see my accounts", "No problem! head to this link to see them: url_user" ],
+  ["I want to access my accounts", "You can access your accounts here! url_user" ]
+]
+}

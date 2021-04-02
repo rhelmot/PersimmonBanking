@@ -1,0 +1,19 @@
+{ "conversations":
+[
+  ["I want to apply for a new account", "Thats exciting! You can apply for a new account here: url_create_bank_account" ],
+  ["I want to create a new account", "You can create a new account here: url_create_bank_account" ],
+  ["I want to create a new checkings account", "You can create a new checkings account here: url_create_bank_account" ],
+  ["I want to create a new savings account", "You can create a new savings account here: url_create_bank_account" ],
+  ["I want to create a new credit account", "You can create a new credit account here: url_create_bank_account" ],
+  ["I want to apply for a new checkings account", "Sounds great! You can apply for a new checkings account here: url_create_bank_account" ],
+  ["I want to apply for a new savings account", "Sounds great! You can apply for a new savings account here: url_create_bank_account" ],
+  ["I want to apply for a new credit account", "Sounds great! You can apply for a new credit account here: url_create_bank_account" ],
+  ["Where can I apply for a new account?", "You can apply for a new account here: url_create_bank_account" ],
+  ["Where can I apply for a new checkings account?", "You can apply for a new checkings account here: url_create_bank_account" ],
+  ["Where can I apply for a new savings account?", "You can apply for a new savings account here: url_create_bank_account" ],
+  ["Where can I apply for a new credit account?", "You can apply for a new credit account here: url_create_bank_account" ],
+  ["Where can I create a new account?", "You can create a new account at url_create_bank_account" ],
+  ["Where can I create a new savings account?", "You can create a new savings account at url_create_bank_account" ],
+  ["Where can I create a new credit account?", "You can create a new credit account at url_create_bank_account" ]
+]
+}

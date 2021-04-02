@@ -1,0 +1,13 @@
+{ "conversations":
+[
+  ["I want to update my contact info", "Sounds good! You can update it here: url_edit_user" ],
+  ["I want to change my contact info", "No problem! You can change it here: url_edit_user" ],
+  ["Where can I change some information in my contact profile?", "You can change that information at this link url_edit_user"],
+  ["I wanted to update my email. Where should I go?", "You can go to this link url_edit_user"],
+  ["I have a new email where can I go to change it?", "You can go to this link url_edit_user"],
+  ["I just got a new phone where can I go update that?", "Congrats on the new phone! You can update it here: url_edit_user"],
+  ["I just moved locations and wanted to update my address.", "Hope your move was a smooth transition! You can update that at this link url_edit_user"],
+  ["I wanted to update my address where can I do this?", "You can update your address here: url_edit_user"],
+  ["I just got married and wanted to update my name.", "Congrats on getting married! You can update your name at the link here: url_edit_user"]
+]
+}

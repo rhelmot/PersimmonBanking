@@ -1,0 +1,21 @@
+{% extends 'main.html' %}
+{% block title %}Chat Bot{% endblock %}
+{% block body %}
+    <h2>Persimmon ChatBot</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name =conv  value= "{{conv}}">
+
+        <pre>{{conv | urlize}}</pre>
+
+        <p>
+            <input type="textbox" name="user_input" value="" autocomplete="off">
+        </p>
+
+        <p>
+            <button type="submit">Submit</button>
+        </p>
+
+    </form>
+{% endblock %}

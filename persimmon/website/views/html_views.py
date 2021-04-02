@@ -1,4 +1,4 @@
-from bootstrap_datepicker_plus import DateTimePickerInput
+import re
 
 from django.core import mail
 from django.http import Http404
@@ -9,7 +9,9 @@ from django.contrib.auth import logout as django_logout, login as django_login, 
 from django.conf import settings
 from django.shortcuts import redirect
 from sms import send_sms
+from bootstrap_datepicker_plus import DateTimePickerInput
 
+from ..chatbot import run_bot
 from ..models import BankAccount, ApprovalStatus, DjangoUser, EmployeeLevel, User, Transaction, Appointment
 from . import current_user, apis
 from ..transaction_approval import check_approvals, applicable_approvals
@@ -181,6 +183,7 @@ def create_user_page(request):
 
 def account_overview_page(request, user_id):
     login_user = current_user(request)
+
     try:
         view_user = User.objects.get(id=user_id)
         if view_user != login_user and login_user.employee_level < EmployeeLevel.TELLER:
@@ -233,6 +236,40 @@ def employee_page(request):
     })
 
 
+# https://persimmon.rhelmot.io/
+def chatbot_page(request):
+    user = current_user(request)
+    url_base = f'{request.scheme}://{request.get_host()}'
+
+    if request.POST:
+        conv = request.POST.get('conv', '')
+        user_input = request.POST.get('user_input', '')
+        resp = str(run_bot(user_input))
+
+        while True:
+            match = re.search('url_\\w*', resp, re.IGNORECASE)
+            if match is None:
+                break
+            ind1, ind2 = match.span()
+            target = resp[ind1+4:ind2].replace('_', '-')
+            if target in ('index', 'appointment', 'transfer', 'create-bank-account', 'mobileatm'):
+                replacement = url_base + urls.reverse(target)
+            elif target in ('edit-user', 'user'):
+                replacement = url_base + urls.reverse(target, args=(user.id,))
+            else:
+                replacement = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            resp = resp[:ind1] + replacement + resp[ind2:]
+
+        conv += f"YOU: {user_input}\nBOT: {resp}\n"
+
+    else:
+        resp = run_bot("Hello")
+        conv = f"BOT: {resp}\n"
+
+    return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})
+
+
+# http://127.0.0.1:8000/appointment
 class OwnAccountField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.str_with_balance()
@@ -315,7 +352,7 @@ def transfer_page(request):
 
 class LoginForm(forms.Form):
     username = forms.CharField(max_length=200)
-    password = forms.CharField(widget= forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput)
 
 
 def login_page(request):

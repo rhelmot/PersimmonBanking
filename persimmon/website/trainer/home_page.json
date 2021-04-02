@@ -1,0 +1,9 @@
+{ "conversations":
+[
+  ["I wanted to know how to get to the home page", "No problem! You can get to the home page by going to url_index" ],
+  ["How do I get to the main page?", "You can get to the main page by heading here: url_index"],
+  ["Home page", "I believe this is what you are looking for: url_index"],
+  ["Home", "I believe this is what you are looking for: url_index"]
+]
+}
+
