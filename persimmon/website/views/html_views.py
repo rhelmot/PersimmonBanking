@@ -68,8 +68,7 @@ def schedule_appointment_page(request):
                         'time': form.cleaned_data['time'],
                     })
 
-                else:
-                    form.add_error(None, "Cannot make an appointment with yourself")
+                form.add_error(None, "Cannot make an appointment with yourself")
 
         form.add_error(None, "No employees available at given time")
 
