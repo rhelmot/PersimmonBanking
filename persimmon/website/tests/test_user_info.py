@@ -30,8 +30,8 @@ class TestUserInformation(TestCase):
             reverse(apis.edit_user, args=(user.id,)),
             data={'phone': '0987654321'})
         self.assertEqual(req.status_code, 200)
-        code1 = sms.outbox[-2].body.split()[-1]  # pylint: disable=no-member
-        code2 = sms.outbox[-1].body.split()[-1]  # pylint: disable=no-member
+        code1 = sms.outbox[-1].body.split()[-1]  # pylint: disable=no-member
+        code2 = sms.outbox[-2].body.split()[-1]  # pylint: disable=no-member
         req = client.post(
             reverse(apis.edit_user, args=(user.id,)),
             data={'phone': '0987654321',
