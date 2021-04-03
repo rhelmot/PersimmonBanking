@@ -116,7 +116,7 @@ def approve_transaction_page(request, tid):
             str(form.cleaned_data['approved']),
             user.username,
             str(tid))
-        form.fields['email_verification'] = forms.CharField()
+        form.fields['email_verification'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
         form.full_clean()
         if not form.is_valid():
             mail.send_mail(
@@ -345,8 +345,8 @@ def edit_user(request, user_id):
                 user_edited.username,
                 form_email.cleaned_data['email'],
                 form_email.cleaned_data['email'])
-            form_email.fields['email_verification_1'] = forms.CharField()
-            form_email.fields['email_verification_2'] = forms.CharField()
+            form_email.fields['email_verification_1'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
+            form_email.fields['email_verification_2'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
             form_email.full_clean()
             if not form_email.is_valid():
                 mail.send_mail(
@@ -393,8 +393,8 @@ def edit_user(request, user_id):
                 user_edited.username,
                 form_phone.cleaned_data['phone'],
                 form_phone.cleaned_data['phone'])
-            form_phone.fields['phone_verification_1'] = forms.CharField()
-            form_phone.fields['phone_verification_2'] = forms.CharField()
+            form_phone.fields['phone_verification_1'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
+            form_phone.fields['phone_verification_2'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
             form_phone.full_clean()
             if not form_phone.is_valid():
                 try:
