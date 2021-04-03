@@ -281,12 +281,11 @@ class UserEmailForm(forms.ModelForm):
     email = forms.EmailField()
 
 
-@transaction.atomic
 def edit_user(request, user_id):
     # load the users we're working with - the editor and the to-be-edited
     user_editor = current_user(request)
     try:
-        user_edited = User.objects.select_for_update().get(id=user_id, django_user__is_active=True)
+        user_edited = User.objects.get(id=user_id, django_user__is_active=True)
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
     original_email = user_edited.email

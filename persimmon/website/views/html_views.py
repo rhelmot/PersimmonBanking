@@ -210,7 +210,7 @@ def statement_page(request, number):
     user = current_user(request, expect_not_logged_in=False)
 
     try:
-        account = BankAccount.objects.select_for_update().get(id=number)
+        account = BankAccount.objects.get(id=number)
         if user != account.owner and user.employee_level < EmployeeLevel.TELLER:
             raise BankAccount.DoesNotExist
     except BankAccount.DoesNotExist as exc:
@@ -221,7 +221,6 @@ def statement_page(request, number):
     statement = []
 
     for transaction in transactions:
-
         entry = transaction.for_one_account(account)
         if transaction.approval_status == ApprovalStatus.PENDING and check_approvals(transaction, user):
             entry.can_approve = True
