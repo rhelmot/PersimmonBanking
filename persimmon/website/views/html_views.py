@@ -236,7 +236,6 @@ def employee_page(request):
     })
 
 
-# https://persimmon.rhelmot.io/
 def chatbot_page(request):
     user = current_user(request)
     url_base = f'{request.scheme}://{request.get_host()}'
@@ -269,7 +268,6 @@ def chatbot_page(request):
     return TemplateResponse(request, 'pages/chat_bot.html', {'conv': conv})
 
 
-# http://127.0.0.1:8000/appointment
 class OwnAccountField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.str_with_balance()
