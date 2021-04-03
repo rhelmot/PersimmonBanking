@@ -443,6 +443,8 @@ def close_account(request, user_id):
     if request.POST:
         closed_user.django_user.is_active = False
         closed_user.django_user.save()
+        Transaction.objects.filter(Q(account_add__owner=closed_user) | Q(account_subtract__owner=closed_user))\
+            .filter(approval_status=ApprovalStatus.PENDING).update(approval_status=ApprovalStatus.DECLINED)
         return TemplateResponse(request, 'pages/close_account_success.html', {})
 
     return TemplateResponse(request, 'pages/close_account.html', {
