@@ -1,5 +1,6 @@
 from django.contrib import admin  # pylint: disable=unused-import
-from .models import User, BankAccount, Appointment, SignInHistory, Transaction, UserEditRequest, TransactionApproval
+from .models import User, BankAccount, Appointment, SignInHistory, Transaction, UserEditRequest, TransactionApproval, \
+    SignInFailure
 
 
 def approve_edit_request(modeladmin, request, queryset):  # pylint: disable=unused-argument
@@ -33,4 +34,5 @@ admin.site.register(Transaction)
 admin.site.register(Appointment)
 admin.site.register(TransactionApproval)
 admin.site.register(SignInHistory, SignInHistoryAdmin)
+admin.site.register(SignInFailure, SignInHistoryAdmin)
 admin.site.register(UserEditRequest, UserEditRequestAdmin)

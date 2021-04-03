@@ -298,6 +298,19 @@ class SignInHistory(models.Model):
         verbose_name_plural = 'Sign In Histories'
 
 
+class SignInFailure(models.Model):
+    log = models.DateTimeField(auto_now=True)
+    ip = models.CharField(max_length=50)
+    info = models.CharField(max_length=1000)
+
+    def __str__(self):
+        return f'{self.ip} - {self.log} ({self.info})'
+
+    @classmethod
+    def locked_out(cls, ip, attempts=6, cooldown=timezone.timedelta(days=1)):
+        return cls.objects.filter(ip=ip, log__gt=timezone.now() - cooldown).count() >= attempts
+
+
 class Appointment(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_customer')
     employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments_as_employee',
