@@ -148,15 +148,19 @@ def create_user_page(request):
             form1.add_error('email_verification', 'Invalid code')
 
         if form1.has_error("phone_verification"):
-            send_sms(
-                f"Here is the code to verify your phone number: {verification_code_phone}",
-                settings.SMS_SENDER,
-                [form1.cleaned_data['phone']],
-            )
-            form1.errors["phone_verification"].clear()
-            form1.add_error(
-                'phone_verification',
-                'Please check your phone and enter the code we sent you here')
+            try:
+                send_sms(
+                    f"Here is the code to verify your phone number: {verification_code_phone}",
+                    settings.SMS_SENDER,
+                    [form1.cleaned_data['phone']],
+                )
+            except Exception:  # pylint: disable=broad-except
+                form1.add_error("phone", "This phone number is not imported into our system. See user guide.")
+            else:
+                form1.errors["phone_verification"].clear()
+                form1.add_error(
+                    'phone_verification',
+                    'Please check your phone and enter the code we sent you here')
         elif form1.cleaned_data['phone_verification'] != verification_code_phone:
             form1.add_error('phone_verification', 'Invalid code')
 

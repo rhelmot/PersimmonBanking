@@ -397,20 +397,24 @@ def edit_user(request, user_id):
             form_phone.fields['phone_verification_2'] = forms.CharField()
             form_phone.full_clean()
             if not form_phone.is_valid():
-                send_sms(
-                    f"Here is code 1 to update your phone number: {verification_code_1}",
-                    settings.SMS_SENDER,
-                    [original_phone]
-                )
-                send_sms(
-                    f"Here is code 2 to update your phone number: {verification_code_2}",
-                    settings.SMS_SENDER,
-                    [form_phone.cleaned_data['phone']]
-                )
-                form_phone.errors.clear()
-                form_phone.add_error(
-                    'phone_verification_1',
-                    'Please check both your phones and enter the codes we sent you here')
+                try:
+                    send_sms(
+                        f"Here is code 2 to update your phone number: {verification_code_2}",
+                        settings.SMS_SENDER,
+                        [form_phone.cleaned_data['phone']]
+                    )
+                except Exception:  # pylint: disable=broad-except
+                    form_phone.add_error("phone", "This phone number is not imported into our system. See user guide.")
+                else:
+                    send_sms(
+                        f"Here is code 1 to update your phone number: {verification_code_1}",
+                        settings.SMS_SENDER,
+                        [original_phone]
+                    )
+                    form_phone.errors.clear()
+                    form_phone.add_error(
+                        'phone_verification_1',
+                        'Please check both your phones and enter the codes we sent you here')
             elif form_phone.cleaned_data['phone_verification_1'] != verification_code_1 or \
                     form_phone.cleaned_data['phone_verification_2'] != verification_code_2:
                 form_phone.add_error('phone_verification_1', 'Invalid codes')
