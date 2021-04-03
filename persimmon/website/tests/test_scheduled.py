@@ -94,7 +94,7 @@ class TestSchedule(TestCase):
 
         self.assertEqual(Appointment.objects.count(), 1)
 
-    def test_schedule2(self):
+    def test_schedule3(self):
         # setup database
         make_user('teller', employee_level=EmployeeLevel.TELLER)
         client_teller = Client()
