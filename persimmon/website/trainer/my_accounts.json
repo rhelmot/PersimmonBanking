@@ -3,6 +3,11 @@
   ["Where can I access my accounts?", "You can access your accounts by going to: url_user" ],
   ["Where can I see my accounts?", "You can see your accounts here: url_user" ],
   ["I want to see my accounts", "No problem! head to this link to see them: url_user" ],
-  ["I want to access my accounts", "You can access your accounts here! url_user" ]
+  ["I want to access my accounts", "You can access your accounts here! url_user" ],
+  ["I need to see my accounts", "No worries! You can see them here! url_user" ],
+  ["Where are my accounts?", "Your accounts are here url_user"],
+  ["I need to access my accounts", "Sounds good! Here they are url_user"],
+  ["Where can I find my accounts?", "You can find them here url_user"],
+  ["I need some help finding my accounts.", "No problem! Your accounts are here url_user"]
 ]
 }

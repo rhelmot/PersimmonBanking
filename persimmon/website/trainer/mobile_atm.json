@@ -11,6 +11,11 @@
   ["I want to deposit some money in my account", "Great! You can deposit some money at url_mobileatm"],
   ["Where can I go to deposit some money in my account?", "You can deposit some money at url_mobileatm"],
   ["Where can I go to withdraw some money from my account?", "You can withdraw some money from your account here: url_mobileatm"],
-  ["I want to withdraw some money from my account", "You can withdraw some money from your account at url_mobileatm"]
+  ["I want to withdraw some money from my account", "You can withdraw some money from your account at url_mobileatm"],
+  ["I need an atm", "No problem! This should help you out url_mobileatm"],
+  ["I need a mobile atm", "I got you! This will help: url_mobileatm"],
+  ["I need to deposit some money", "You can deposit some money here: url_mobileatm"],
+  ["I need to withdraw some money", "You can withdraw some money here: url_mobileatm"],
+  ["I need to access an atm", "You can access one here url_mobileatm"]
 ]
 }

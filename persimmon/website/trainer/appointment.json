@@ -5,6 +5,12 @@
   ["Appointment", "Clicking this link should help you: url_appointment"],
   ["I want to schedule a talk with somebody", "I understand! You can schedule that right at this link url_appointment"],
   ["How can I schedule a meeting with management?", "You can schedule a meeting with management here: url_appointment"],
-  ["Where do I go for an appointment?", "You can go to this link to schedule yourself an appointment url_appointment"]
+  ["Where do I go for an appointment?", "You can go to this link to schedule yourself an appointment url_appointment"],
+  ["I would like an appointment please", "No problem! You can schedule an appoint at url_appointment"],
+  ["How can I get myself an appointment with management?", "You can get yourself an appointment with management at url_appointment"],
+  ["I'd like to speak with someone", "This might help: url_appointment"],
+  ["I would like to make an appointment", "This might help: url_appointment"],
+  ["Where on this banking system can I make an appointment?", "You can go here url_appointment"],
+  ["I'd like to talk to someone", "Scheduling an appointment to talk to someone can be done here url_appointment"]
 ]
 }

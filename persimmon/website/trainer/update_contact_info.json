@@ -1,13 +1,29 @@
 { "conversations":
 [
   ["I want to update my contact info", "Sounds good! You can update it here: url_edit_user" ],
+  ["I need to update my contact info", "Sounds good! You can update it here: url_edit_user" ],
   ["I want to change my contact info", "No problem! You can change it here: url_edit_user" ],
+  ["I need to change my contact info", "No problem! You can change it here: url_edit_user" ],
   ["Where can I change some information in my contact profile?", "You can change that information at this link url_edit_user"],
-  ["I wanted to update my email. Where should I go?", "You can go to this link url_edit_user"],
-  ["I have a new email where can I go to change it?", "You can go to this link url_edit_user"],
+  ["I wanted to update my email. Where should I go?", "You can update your email at this link url_edit_user"],
+  ["I wanted to change my email. Where should I go?", "You can change your email at this link url_edit_user"],
+  ["I need to update my email. Where should I go?", "You can update your email here url_edit_user"],
+  ["I need to change my email. Where should I go?", "You can change your email here url_edit_user"],
+  ["I have a new email where can I go to change it?", "You can update your email here link url_edit_user"],
+  ["I wanted to update my phone number. Where should I go?", "You can update your phone number at this link url_edit_user"],
+  ["I wanted to change my phone number. Where should I go?", "You can change your phone number at this link url_edit_user"],
+  ["I need to update my phone number. Where should I go?", "You can update your phone number at this link url_edit_user"],
+  ["I need to change my phone number. Where should I go?", "You can change your phone number at this link url_edit_user"],
   ["I just got a new phone where can I go update that?", "Congrats on the new phone! You can update it here: url_edit_user"],
+  ["I have a new address where can I go to change it?", "You can update your address here link url_edit_user"],
   ["I just moved locations and wanted to update my address.", "Hope your move was a smooth transition! You can update that at this link url_edit_user"],
   ["I wanted to update my address where can I do this?", "You can update your address here: url_edit_user"],
+  ["I need to update my address where can I do this?", "You can update your address here: url_edit_user"],
+  ["I need to change my address where can I do this?", "You can change your address here: url_edit_user"],
+  ["I need to change my name where can I do this?", "You can change your name here: url_edit_user"],
+  ["I need to update my name where can I do this?", "You can update your name here: url_edit_user"],
+  ["I want to update my name where can I do this?", "You can update your name here: url_edit_user"],
+  ["I want to change my name where can I do this?", "You can change your name here: url_edit_user"],
   ["I just got married and wanted to update my name.", "Congrats on getting married! You can update your name at the link here: url_edit_user"]
 ]
 }

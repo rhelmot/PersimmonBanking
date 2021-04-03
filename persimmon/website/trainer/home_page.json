@@ -3,7 +3,15 @@
   ["I wanted to know how to get to the home page", "No problem! You can get to the home page by going to url_index" ],
   ["How do I get to the main page?", "You can get to the main page by heading here: url_index"],
   ["Home page", "I believe this is what you are looking for: url_index"],
-  ["Home", "I believe this is what you are looking for: url_index"]
+  ["Home", "I believe this is what you are looking for: url_index"],
+  ["Where is the main page?", "The main page is here: url_index"],
+  ["Where is the home page?", "The home page is here: url_index"],
+  ["How can I access the home page?", "You can access the home page here: url_index"],
+  ["How can I get to the home page?", "You can get to the home page here: url_index"],
+  ["How can I access the main page?", "You can access the main page here: url_index"],
+  ["How can I get to the main page?", "You can get to the main page here: url_index"],
+  ["Where is home?", "Home is here: url_index"],
+  ["Where can I see all the tabs?", "I believe this is what you are looking for: url_index"]
 ]
 }
 

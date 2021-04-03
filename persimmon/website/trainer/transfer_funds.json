@@ -1,13 +1,22 @@
 { "conversations":
 [
   ["I want to transfer some money", "I got you! You can transfer some money here url_transfer" ],
+  ["I need to transfer some money", "I got you! You can transfer some money here url_transfer" ],
   ["Where do I go to transfer funds?", "You can transfer some funds here: url_transfer"],
+  ["Where can I go to transfer funds?", "You can transfer some funds here: url_transfer"],
   ["I want to request money from ", "You can go request money from them at url_transfer"],
+  ["I need to request money from ", "You can go request money from them at url_transfer"],
   ["Where do I go to transfer money?", "You can go and transfer money at this link url_transfer"],
+  ["Where can I go to transfer money?", "You can go and transfer money at this link url_transfer"],
   ["I want to request some funds from", "You can go and request those funds at url_transfer"],
+  ["I need to request some funds from", "You can go and request those funds at url_transfer"],
   ["I want to send some money", "Great person you are! You can do that here url_transfer"],
+  ["I need to send some money", "Great person you are! You can do that here url_transfer"],
   ["I want to request some money", "You can request that money at url_transfer"],
+  ["I need to request some money", "You can request that money at url_transfer"],
   ["Where do I go to transfer a certain amount of money?", "You can go ahead and transfer that money here url_transfer"],
-  ["I want a certain amount of money transferred", "You can get that handled at the following link url_transfer"]
+  ["Where can I go to transfer a certain amount of money?", "You can go ahead and transfer that money here url_transfer"],
+  ["I want a certain amount of money transferred", "You can get that handled at the following link url_transfer"],
+  ["I need a certain amount of money transferred", "You can get that handled at the following link url_transfer"]
 ]
 }
