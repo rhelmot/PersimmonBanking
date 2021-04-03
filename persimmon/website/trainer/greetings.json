@@ -6,6 +6,16 @@
   ["Whats up", "Hello how's it going?" ],
   ["I'm well", "That's great how can I help you?"],
   ["Good", "That's good to hear how can I assist you?"],
-  ["I'm good", "Great to hear! How can I help you"]
+  ["I'm good", "Great to hear! How can I help you"],
+  ["Yo", "Yo! How can I assist you?"],
+  ["I'm doing good", "That's good to hear!"],
+  ["Yeah it is", "How can I help you?"],
+  ["Cool", "How can I help you?"],
+  ["Dope", "What can I do to assist you?"],
+  ["Awesome", "What can I do to assist you?"],
+  ["That's great", "It is! What can I do to assist you?"],
+  ["How are you?", "I'm good how are you?"],
+  ["What are you doing?", "Not much! How can I help you?"]
+
 ]
 }
