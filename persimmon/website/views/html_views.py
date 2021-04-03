@@ -54,7 +54,8 @@ def schedule_appointment_page(request):
     form = ScheduleAppointment(request.POST or None)
 
     if form.is_valid():
-        for teller in User.objects.filter(employee_level=1).exclude(django_user=user.django_user):
+        for teller in User.objects.filter(employee_level=1, django_user__is_active=True)\
+                .exclude(django_user=user.django_user):
             if not Appointment.objects.filter(employee=teller, time=form.cleaned_data['time']):
                 newapp = Appointment.objects.create(
                     employee=teller,
@@ -186,7 +187,7 @@ def account_overview_page(request, user_id):
     login_user = current_user(request)
 
     try:
-        view_user = User.objects.get(id=user_id)
+        view_user = User.objects.get(id=user_id, django_user__is_active=True)
         if view_user != login_user and login_user.employee_level < EmployeeLevel.TELLER:
             raise User.DoesNotExist
     except User.DoesNotExist as exc:

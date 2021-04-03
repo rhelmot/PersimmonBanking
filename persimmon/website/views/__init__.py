@@ -6,7 +6,7 @@ from ..models import EmployeeLevel, User
 def current_user(request, required_auth=EmployeeLevel.CUSTOMER, expect_not_logged_in=False):
     if request.user.is_authenticated:
         try:
-            user = User.objects.get(django_user=request.user)
+            user = User.objects.get(django_user=request.user, django_user__is_active=True)
         except User.DoesNotExist:
             user = None
     else:

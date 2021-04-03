@@ -30,9 +30,6 @@ from ..transaction_approval import check_approvals
 from ..common import event_loop
 
 
-# phone number is +13236949222
-
-
 def hashit(string):
     return hashlib.sha256(string.encode()).hexdigest()
 
@@ -201,6 +198,8 @@ def persimmon_login(request):
             request,
             username=form.cleaned_data['username'],
             password=form.cleaned_data['password'])
+        if not django_user.is_active:
+            django_user = None
         if django_user is None:
             form.add_error(None, "Username or password is incorrect")
         else:
@@ -286,7 +285,7 @@ def edit_user(request, user_id):
     # load the users we're working with - the editor and the to-be-edited
     user_editor = current_user(request)
     try:
-        user_edited = User.objects.get(id=user_id)
+        user_edited = User.objects.get(id=user_id, django_user__is_active=True)
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
     original_email = user_edited.email
@@ -301,6 +300,8 @@ def edit_user(request, user_id):
     if user_editor == user_edited:
         editing_self = True
     elif user_editor.employee_level >= EmployeeLevel.MANAGER:
+        if user_edited.employee_level > EmployeeLevel.CUSTOMER and user_editor.employee_level < EmployeeLevel.ADMIN:
+            raise Http404("Cannot edit this user")
         editing_self = False
     else:
         raise Http404("Cannot edit this user")
@@ -429,6 +430,25 @@ def edit_user(request, user_id):
     })
 
 
+def close_account(request, user_id):
+    user = current_user(request, required_auth=EmployeeLevel.MANAGER)
+    try:
+        closed_user = User.objects.get(id=user_id, django_user__is_active=True)
+    except User.DoesNotExist as exc:
+        raise Http404("No such user") from exc
+
+    if closed_user.employee_level > EmployeeLevel.CUSTOMER and user.employee_level < EmployeeLevel.ADMIN:
+        raise Http404("Cannot modify this account")
+
+    if request.POST:
+        closed_user.django_user.is_active = False
+        closed_user.django_user.save()
+        return TemplateResponse(request, 'pages/close_account_success.html', {})
+
+    return TemplateResponse(request, 'pages/close_account.html', {
+        'view_user': closed_user,
+    })
+
 class UserLookupForm(forms.Form):
     search_term = forms.CharField()
 
@@ -439,7 +459,7 @@ def user_lookup(request):
 
     if form.is_valid():
         terms = form.cleaned_data['search_term'].split()
-        query = User.objects
+        query = User.objects.filter(django_user__is_active=True)
         for term in terms:
             query = query.filter(Q(django_user__first_name__icontains=term) |
                                  Q(django_user__last_name__icontains=term) |

@@ -31,6 +31,7 @@ urlpatterns = [
     path('user/new', html_views.create_user_page, name='create-account'),
     path('user/<int:user_id>', html_views.account_overview_page, name='user'),
     path('user/<int:user_id>/edit', apis.edit_user, name='edit-user'),
+    path('user/<int:user_id>/close', apis.close_account, name='close-account'),
     path('user/search', apis.user_lookup, name='user-lookup'),
 
     path('account/new', apis.create_bank_account, name='create-bank-account'),

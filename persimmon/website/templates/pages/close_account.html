@@ -1,0 +1,7 @@
+{% extends 'main.html' %}
+{% block title %}Close Account{% endblock %}
+{% block body %}
+    <h2>Are you sure?</h2>
+    <p>Closing this account ({{ view_user.name }}) can only be undone by an administrator. Please click the button below to indicate you really want to close this account.</p>
+    <form method="POST">{% csrf_token %}<p><input type="submit" value="Close Account"></p></form>
+{% endblock %}

@@ -24,7 +24,14 @@
 </table>
 
 <p><a href="{% url 'create-bank-account' %}">Apply for a new account</a></p>
-<p><a href="{% url 'edit-user' view_user.id %}">Edit my contact information</a></p>
+{% if view_user.employee_level == 0 or persimmon_user.employee_level >= 3 %}
+<p><a href="{% url 'edit-user' view_user.id %}">Edit contact information</a></p>
+{% endif %}
+{% if persimmon_user == view_user %}
 <p><a href="{% url 'password_change' %}">Change my password</a></p>
+{% endif %}
+{% if persimmon_user.employee_level >= 2 and view_user.employee_level == 0 or persimmon_user.employee_level >= 3 %}
+<p><a href="{% url 'close-account' view_user.id %}">Close this account</a></p>
+{% endif %}
 
 {% endblock %}
