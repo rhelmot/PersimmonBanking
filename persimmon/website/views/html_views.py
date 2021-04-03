@@ -220,9 +220,9 @@ def statement_page(request, number):
         .order_by('approval_status', '-date')
     statement = []
 
-    for transaction in transactions:
-        entry = transaction.for_one_account(account)
-        if transaction.approval_status == ApprovalStatus.PENDING and check_approvals(transaction, user):
+    for transaction1 in transactions:
+        entry = transaction1.for_one_account(account)
+        if transaction1.approval_status == ApprovalStatus.PENDING and check_approvals(transaction1, user):
             entry.can_approve = True
         statement.append(entry)
 
