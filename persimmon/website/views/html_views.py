@@ -1,6 +1,7 @@
 import re
 
 from django.core import mail
+from django.db import transaction
 from django.http import Http404
 from django.core.validators import RegexValidator
 from django import forms, urls
@@ -49,14 +50,15 @@ class ScheduleAppointment(forms.Form):
     }))
 
 
+@transaction.atomic
 def schedule_appointment_page(request):
     user = current_user(request)
     form = ScheduleAppointment(request.POST or None)
 
     if form.is_valid():
-        for teller in User.objects.filter(employee_level=1, django_user__is_active=True)\
+        for teller in User.objects.select_for_update().filter(employee_level=1, django_user__is_active=True)\
                 .exclude(django_user=user.django_user):
-            if not Appointment.objects.filter(employee=teller, time=form.cleaned_data['time']):
+            if not Appointment.objects.select_for_update().filter(employee=teller, time=form.cleaned_data['time']):
                 newapp = Appointment.objects.create(
                     employee=teller,
                     customer=user,
@@ -70,7 +72,7 @@ def schedule_appointment_page(request):
 
         form.add_error(None, "No employees available at given time")
 
-    appointments = Appointment.objects.filter(customer=user).all()
+    appointments = Appointment.objects.select_for_update().filter(customer=user).all()
 
     return TemplateResponse(request, 'pages/schedule_appointment.html', {
         'form': form,
@@ -191,7 +193,7 @@ def account_overview_page(request, user_id):
     login_user = current_user(request)
 
     try:
-        view_user = User.objects.get(id=user_id, django_user__is_active=True)
+        view_user = User.objects.select_for_update().get(id=user_id, django_user__is_active=True)
         if view_user != login_user and login_user.employee_level < EmployeeLevel.TELLER:
             raise User.DoesNotExist
     except User.DoesNotExist as exc:
@@ -208,7 +210,7 @@ def statement_page(request, number):
     user = current_user(request, expect_not_logged_in=False)
 
     try:
-        account = BankAccount.objects.get(id=number)
+        account = BankAccount.objects.select_for_update().get(id=number)
         if user != account.owner and user.employee_level < EmployeeLevel.TELLER:
             raise BankAccount.DoesNotExist
     except BankAccount.DoesNotExist as exc:
@@ -234,7 +236,7 @@ def statement_page(request, number):
 def employee_page(request):
     user = current_user(request, required_auth=EmployeeLevel.TELLER)
     transactions = applicable_approvals(user)
-    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.PENDING)
+    accounts = BankAccount.objects.select_for_update().filter(approval_status=ApprovalStatus.PENDING)
 
     return TemplateResponse(request, 'pages/employee_page.html', {
         "pending_transactions": transactions,
@@ -292,10 +294,11 @@ class MobileATMForm(forms.Form):
         self.fields['account'].queryset = qs_1
 
 
+@transaction.atomic
 def mobile_atm_page(request):
     user = current_user(request, expect_not_logged_in=False)
     filter_owner = {'owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
-    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
+    accounts = BankAccount.objects.select_for_update().filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
     form = MobileATMForm(accounts, user.employee_level != EmployeeLevel.CUSTOMER, request.POST or None)
 
     if form.is_valid():
@@ -383,7 +386,7 @@ def otp_page(request):
         if form.cleaned_data['otp'] != sent_otp:
             form.add_error("otp", "Incorrect code")
         else:
-            user = User.objects.get(django_user__username=username)
+            user = User.objects.select_for_update().get(django_user__username=username)
             django_login(request, user.django_user)
             return TemplateResponse(request, 'pages/login_success.html', {})
 

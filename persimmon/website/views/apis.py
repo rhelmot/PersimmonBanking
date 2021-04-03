@@ -81,7 +81,7 @@ def approve_bank_account(request):
         return HttpResponseBadRequest("Bad parameters")
 
     try:
-        account = BankAccount.objects.get(
+        account = BankAccount.objects.select_for_update().get(
             id=form.cleaned_data['account_number'],
             approval_status=ApprovalStatus.PENDING)
     except BankAccount.DoesNotExist as exc:
@@ -104,7 +104,7 @@ def approve_transaction_page(request, tid):
     user = current_user(request)
     form = ApproveTransactionForm(request.POST or None)
     try:
-        trans = Transaction.objects.get(id=tid, approval_status=ApprovalStatus.PENDING)
+        trans = Transaction.objects.select_for_update().get(id=tid, approval_status=ApprovalStatus.PENDING)
         if not check_approvals(trans, user):
             raise Transaction.DoesNotExist
     except Transaction.DoesNotExist as exc:
@@ -204,7 +204,7 @@ def persimmon_login(request):
             form.add_error(None, "Username or password is incorrect")
         else:
             try:
-                persimmon_user = User.objects.get(django_user=django_user)
+                persimmon_user = User.objects.select_for_update().get(django_user=django_user)
             except User.DoesNotExist:
                 form.add_error(None, "Username or password is incorrect")
 
@@ -281,11 +281,12 @@ class UserEmailForm(forms.ModelForm):
     email = forms.EmailField()
 
 
+@transaction.atomic
 def edit_user(request, user_id):
     # load the users we're working with - the editor and the to-be-edited
     user_editor = current_user(request)
     try:
-        user_edited = User.objects.get(id=user_id, django_user__is_active=True)
+        user_edited = User.objects.select_for_update().get(id=user_id, django_user__is_active=True)
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
     original_email = user_edited.email
@@ -434,10 +435,11 @@ def edit_user(request, user_id):
     })
 
 
+@transaction.atomic
 def close_account(request, user_id):
     user = current_user(request, required_auth=EmployeeLevel.MANAGER)
     try:
-        closed_user = User.objects.get(id=user_id, django_user__is_active=True)
+        closed_user = User.objects.select_for_update().get(id=user_id, django_user__is_active=True)
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
 
@@ -447,13 +449,16 @@ def close_account(request, user_id):
     if request.POST:
         closed_user.django_user.is_active = False
         closed_user.django_user.save()
-        Transaction.objects.filter(Q(account_add__owner=closed_user) | Q(account_subtract__owner=closed_user))\
-            .filter(approval_status=ApprovalStatus.PENDING).update(approval_status=ApprovalStatus.DECLINED)
+        Transaction.objects.select_for_update().filter(Q(account_add__owner=closed_user)
+                                                       | Q(account_subtract__owner=closed_user))\
+            .select_for_update().filter(approval_status=ApprovalStatus.PENDING)\
+            .update(approval_status=ApprovalStatus.DECLINED)
         return TemplateResponse(request, 'pages/close_account_success.html', {})
 
     return TemplateResponse(request, 'pages/close_account.html', {
         'view_user': closed_user,
     })
+
 
 class UserLookupForm(forms.Form):
     search_term = forms.CharField()
@@ -465,7 +470,7 @@ def user_lookup(request):
 
     if form.is_valid():
         terms = form.cleaned_data['search_term'].split()
-        query = User.objects.filter(django_user__is_active=True)
+        query = User.objects.select_for_update(django_user__is_active=True)
         for term in terms:
             query = query.filter(Q(django_user__first_name__icontains=term) |
                                  Q(django_user__last_name__icontains=term) |
