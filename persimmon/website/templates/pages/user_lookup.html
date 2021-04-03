@@ -22,10 +22,10 @@
             {% for entry in query %}
                 <tr>
                     <td><a href="{% url 'user' entry.id %}">{{ entry.name }}</a></td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.phone }}</td>
-                    <td>{{ user.address }}</td>
+                    <td>{{ entry.username }}</td>
+                    <td>{{ entry.email }}</td>
+                    <td>{{ entry.phone }}</td>
+                    <td>{{ entry.address }}</td>
                 </tr>
             {% endfor %}
             </table>
