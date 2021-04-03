@@ -198,7 +198,7 @@ def persimmon_login(request):
             request,
             username=form.cleaned_data['username'],
             password=form.cleaned_data['password'])
-        if not django_user.is_active:
+        if django_user is not None and not django_user.is_active:
             django_user = None
         if django_user is None:
             form.add_error(None, "Username or password is incorrect")
