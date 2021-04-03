@@ -129,8 +129,10 @@ def create_user_page(request):
             'create_account_phone',
             form2.cleaned_data['username'],
             form1.cleaned_data['phone'])
-        form1.fields['email_verification'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
-        form1.fields['phone_verification'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
+        form1.fields['email_verification'] = forms.CharField(widget=forms.TextInput(
+            attrs={'class': 'use-otpkeyboard-input'}))
+        form1.fields['phone_verification'] = forms.CharField(widget=forms.TextInput(
+            attrs={'class': 'use-otpkeyboard-input'}))
         form1.full_clean()
 
         if form1.has_error("email_verification"):
