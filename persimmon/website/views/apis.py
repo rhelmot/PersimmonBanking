@@ -213,7 +213,7 @@ def persimmon_login(request):
     if form.is_valid():
         # if we get this far and we need to render the form again don't wipe the password and display the otp field
         form.fields['password'].widget.render_value = True
-        form.fields['login_code'] = forms.CharField()
+        form.fields['login_code'] = forms.CharField(widget=forms.TextInput(attrs={'class': 'use-otpkeyboard-input'}))
         form.full_clean()
 
         # if the form is no longer valid no otp was not entered, generate and send it
@@ -221,7 +221,7 @@ def persimmon_login(request):
             form.errors.clear()
             form.add_error(None, "Please enter the code we just sent to your phone")
 
-            otp = '%06d' % random.randint(0, 999999)
+            otp = '%06d' % random.randint(100000, 999999)
             request.session['sent_otp'] = otp
             request.session['username'] = django_user.username
 
