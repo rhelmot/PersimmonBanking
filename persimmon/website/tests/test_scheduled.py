@@ -104,6 +104,5 @@ class TestSchedule(TestCase):
         req = client_teller.post(
             reverse(html_views.schedule_appointment_page),
             data={"time": "2021-04-15 14:30"})
-        print(req)
         self.assertEqual(req.status_code, 200)
         self.assertEqual(Appointment.objects.count(), 0)
