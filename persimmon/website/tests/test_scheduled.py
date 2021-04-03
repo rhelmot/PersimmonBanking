@@ -93,3 +93,17 @@ class TestSchedule(TestCase):
         self.assertEqual(req.status_code, 200)
 
         self.assertEqual(Appointment.objects.count(), 1)
+
+    def test_schedule2(self):
+        # setup database
+        make_user('teller', employee_level=EmployeeLevel.TELLER)
+        client_teller = Client()
+        self.assertTrue(client_teller.login(username='teller', password='password'))
+
+        # creating appointments
+        req = client_teller.post(
+            reverse(html_views.schedule_appointment_page),
+            data={"time": "2021-04-15 14:30"})
+        print(req)
+        self.assertEqual(req.status_code, 200)
+        self.assertEqual(Appointment.objects.count(), 0)
