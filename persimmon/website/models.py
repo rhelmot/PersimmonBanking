@@ -307,8 +307,8 @@ class SignInFailure(models.Model):
         return f'{self.ip} - {self.log} ({self.info})'
 
     @classmethod
-    def locked_out(cls, ip, attempts=6, cooldown=timezone.timedelta(days=1)):
-        return cls.objects.filter(ip=ip, log__gt=timezone.now() - cooldown).count() >= attempts
+    def locked_out(cls, ip_addr, attempts=6, cooldown=timezone.timedelta(days=1)):
+        return cls.objects.filter(ip=ip_addr, log__gt=timezone.now() - cooldown).count() >= attempts
 
 
 class Appointment(models.Model):

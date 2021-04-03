@@ -194,8 +194,8 @@ def persimmon_login(request):
     django_user = persimmon_user = None
 
     # pass 0: check lockout
-    ip = request.META['REMOTE_ADDR']
-    if SignInFailure.locked_out(ip):
+    ip_addr = request.META['REMOTE_ADDR']
+    if SignInFailure.locked_out(ip_addr):
         form.add_error(None, "You have reached the maximum number of login attempts for today. Try again tomorrow.")
 
     # pass 1: check authentication
@@ -208,13 +208,13 @@ def persimmon_login(request):
             django_user = None
         if django_user is None:
             form.add_error(None, "Username or password is incorrect")
-            SignInFailure.objects.create(ip=ip, info=f"{repr(form.cleaned_data['username'])} failure")
+            SignInFailure.objects.create(ip=ip_addr, info=f"{repr(form.cleaned_data['username'])} failure")
         else:
             try:
                 persimmon_user = User.objects.get(django_user=django_user)
             except User.DoesNotExist:
                 form.add_error(None, "Username or password is incorrect")
-                SignInFailure.objects.create(ip=ip, info="Django user without persimmon user???")
+                SignInFailure.objects.create(ip=ip_addr, info="Django user without persimmon user???")
 
     # pass 2: check otp
     if form.is_valid():
@@ -241,7 +241,7 @@ def persimmon_login(request):
         elif form.cleaned_data['login_code'] != request.session.get('sent_otp', None) or \
                 form.cleaned_data['username'] != request.session.get('username', None):
             form.add_error('login_code', 'Invalid code')
-            SignInFailure.objects.create(ip=ip, info="Invalid OTP")
+            SignInFailure.objects.create(ip=ip_addr, info="Invalid OTP")
 
         # got em
         else:
