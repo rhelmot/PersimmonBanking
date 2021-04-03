@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.db.transaction import atomic
 from django.utils import timezone
 from django.contrib.auth.models import User as DjangoUser  # pylint: disable=imported-auth-user
 from django.conf import settings
@@ -178,28 +179,32 @@ class Transaction(models.Model):
     def add_approval(self, user):
         TransactionApproval.objects.create(approver=user, transaction=self)
 
+    @atomic
     def approve(self):
-        if self.approval_status != ApprovalStatus.PENDING:
+        self2 = Transaction.objects.select_for_update().get(id=self.id)
+        if self2.approval_status != ApprovalStatus.PENDING:
             return
 
-        self.approval_status = ApprovalStatus.APPROVED
-        self.date = timezone.now()
+        self2.approval_status = ApprovalStatus.APPROVED
+        self2.date = timezone.now()
 
-        if self.account_add is not None:
-            self.account_add.balance += self.transaction
-            self.balance_add = self.account_add.balance
-            self.account_add.save()
-            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
-            self.create_bank_statement_to_blockchain(self.id, date, self.transaction,self.account_add.balance,
-                                                     self.account_add.id, self.description)
-        if self.account_subtract is not None:
-            self.account_subtract.balance -= self.transaction
-            self.balance_subtract = self.account_subtract.balance
-            self.account_subtract.save()
-            date = self.date.strftime("%m/%d/%Y, %H:%M:%S")
-            self.create_bank_statement_to_blockchain(self.id, date, self.transaction, self.account_subtract.balance,
-                                                     self.account_subtract.id, self.description)
-        self.save()
+        if self2.account_add is not None:
+            account_add = BankAccount.objects.select_for_update().get(id=self2.account_add.id)
+            account_add.balance += self2.transaction
+            account_add.save()
+            self2.balance_add = account_add.balance
+            date = self2.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self2.id, date, self2.transaction, account_add.balance,
+                                                     account_add.id, self2.description)
+        if self2.account_subtract is not None:
+            account_sub = BankAccount.objects.select_for_update().get(id=self2.account_subtract.id)
+            account_sub.balance -= self2.transaction
+            account_sub.save()
+            self2.balance_subtract = account_sub.balance
+            date = self2.date.strftime("%m/%d/%Y, %H:%M:%S")
+            self.create_bank_statement_to_blockchain(self2.id, date, self2.transaction, account_sub.balance,
+                                                     account_sub.id, self2.description)
+        self2.save()
 
     def decline(self):
         if self.approval_status != ApprovalStatus.PENDING:
@@ -209,14 +214,7 @@ class Transaction(models.Model):
         self.save()
 
     def for_one_account(self, account):
-        if self.account_add == account:
-            return BankStatementEntry(
-                self.id,
-                self.date,
-                self.transaction,
-                self.balance_add,
-                self.description,
-                self.check_recipient)
+        # subtract first because subtract is second during approval
         if self.account_subtract == account:
             # pylint: disable=invalid-unary-operand-type
             return BankStatementEntry(
@@ -224,6 +222,14 @@ class Transaction(models.Model):
                 self.date,
                 -self.transaction,
                 self.balance_subtract,
+                self.description,
+                self.check_recipient)
+        if self.account_add == account:
+            return BankStatementEntry(
+                self.id,
+                self.date,
+                self.transaction,
+                self.balance_add,
                 self.description,
                 self.check_recipient)
         raise Exception("Called for_one_account with account not associated with transaction")
@@ -276,7 +282,7 @@ class BankStatementEntry:
 
 
 class TransactionApproval(models.Model):
-    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name="+")
     approver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='+')
     timestamp = models.DateTimeField(auto_now=True)
 
