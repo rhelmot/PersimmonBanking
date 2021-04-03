@@ -434,11 +434,10 @@ def edit_user(request, user_id):
     })
 
 
-@transaction.atomic
 def close_account(request, user_id):
     user = current_user(request, required_auth=EmployeeLevel.MANAGER)
     try:
-        closed_user = User.objects.select_for_update().get(id=user_id, django_user__is_active=True)
+        closed_user = User.objects.get(id=user_id, django_user__is_active=True)
     except User.DoesNotExist as exc:
         raise Http404("No such user") from exc
 
@@ -448,7 +447,7 @@ def close_account(request, user_id):
     if request.POST:
         closed_user.django_user.is_active = False
         closed_user.django_user.save()
-        Transaction.objects.select_for_update().filter(Q(account_add__owner=closed_user)
+        Transaction.objects.filter(Q(account_add__owner=closed_user)
                                                        | Q(account_subtract__owner=closed_user))\
             .select_for_update().filter(approval_status=ApprovalStatus.PENDING)\
             .update(approval_status=ApprovalStatus.DECLINED)
@@ -469,7 +468,7 @@ def user_lookup(request):
 
     if form.is_valid():
         terms = form.cleaned_data['search_term'].split()
-        query = User.objects.select_for_update(django_user__is_active=True)
+        query = User.objects.select_for_update().filter(django_user__is_active=True)
         for term in terms:
             query = query.filter(Q(django_user__first_name__icontains=term) |
                                  Q(django_user__last_name__icontains=term) |

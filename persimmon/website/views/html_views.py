@@ -297,7 +297,7 @@ class MobileATMForm(forms.Form):
 def mobile_atm_page(request):
     user = current_user(request, expect_not_logged_in=False)
     filter_owner = {'owner': user} if user.employee_level == EmployeeLevel.CUSTOMER else {}
-    accounts = BankAccount.objects.select_for_update().filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
+    accounts = BankAccount.objects.filter(approval_status=ApprovalStatus.APPROVED, **filter_owner)
     form = MobileATMForm(accounts, user.employee_level != EmployeeLevel.CUSTOMER, request.POST or None)
 
     if form.is_valid():
@@ -385,7 +385,7 @@ def otp_page(request):
         if form.cleaned_data['otp'] != sent_otp:
             form.add_error("otp", "Incorrect code")
         else:
-            user = User.objects.select_for_update().get(django_user__username=username)
+            user = User.objects.get(django_user__username=username)
             django_login(request, user.django_user)
             return TemplateResponse(request, 'pages/login_success.html', {})
 
