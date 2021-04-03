@@ -1,8 +1,8 @@
 {% extends 'main.html' %}
 {% block title %}Account {{ account.account_number }}{% endblock %}
 {% block body %}
-    <h2>Statement for account {{ account.account_number }}</h2>
-    <table>
+    <h2 class="print">Statement for account {{ account.account_number }}</h2>
+    <table class="print">
     <tr>
         <th>Date/Time</th>
         <th>Description</th>
@@ -10,7 +10,7 @@
         <th>Balance</th>
     </tr>
     {% for entry in statement %}
-    <tr>
+    <tr{% if entry.balance is None %} class="noprint"{% endif %}>
         <td>{{ entry.date }}</td>
         {% if entry.balance is not None and entry.check_recipient is not None and entry.transaction < 0 %}
             <td><a href="{% url 'check' entry.id %}">{{ entry.description }}</a></td>
@@ -34,4 +34,5 @@
     </table>
 
     <p><a href="{% url 'get-blockchain' account.id %}">View Blockchain Ledger</a></p>
+    <p><a href="#" onclick="window.print(); return false;">Print This Page</a></p>
 {% endblock %}

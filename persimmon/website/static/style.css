@@ -85,3 +85,15 @@ h2 {
     margin-left: 200px;
     padding-left: 0;
 }
+
+@media print {
+    body {
+        visibility: hidden;
+    }
+    .print {
+        visibility: visible;
+    }
+    .noprint {
+        display: none;
+    }
+}

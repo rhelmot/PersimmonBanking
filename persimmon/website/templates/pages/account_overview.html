@@ -17,7 +17,7 @@
         {% if account.approval_status == 0 %}
             <td style="text-align:center;"><em>Pending Approval</em></td>
         {% else %}
-            <td style="text-align:center;"><a href="{% url 'statement' account.id %}">Statements</a></td>
+            <td style="text-align:center;"><a href="{% url 'statement' account.id %}">Statement</a></td>
         {% endif %}
     </tr>
 {% endfor %}
