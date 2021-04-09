@@ -195,7 +195,7 @@ def persimmon_login(request):
 
     # pass 0: check lockout
     ip_addr = request.META['REMOTE_ADDR']
-    if SignInFailure.locked_out(ip_addr):
+    if request.method == "POST" and SignInFailure.locked_out(ip_addr):
         form.add_error(None, "You have reached the maximum number of login attempts for today. Try again tomorrow.")
 
     # pass 1: check authentication
